@@ -1,0 +1,13 @@
+{% extends 'is_project/base.html' %}
+
+{% block title%}Login{% endblock %}
+
+{% block content %}
+{% load socialaccount %}
+        <h1>Gestión de Proyectos</h1>
+    {% if user.is_authenticated %}
+        <p>Welcome, You are logged in as {{ user.username }}</p>
+    {% else %}
+        <a href="{% provider_login_url 'google' %}">Login With Google</a>
+    {% endif %}
+{% endblock %}
