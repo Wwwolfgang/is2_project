@@ -3,7 +3,7 @@
 
 
 
-### CONFIG DOCKER 
+# CONFIG DOCKER 
 ## Iniciar container de base de datos postgres (si usan Docker)
 ```sudo docker-compose up -d```
 
@@ -33,4 +33,4 @@ python manage.py collectstatic
 'PASSWORD': 'root',
 
 ## Dentro del .env tambien encuentran el id y el secret para el sso 
-# Guía para ver la configuración del sso https://www.section.io/engineering-education/django-google-oauth/
+## Guía para ver la configuración del sso https://www.section.io/engineering-education/django-google-oauth/
