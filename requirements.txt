@@ -5,3 +5,5 @@ django-allauth
 django-guardian==2.4
 #python-decouple
 python-dotenv
+pdoc
+pytest-django
