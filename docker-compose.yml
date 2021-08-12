@@ -3,7 +3,7 @@ version: '3.7'
 services:
   web:
     build:
-      context: ./is2_project
+      context: ./
       dockerfile: Dockerfile
     command: gunicorn is_project.wsgi:application --bind 0.0.0.0:8000
     volumes:
