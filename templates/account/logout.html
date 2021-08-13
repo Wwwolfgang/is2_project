@@ -1,0 +1,19 @@
+{% extends "sso/base.html" %}
+{% block container %}
+    {% load socialaccount %}
+        <div class="container d-flex justify-content-center " style="height: 400px;">
+          <div class="card align-self-center justify-content-center" style="width: 18rem; height: 200px;">
+              <div class="card-body text-center">
+                <h1 class="card-title ">Cerrar sesión</h1>
+                <p>¿Estas seguro que quieres cerrar la sesión?</p>
+                <form method="post" action="{% url 'account_logout' %}">
+                  {% csrf_token %}
+                  {% if redirect_field_value %}
+                  <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+                  {% endif %}
+                  <button class='btn btn-outline-primary' type="submit">Cerrar sesión</button>
+                </form>
+            </div>
+          </div>
+        </div>
+{% endblock %}

@@ -1,13 +1,21 @@
-{% extends 'is_project/base.html' %}
+{% extends 'sso/base.html' %}
 
-{% block title%}Login{% endblock %}
 
-{% block content %}
-{% load socialaccount %}
-        <h1>Gestión de Proyectos</h1>
-    {% if user.is_authenticated %}
-        <p>Welcome, You are logged in as {{ user.username }}</p>
+{% block container %}
+    {% load socialaccount %}
+    {% if not user.is_authenticated %}
+        <div class="container d-flex justify-content-center " style="height: 400px;">
+            <div class="card align-self-center text-center" style="width: 18rem; height: 200px;">
+                <div class="card-body">
+                    <h2 class="card-title pb-3">Gestión de Proyectos</h2>
+                    <a href="{% provider_login_url 'google' %}" class="btn btn-primary">Login With Google</a>
+                </div>
+            </div>
+        </div>
+
     {% else %}
-        <a href="{% provider_login_url 'google' %}">Login With Google</a>
+        <div class="container d-flex justify-content-center " style="height: 400px;">
+            <h1>Bienvenidos</h1>
+        </div>
     {% endif %}
 {% endblock %}
