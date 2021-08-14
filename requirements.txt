@@ -7,3 +7,4 @@ django-guardian==2.4
 python-dotenv
 pdoc
 pytest-django
+gunicorn
