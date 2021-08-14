@@ -5,6 +5,12 @@ django-allauth
 django-guardian==2.4
 #python-decouple
 python-dotenv
+<<<<<<< HEAD
 sphinx
 pytest-django
 django-livereload-server
+=======
+pdoc
+pytest-django
+gunicorn
+>>>>>>> cesar

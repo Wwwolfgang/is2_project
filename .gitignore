@@ -1,11 +1,17 @@
 .vscode
+<<<<<<< HEAD
 *.pyc
 */*/*/__pycache__/
 */*/__pycache__/
 */__pycache__/
+.idea/
 *.log
 *.pot
 db.sqlite3
 build
 source
 venv
+=======
+/cesar/
+/*/__pycache__/
+>>>>>>> cesar
