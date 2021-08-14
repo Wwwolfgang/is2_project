@@ -1,1 +1,11 @@
 .vscode
+*.pyc
+*/*/*/__pycache__/
+*/*/__pycache__/
+*/__pycache__/
+*.log
+*.pot
+db.sqlite3
+build
+source
+venv
