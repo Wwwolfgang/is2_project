@@ -1,0 +1,45 @@
+is\_project package
+===================
+
+Submodules
+----------
+
+is\_project.asgi module
+-----------------------
+
+.. automodule:: is_project.asgi
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+is\_project.settings module
+---------------------------
+
+.. automodule:: is_project.settings
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+is\_project.urls module
+-----------------------
+
+.. automodule:: is_project.urls
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+is\_project.wsgi module
+-----------------------
+
+.. automodule:: is_project.wsgi
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: is_project
+   :members:
+   :undoc-members:
+   :show-inheritance:

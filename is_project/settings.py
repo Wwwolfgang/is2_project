@@ -150,6 +150,8 @@ AUTH_USER_MODEL = 'sso.User'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
@@ -158,6 +160,11 @@ AUTHENTICATION_BACKENDS = [
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
+        'APP':{
+            'client_id': os.environ.get('ID'),
+            'secret': os.environ.get('SECRET'),
+            'key': ''
+        },
         'SCOPE': [
             'profile',
             'email',

@@ -1,0 +1,9 @@
+is2_project
+===========
+
+.. toctree::
+   :maxdepth: 4
+
+   is_project
+   manage
+   sso
