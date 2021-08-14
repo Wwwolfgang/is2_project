@@ -1,0 +1,61 @@
+sso package
+===========
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   sso.migrations
+
+Submodules
+----------
+
+sso.admin module
+----------------
+
+.. automodule:: sso.admin
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+sso.apps module
+---------------
+
+.. automodule:: sso.apps
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+sso.models module
+-----------------
+
+.. automodule:: sso.models
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+sso.tests module
+----------------
+
+.. automodule:: sso.tests
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+sso.views module
+----------------
+
+.. automodule:: sso.views
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: sso
+   :members:
+   :undoc-members:
+   :show-inheritance:
