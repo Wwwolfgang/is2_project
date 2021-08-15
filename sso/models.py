@@ -1,5 +1,21 @@
-from django.db import models
+#from django.db import models
+from django.contrib.auth.models import AbstractUser
 import datetime
+class User(AbstractUser):
+    """
+    Esta clase es un usuario personalizado que hereda de la classe AbstractUser, diferente del usuario normal de Django.
+    Esto será util para relacionar los usuarios con los roles de sistema y de proyecto.
+    
+    #TODO
+    
+    - Agregar los campos restantes del modelo
+    """
+    #descripcion = models.TextField(max_length=500, blank=True, null=True)
+    """Este es un campo de texto de prueba. A futuro será eliminado y se agregarán mas campos."""
+
+    def __str__(self):
+        return self.username
+
 class usuario:
     username = ""
     tokenSesion = False
@@ -35,6 +51,13 @@ class usuarioProyecto:
     def crearSprint(nombreSprint, duracionSprint):
         print("El sprint fue creado")
 
+'''Clase user story
+    #TODO: 
+    *)Correcto funcionamiento de la clase para ser implementada en otros
+    metodos
+    *)Adicion de datos relacionados a user story en postgresql para realizar
+    tests
+'''
 class userStory:
     nombreUserStory = ""
     codigoUserStory = ""
@@ -65,6 +88,9 @@ class userStory:
     def generarEstimacion(int,int2):
         print("Se estima que el user story dure 1 mes")
 
+'''Clase sprint
+    #TODO: Desarrollar user story
+'''
 class sprint:
     nombreSprint = ""
     codSprint = ""
@@ -109,6 +135,9 @@ class rol:
     def obtenerClave(Self):
         return Self.claveProyecto
 
+'''Clase kanban
+    #TODO: Inutilizable sin user story
+'''
 #class kanban:
     #columnas = userStory[]
     #def moverUserStory(userStory codUserStory):
@@ -174,6 +203,11 @@ class burnDownChart:
     def borrarBurnDownChart():
         print("Se borro el burn down chart")
 
+
+'''Clase proyecto
+    #TODO: Realizar user story para poder implementar en agregarSprintProyecto()
+    y actualizarBurnDownChart()
+'''
 class proyecto:
     nombreProyecto = ""
     fechaInicio = datetime.date.today()

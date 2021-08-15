@@ -5,6 +5,8 @@ django-allauth
 django-guardian==2.4
 #python-decouple
 python-dotenv
-pdoc
+sphinx
 pytest-django
+django-livereload-server
+pdoc
 gunicorn
