@@ -1,7 +1,6 @@
-from django.db import models
-<<<<<<< HEAD
+#from django.db import models
 from django.contrib.auth.models import AbstractUser
-
+import datetime
 class User(AbstractUser):
     """
     Esta clase es un usuario personalizado que hereda de la classe AbstractUser, diferente del usuario normal de Django.
@@ -11,13 +10,12 @@ class User(AbstractUser):
     
     - Agregar los campos restantes del modelo
     """
-    descripcion = models.TextField(max_length=500, blank=True, null=True)
+    #descripcion = models.TextField(max_length=500, blank=True, null=True)
     """Este es un campo de texto de prueba. A futuro será eliminado y se agregarán mas campos."""
 
     def __str__(self):
         return self.username
-=======
-import datetime
+
 class usuario:
     username = ""
     tokenSesion = False
@@ -53,6 +51,13 @@ class usuarioProyecto:
     def crearSprint(nombreSprint, duracionSprint):
         print("El sprint fue creado")
 
+'''Clase user story
+    #TODO: 
+    *)Correcto funcionamiento de la clase para ser implementada en otros
+    metodos
+    *)Adicion de datos relacionados a user story en postgresql para realizar
+    tests
+'''
 class userStory:
     nombreUserStory = ""
     codigoUserStory = ""
@@ -83,13 +88,16 @@ class userStory:
     def generarEstimacion(int,int2):
         print("Se estima que el user story dure 1 mes")
 
+'''Clase sprint
+    #TODO: Desarrollar user story
+'''
 class sprint:
     nombreSprint = ""
     codSprint = ""
     nroUserStories = 0
     #listaStories = userStory[]
-    fechaInicio = datetime.date()
-    fechaFin = datetime.date()
+    fechaInicio = datetime.date.today()
+    fechaFin = datetime.date.today()
     duracionSprint = 0
     def modificarNombreSprint(self,nombreSprint):
         self.nombreSprint = nombreSprint
@@ -100,9 +108,9 @@ class sprint:
     #    if( codUserStory == self.listaStories ):
     #       eliminar()
     def actualizarFechaInicio(self):
-        self.fechaInicio = datetime.date()
+        self.fechaInicio = datetime.date.today()
     def actualizarFechaFin(self):
-        self.fechaFin = datetime.date()
+        self.fechaFin = datetime.date.today()
     def terminarSprint():
         print("Se termino el sprint")
     def generarCodigoSprint(self):
@@ -127,6 +135,9 @@ class rol:
     def obtenerClave(Self):
         return Self.claveProyecto
 
+'''Clase kanban
+    #TODO: Inutilizable sin user story
+'''
 #class kanban:
     #columnas = userStory[]
     #def moverUserStory(userStory codUserStory):
@@ -146,7 +157,7 @@ class historialCambiosUS:
     codProyecto = ""
     codUsuario = ""
     descripcionCambio = ""
-    fecha = datetime.date()
+    fecha = datetime.date.today()
     def generarCambio(Self, descripcion, codProyecto, codUsuario, codUserStory):
         Self.codUserStory = codUserStory
         Self.codProyecto = codProyecto
@@ -160,7 +171,7 @@ class comentario:
     codUserStory = ""
     codProyecto = ""
     descripcion = ""
-    fecha = datetime.date()
+    fecha = datetime.date.today()
     def generarCodComentario():
         print("Se genero comentario")
     def obtenerCodUserStory(self):
@@ -172,7 +183,7 @@ class comentario:
     def modificarDescripcion(self,descripcion):
         self.descripcion=descripcion
     def marcarFechaComentario(self):
-        self.fecha = datetime.date()
+        self.fecha = datetime.date.today()
     #def usuarioComentando(self, codUsuario):
     #   self.codComentario = codComentario
     #   Que hace esta funcion?
@@ -192,10 +203,15 @@ class burnDownChart:
     def borrarBurnDownChart():
         print("Se borro el burn down chart")
 
+
+'''Clase proyecto
+    #TODO: Realizar user story para poder implementar en agregarSprintProyecto()
+    y actualizarBurnDownChart()
+'''
 class proyecto:
     nombreProyecto = ""
-    fechaInicio = datetime.date()
-    fechaFin = datetime.date()
+    fechaInicio = datetime.date.today()
+    fechaFin = datetime.date.today()
     codProyecto = ""
     estadoProyecto = 0
     nroSprints = 0
@@ -224,4 +240,3 @@ class proyecto:
         Self.estadoProyecto = codSprint
     #def actualizarBurnDownChart(self, dificultad):
         #Self
->>>>>>> cesar
