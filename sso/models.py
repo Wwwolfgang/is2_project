@@ -70,8 +70,8 @@ class sprint:
     codSprint = ""
     nroUserStories = 0
     #listaStories = userStory[]
-    fechaInicio = datetime.date()
-    fechaFin = datetime.date()
+    fechaInicio = datetime.date.today()
+    fechaFin = datetime.date.today()
     duracionSprint = 0
     def modificarNombreSprint(self,nombreSprint):
         self.nombreSprint = nombreSprint
@@ -82,9 +82,9 @@ class sprint:
     #    if( codUserStory == self.listaStories ):
     #       eliminar()
     def actualizarFechaInicio(self):
-        self.fechaInicio = datetime.date()
+        self.fechaInicio = datetime.date.today()
     def actualizarFechaFin(self):
-        self.fechaFin = datetime.date()
+        self.fechaFin = datetime.date.today()
     def terminarSprint():
         print("Se termino el sprint")
     def generarCodigoSprint(self):
@@ -128,7 +128,7 @@ class historialCambiosUS:
     codProyecto = ""
     codUsuario = ""
     descripcionCambio = ""
-    fecha = datetime.date()
+    fecha = datetime.date.today()
     def generarCambio(Self, descripcion, codProyecto, codUsuario, codUserStory):
         Self.codUserStory = codUserStory
         Self.codProyecto = codProyecto
@@ -142,7 +142,7 @@ class comentario:
     codUserStory = ""
     codProyecto = ""
     descripcion = ""
-    fecha = datetime.date()
+    fecha = datetime.date.today()
     def generarCodComentario():
         print("Se genero comentario")
     def obtenerCodUserStory(self):
@@ -154,7 +154,7 @@ class comentario:
     def modificarDescripcion(self,descripcion):
         self.descripcion=descripcion
     def marcarFechaComentario(self):
-        self.fecha = datetime.date()
+        self.fecha = datetime.date.today()
     #def usuarioComentando(self, codUsuario):
     #   self.codComentario = codComentario
     #   Que hace esta funcion?
@@ -176,8 +176,8 @@ class burnDownChart:
 
 class proyecto:
     nombreProyecto = ""
-    fechaInicio = datetime.date()
-    fechaFin = datetime.date()
+    fechaInicio = datetime.date.today()
+    fechaFin = datetime.date.today()
     codProyecto = ""
     estadoProyecto = 0
     nroSprints = 0
