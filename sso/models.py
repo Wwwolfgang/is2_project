@@ -1,4 +1,4 @@
-#from django.db import models
+from django.db import models
 from django.contrib.auth.models import AbstractUser
 import datetime
 class User(AbstractUser):
@@ -30,17 +30,17 @@ class usuario:
 class usuarioProyecto:
     codProyecto = ""
     rolUsuario = ""
-    def cambiarRol(Self, username):
-        Self.rolUsuario = username #?
-    def solicitarCambioRol(Self):
-        if( Self.rolUsuario == 1 ):
+    def cambiarRol(self, username):
+        self.rolUsuario = username #?
+    def solicitarCambioRol(self):
+        if( self.rolUsuario == 1 ):
             return True
         return False
     def agregarUsuarioProyecto():
         print("Se agrego el usuario al proyecto")
-    def asignarUserStory(Self,codUserStory, username):
+    def asignarUserStory(self,codUserStory, username):
         print("Se ha asignado el usuario al user story")
-    def crearRolProyecto(Self,codProyecto, listaPermisos, descripcion):
+    def crearRolProyecto(self,codProyecto, listaPermisos, descripcion):
         print("Se creo el rol")
     def crearUserStory(nombreUserStory, descripcionUserStory):
         print("El user story fue creado")
@@ -59,28 +59,31 @@ class usuarioProyecto:
     tests
 '''
 class userStory:
-    nombreUserStory = ""
-    codigoUserStory = ""
-    listaParticipantes = [""]
-    descipcionUserStory = ""
-    estado = 0
-    #comentarios comentario[]
-    estimacion = 0
-    tiempoEmpleado = 0
-    def obtenerNombre(Self):
-        return Self.nombreUserStory
-    def modificarNombre(Self, nombre):
-        Self.nombreUserStory = nombre
-    def actualizarEstado(Self, estado):
-        Self.estado = estado
-    def actualizarDescripcion(Self, descripcionUserStory):
-        Self.descipcionUserStory = descripcionUserStory
-    def agregarParticipantes(Self, participante):
-        Self.listaParticipantes.append(participante)
-    def eliminarParicipantes(Self, participante):
-        for i in Self.listaParticipantes:
+    def __init__(self,nombreUserStory,codigoUserStory,listaParticipantes,descripcionUserStory,estado,comentarios,estimacion,tiempoEmpleado):
+        self.nombreUserStory = nombreUserStory
+        self.codigoUserStory = codigoUserStory
+        self.listaParticipantes = listaParticipantes
+        self.descripcionUserStory = descripcionUserStory
+        self.estado = estado
+        self.comentarios = comentarios
+        self.estimacion = estimacion
+        self.tiempoEmpleado = tiempoEmpleado
+    def __str__(self):
+        return self
+    def obtenerNombre(self):
+        return self.nombreUserStory
+    def modificarNombre(self, nombre):
+        self.nombreUserStory = nombre
+    def actualizarEstado(self, estado):
+        self.estado = estado
+    def actualizarDescripcion(self, descripcionUserStory):
+        self.descipcionUserStory = descripcionUserStory
+    def agregarParticipantes(self, participante):
+        self.listaParticipantes.append(participante)
+    def eliminarParpassicipantes(self, participante):
+        for i in self.listaParticipantes:
             if( i == participante ):
-                Self.listaParticipantes.remove(participante)
+                self.listaParticipantes.remove(participante)
                 return True
         return False
     def actualizarHistorial():
@@ -124,16 +127,16 @@ class rol:
     nombreRol = ""
     claveProyecto = ""
     permisos = [""]
-    def modificarRol(Self, nombreRol, permisos):
-        Self.nombreRol = nombreRol
-        Self.permisos = permisos
+    def modificarRol(self, nombreRol, permisos):
+        self.nombreRol = nombreRol
+        self.permisos = permisos
         print("Se modifico el rol")
-    def obtenerNombreRol(Self):
-        return Self.nombreRol
-    def obtenerPermisos(Self):
-        return Self.permisos
-    def obtenerClave(Self):
-        return Self.claveProyecto
+    def obtenerNombreRol(self):
+        return self.nombreRol
+    def obtenerPermisos(self):
+        return self.permisos
+    def obtenerClave(self):
+        return self.claveProyecto
 
 '''Clase kanban
     #TODO: Inutilizable sin user story
@@ -158,20 +161,28 @@ class historialCambiosUS:
     codUsuario = ""
     descripcionCambio = ""
     fecha = datetime.date.today()
-    def generarCambio(Self, descripcion, codProyecto, codUsuario, codUserStory):
-        Self.codUserStory = codUserStory
-        Self.codProyecto = codProyecto
-        Self.codUsuario = codUsuario
-        Self.descripcionCambio = descripcion
-    def obtenerFecha(Self):
-        return Self.fecha
+    def generarCambio(self, descripcion, codProyecto, codUsuario, codUserStory):
+        self.codUserStory = codUserStory
+        self.codProyecto = codProyecto
+        self.codUsuario = codUsuario
+        self.descripcionCambio = descripcion
+    def obtenerFecha(self):
+        return self.fecha
 
 class comentario:
-    codComentario = ""
-    codUserStory = ""
-    codProyecto = ""
-    descripcion = ""
-    fecha = datetime.date.today()
+    #codComentario = ""
+    #codUserStory = ""
+    #codProyecto = ""
+    #descripcion = ""
+    #fecha = datetime.date.today()
+    def __init__(self,codComentario,codUserStory,codProyecto,descripcion,fecha):
+        self.codComentario = codComentario
+        self.codUserStory = codUserStory
+        self.codProyecto = codProyecto
+        self.descripcion = descripcion
+        self.fecha = fecha
+    def __str__(self):
+        return self
     def generarCodComentario():
         print("Se genero comentario")
     def obtenerCodUserStory(self):
@@ -218,25 +229,25 @@ class proyecto:
     #listaSprints = Sprint[]
     #listaUsuarios = Usuario[]
     #listaRoles = Rol[]
-    def obtenerNombreProyecto(Self):
-        return Self.nombreProyecto
-    def obtenerFechaInicio(Self):
-        return Self.fechaInicio
-    def obtenerEstadoProyecto(Self):
-        return Self.estadoProyecto
-    def ingresarNombreProyecto(Self, nombreProyecto ):
-        Self.nombreProyecto = nombreProyecto
-    def finalizarProyecto(Self):
+    def obtenerNombreProyecto(self):
+        return self.nombreProyecto
+    def obtenerFechaInicio(self):
+        return self.fechaInicio
+    def obtenerEstadoProyecto(self):
+        return self.estadoProyecto
+    def ingresarNombreProyecto(self, nombreProyecto ):
+        self.nombreProyecto = nombreProyecto
+    def finalizarProyecto(self):
         print("Se finalizo el proyecto")
-    def generarCodigoProyecto(Self):
+    def generarCodigoProyecto(self):
         print("Codigo generado")
-    def actualizarEstadoProyecto(Self, estadoProyecto ):
-        Self.estadoProyecto = estadoProyecto
-    #def agregarSprintProyecto(Self, sprintNuevo):
-        #Self.listaSprints.add(sprintNuevo)
-    def obtenerCantidadSprints(Self):
-        return Self.nroSprints
-    def marcarSprintTerminado(Self, codSprint):
-        Self.estadoProyecto = codSprint
+    def actualizarEstadoProyecto(self, estadoProyecto ):
+        self.estadoProyecto = estadoProyecto
+    #def agregarSprintProyecto(self, sprintNuevo):
+        #self.listaSprints.add(sprintNuevo)
+    def obtenerCantidadSprints(self):
+        return self.nroSprints
+    def marcarSprintTerminado(self, codSprint):
+        self.estadoProyecto = codSprint
     #def actualizarBurnDownChart(self, dificultad):
-        #Self
+        #self
