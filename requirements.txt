@@ -8,3 +8,4 @@ python-dotenv
 sphinx
 pytest-django
 django-livereload-server
+pdoc
