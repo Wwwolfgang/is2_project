@@ -1,7 +1,6 @@
 from django.db import models
-<<<<<<< HEAD
 from django.contrib.auth.models import AbstractUser
-
+import datetime
 class User(AbstractUser):
     """
     Esta clase es un usuario personalizado que hereda de la classe AbstractUser, diferente del usuario normal de Django.
@@ -11,13 +10,12 @@ class User(AbstractUser):
     
     - Agregar los campos restantes del modelo
     """
-    descripcion = models.TextField(max_length=500, blank=True, null=True)
+    #descripcion = models.TextField(max_length=500, blank=True, null=True)
     """Este es un campo de texto de prueba. A futuro será eliminado y se agregarán mas campos."""
 
     def __str__(self):
         return self.username
-=======
-import datetime
+
 class usuario:
     username = ""
     tokenSesion = False
@@ -32,17 +30,17 @@ class usuario:
 class usuarioProyecto:
     codProyecto = ""
     rolUsuario = ""
-    def cambiarRol(Self, username):
-        Self.rolUsuario = username #?
-    def solicitarCambioRol(Self):
-        if( Self.rolUsuario == 1 ):
+    def cambiarRol(self, username):
+        self.rolUsuario = username #?
+    def solicitarCambioRol(self):
+        if( self.rolUsuario == 1 ):
             return True
         return False
     def agregarUsuarioProyecto():
         print("Se agrego el usuario al proyecto")
-    def asignarUserStory(Self,codUserStory, username):
+    def asignarUserStory(self,codUserStory, username):
         print("Se ha asignado el usuario al user story")
-    def crearRolProyecto(Self,codProyecto, listaPermisos, descripcion):
+    def crearRolProyecto(self,codProyecto, listaPermisos, descripcion):
         print("Se creo el rol")
     def crearUserStory(nombreUserStory, descripcionUserStory):
         print("El user story fue creado")
@@ -53,29 +51,39 @@ class usuarioProyecto:
     def crearSprint(nombreSprint, duracionSprint):
         print("El sprint fue creado")
 
+'''Clase user story
+    #TODO: 
+    *)Correcto funcionamiento de la clase para ser implementada en otros
+    metodos
+    *)Adicion de datos relacionados a user story en postgresql para realizar
+    tests
+'''
 class userStory:
-    nombreUserStory = ""
-    codigoUserStory = ""
-    listaParticipantes = [""]
-    descipcionUserStory = ""
-    estado = 0
-    #comentarios comentario[]
-    estimacion = 0
-    tiempoEmpleado = 0
-    def obtenerNombre(Self):
-        return Self.nombreUserStory
-    def modificarNombre(Self, nombre):
-        Self.nombreUserStory = nombre
-    def actualizarEstado(Self, estado):
-        Self.estado = estado
-    def actualizarDescripcion(Self, descripcionUserStory):
-        Self.descipcionUserStory = descripcionUserStory
-    def agregarParticipantes(Self, participante):
-        Self.listaParticipantes.append(participante)
-    def eliminarParicipantes(Self, participante):
-        for i in Self.listaParticipantes:
+    def __init__(self,nombreUserStory,codigoUserStory,listaParticipantes,descripcionUserStory,estado,comentarios,estimacion,tiempoEmpleado):
+        self.nombreUserStory = nombreUserStory
+        self.codigoUserStory = codigoUserStory
+        self.listaParticipantes = listaParticipantes
+        self.descripcionUserStory = descripcionUserStory
+        self.estado = estado
+        self.comentarios = comentarios
+        self.estimacion = estimacion
+        self.tiempoEmpleado = tiempoEmpleado
+    def __str__(self):
+        return self
+    def obtenerNombre(self):
+        return self.nombreUserStory
+    def modificarNombre(self, nombre):
+        self.nombreUserStory = nombre
+    def actualizarEstado(self, estado):
+        self.estado = estado
+    def actualizarDescripcion(self, descripcionUserStory):
+        self.descipcionUserStory = descripcionUserStory
+    def agregarParticipantes(self, participante):
+        self.listaParticipantes.append(participante)
+    def eliminarParpassicipantes(self, participante):
+        for i in self.listaParticipantes:
             if( i == participante ):
-                Self.listaParticipantes.remove(participante)
+                self.listaParticipantes.remove(participante)
                 return True
         return False
     def actualizarHistorial():
@@ -83,13 +91,16 @@ class userStory:
     def generarEstimacion(int,int2):
         print("Se estima que el user story dure 1 mes")
 
+'''Clase sprint
+    #TODO: Desarrollar user story
+'''
 class sprint:
     nombreSprint = ""
     codSprint = ""
     nroUserStories = 0
     #listaStories = userStory[]
-    fechaInicio = datetime.date()
-    fechaFin = datetime.date()
+    fechaInicio = datetime.date.today()
+    fechaFin = datetime.date.today()
     duracionSprint = 0
     def modificarNombreSprint(self,nombreSprint):
         self.nombreSprint = nombreSprint
@@ -100,9 +111,9 @@ class sprint:
     #    if( codUserStory == self.listaStories ):
     #       eliminar()
     def actualizarFechaInicio(self):
-        self.fechaInicio = datetime.date()
+        self.fechaInicio = datetime.date.today()
     def actualizarFechaFin(self):
-        self.fechaFin = datetime.date()
+        self.fechaFin = datetime.date.today()
     def terminarSprint():
         print("Se termino el sprint")
     def generarCodigoSprint(self):
@@ -116,17 +127,20 @@ class rol:
     nombreRol = ""
     claveProyecto = ""
     permisos = [""]
-    def modificarRol(Self, nombreRol, permisos):
-        Self.nombreRol = nombreRol
-        Self.permisos = permisos
+    def modificarRol(self, nombreRol, permisos):
+        self.nombreRol = nombreRol
+        self.permisos = permisos
         print("Se modifico el rol")
-    def obtenerNombreRol(Self):
-        return Self.nombreRol
-    def obtenerPermisos(Self):
-        return Self.permisos
-    def obtenerClave(Self):
-        return Self.claveProyecto
+    def obtenerNombreRol(self):
+        return self.nombreRol
+    def obtenerPermisos(self):
+        return self.permisos
+    def obtenerClave(self):
+        return self.claveProyecto
 
+'''Clase kanban
+    #TODO: Inutilizable sin user story
+'''
 #class kanban:
     #columnas = userStory[]
     #def moverUserStory(userStory codUserStory):
@@ -146,21 +160,29 @@ class historialCambiosUS:
     codProyecto = ""
     codUsuario = ""
     descripcionCambio = ""
-    fecha = datetime.date()
-    def generarCambio(Self, descripcion, codProyecto, codUsuario, codUserStory):
-        Self.codUserStory = codUserStory
-        Self.codProyecto = codProyecto
-        Self.codUsuario = codUsuario
-        Self.descripcionCambio = descripcion
-    def obtenerFecha(Self):
-        return Self.fecha
+    fecha = datetime.date.today()
+    def generarCambio(self, descripcion, codProyecto, codUsuario, codUserStory):
+        self.codUserStory = codUserStory
+        self.codProyecto = codProyecto
+        self.codUsuario = codUsuario
+        self.descripcionCambio = descripcion
+    def obtenerFecha(self):
+        return self.fecha
 
 class comentario:
-    codComentario = ""
-    codUserStory = ""
-    codProyecto = ""
-    descripcion = ""
-    fecha = datetime.date()
+    #codComentario = ""
+    #codUserStory = ""
+    #codProyecto = ""
+    #descripcion = ""
+    #fecha = datetime.date.today()
+    def __init__(self,codComentario,codUserStory,codProyecto,descripcion,fecha):
+        self.codComentario = codComentario
+        self.codUserStory = codUserStory
+        self.codProyecto = codProyecto
+        self.descripcion = descripcion
+        self.fecha = fecha
+    def __str__(self):
+        return self
     def generarCodComentario():
         print("Se genero comentario")
     def obtenerCodUserStory(self):
@@ -172,7 +194,7 @@ class comentario:
     def modificarDescripcion(self,descripcion):
         self.descripcion=descripcion
     def marcarFechaComentario(self):
-        self.fecha = datetime.date()
+        self.fecha = datetime.date.today()
     #def usuarioComentando(self, codUsuario):
     #   self.codComentario = codComentario
     #   Que hace esta funcion?
@@ -192,36 +214,40 @@ class burnDownChart:
     def borrarBurnDownChart():
         print("Se borro el burn down chart")
 
+
+'''Clase proyecto
+    #TODO: Realizar user story para poder implementar en agregarSprintProyecto()
+    y actualizarBurnDownChart()
+'''
 class proyecto:
     nombreProyecto = ""
-    fechaInicio = datetime.date()
-    fechaFin = datetime.date()
+    fechaInicio = datetime.date.today()
+    fechaFin = datetime.date.today()
     codProyecto = ""
     estadoProyecto = 0
     nroSprints = 0
     #listaSprints = Sprint[]
     #listaUsuarios = Usuario[]
     #listaRoles = Rol[]
-    def obtenerNombreProyecto(Self):
-        return Self.nombreProyecto
-    def obtenerFechaInicio(Self):
-        return Self.fechaInicio
-    def obtenerEstadoProyecto(Self):
-        return Self.estadoProyecto
-    def ingresarNombreProyecto(Self, nombreProyecto ):
-        Self.nombreProyecto = nombreProyecto
-    def finalizarProyecto(Self):
+    def obtenerNombreProyecto(self):
+        return self.nombreProyecto
+    def obtenerFechaInicio(self):
+        return self.fechaInicio
+    def obtenerEstadoProyecto(self):
+        return self.estadoProyecto
+    def ingresarNombreProyecto(self, nombreProyecto ):
+        self.nombreProyecto = nombreProyecto
+    def finalizarProyecto(self):
         print("Se finalizo el proyecto")
-    def generarCodigoProyecto(Self):
+    def generarCodigoProyecto(self):
         print("Codigo generado")
-    def actualizarEstadoProyecto(Self, estadoProyecto ):
-        Self.estadoProyecto = estadoProyecto
-    #def agregarSprintProyecto(Self, sprintNuevo):
-        #Self.listaSprints.add(sprintNuevo)
-    def obtenerCantidadSprints(Self):
-        return Self.nroSprints
-    def marcarSprintTerminado(Self, codSprint):
-        Self.estadoProyecto = codSprint
+    def actualizarEstadoProyecto(self, estadoProyecto ):
+        self.estadoProyecto = estadoProyecto
+    #def agregarSprintProyecto(self, sprintNuevo):
+        #self.listaSprints.add(sprintNuevo)
+    def obtenerCantidadSprints(self):
+        return self.nroSprints
+    def marcarSprintTerminado(self, codSprint):
+        self.estadoProyecto = codSprint
     #def actualizarBurnDownChart(self, dificultad):
-        #Self
->>>>>>> cesar
+        #self
