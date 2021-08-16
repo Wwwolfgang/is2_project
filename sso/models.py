@@ -93,7 +93,7 @@ class userStory(models.Model):
     listaParticipantes = ArrayField(models.CharField(max_length=10))
     descripcionUserStory = models.CharField(max_length=50)
     estado = models.IntegerField()
-    comentarios = ArrayField( models.ManyToManyField(comentario(codComentario = "",codUserStory = "",codProyecto = "",descripcion = "",fecha = datetime.date.today())), size = 10, blank = True )
+    comentarios = models.ManyToManyField(comentario(codComentario = "",codUserStory = "",codProyecto = "",descripcion = "",fecha = datetime.date.today()))
     estimacion = models.IntegerField()
     tiempoEmpleado = models.IntegerField()
     def __str__(self):
