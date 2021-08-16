@@ -1,5 +1,4 @@
 .vscode
-<<<<<<< HEAD
 *.pyc
 */*/*/__pycache__/
 */*/__pycache__/
@@ -11,7 +10,5 @@ db.sqlite3
 build
 source
 venv
-=======
 /cesar/
 /*/__pycache__/
->>>>>>> cesar
