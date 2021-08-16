@@ -1,3 +1,4 @@
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 import datetime
@@ -15,8 +16,35 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.username
+class comentario(models.Model):
+    codComentario = models.CharField(max_length=50)
+    codUserStory = models.CharField(max_length=50)
+    codProyecto = models.CharField(max_length=50)
+    descripcion = models.CharField(max_length=50)
+    fecha = models.DateField(datetime.date.today())
+    def __str__(self):
+        return self
+    def generarCodComentario():
+        print("Se genero comentario")
+    def obtenerCodComentario(self):
+        return self.codComentario
+    def obtenerCodUserStory(self):
+        return self.codUserStory
+    def obtenerCodProyecto(self):
+        return self.codProyecto
+    def obtenerDescripcion(self):
+        return self.descripcion
+    def obtenerFecha(self):
+        return self.fecha
+    def modificarDescripcion(self,descripcion):
+        self.descripcion=descripcion
+    def marcarFechaComentario(self):
+        self.fecha = datetime.date.today()
+    #def usuarioComentando(self, codUsuario):
+    #   self.codComentario = codComentario
+    #   Que hace esta funcion?
 
-class usuario:
+class usuario(models.Model):
     username = ""
     tokenSesion = False
     direccionCorreo = ""
@@ -27,7 +55,7 @@ class usuario:
     def cerrarSesion():
         print("Se cerro la sesion.\n")
 
-class usuarioProyecto:
+class usuarioProyecto(models.Model):
     codProyecto = ""
     rolUsuario = ""
     def cambiarRol(self, username):
@@ -58,26 +86,40 @@ class usuarioProyecto:
     *)Adicion de datos relacionados a user story en postgresql para realizar
     tests
 '''
-class userStory:
-    def __init__(self,nombreUserStory,codigoUserStory,listaParticipantes,descripcionUserStory,estado,comentarios,estimacion,tiempoEmpleado):
-        self.nombreUserStory = nombreUserStory
-        self.codigoUserStory = codigoUserStory
-        self.listaParticipantes = listaParticipantes
-        self.descripcionUserStory = descripcionUserStory
-        self.estado = estado
-        self.comentarios = comentarios
-        self.estimacion = estimacion
-        self.tiempoEmpleado = tiempoEmpleado
+class userStory(models.Model):
+    #def __init__(self,nombreUserStory,codigoUserStory,listaParticipantes,descripcionUserStory,estado,comentarios,estimacion,tiempoEmpleado):
+    nombreUserStory = models.CharField(max_length=50)
+    codigoUserStory = models.CharField(max_length=50)
+    listaParticipantes = ArrayField(models.CharField(max_length=10))
+    descripcionUserStory = models.CharField(max_length=50)
+    estado = models.IntegerField()
+    comentarios = models.ManyToManyField( "sso.models" )
+    estimacion = models.IntegerField()
+    tiempoEmpleado = models.IntegerField()
     def __str__(self):
         return self
-    def obtenerNombre(self):
+    def obtenerNombreUserStory(self):
         return self.nombreUserStory
+    def obtenerCodigoUserStory(self):
+        return self.codigoUserStory
+    def obtenerListaParticipantes(self):
+        return self.listaParticipantes
+    def obtenerDescripcionUserStory(self):
+        return self.descripcionUserStory
+    def obtenerEstado(self):
+        return self.estado
+    def obtenerComentarios(self):
+        return self.comentarios
+    def obtenerEstimacion(self):
+        return self.estimacion
+    def obtenerTiempoEmpleado(self):
+        return self.tiempoEmpleado
     def modificarNombre(self, nombre):
         self.nombreUserStory = nombre
     def actualizarEstado(self, estado):
         self.estado = estado
     def actualizarDescripcion(self, descripcionUserStory):
-        self.descipcionUserStory = descripcionUserStory
+        self.descripcionUserStory = descripcionUserStory
     def agregarParticipantes(self, participante):
         self.listaParticipantes.append(participante)
     def eliminarParpassicipantes(self, participante):
@@ -94,7 +136,7 @@ class userStory:
 '''Clase sprint
     #TODO: Desarrollar user story
 '''
-class sprint:
+class sprint(models.Model):
     nombreSprint = ""
     codSprint = ""
     nroUserStories = 0
@@ -123,7 +165,7 @@ class sprint:
     def actualizarDuracionSprint(self,duracion):
         print("Se actualizo la duracion de sprint")
 
-class rol:
+class rol(models.Model):
     nombreRol = ""
     claveProyecto = ""
     permisos = [""]
@@ -141,7 +183,7 @@ class rol:
 '''Clase kanban
     #TODO: Inutilizable sin user story
 '''
-#class kanban:
+#class kanban(models.Model):
     #columnas = userStory[]
     #def moverUserStory(userStory codUserStory):
     #   print("Se movio el user story")
@@ -154,7 +196,7 @@ class rol:
     #def generarKanban(userStory listaStories):
     #   print("Se genero el kanban")
 
-class historialCambiosUS:
+class historialCambiosUS(models.Model):
     codHistorialCambios = ""
     codUserStory = ""
     codProyecto = ""
@@ -169,37 +211,7 @@ class historialCambiosUS:
     def obtenerFecha(self):
         return self.fecha
 
-class comentario:
-    #codComentario = ""
-    #codUserStory = ""
-    #codProyecto = ""
-    #descripcion = ""
-    #fecha = datetime.date.today()
-    def __init__(self,codComentario,codUserStory,codProyecto,descripcion,fecha):
-        self.codComentario = codComentario
-        self.codUserStory = codUserStory
-        self.codProyecto = codProyecto
-        self.descripcion = descripcion
-        self.fecha = fecha
-    def __str__(self):
-        return self
-    def generarCodComentario():
-        print("Se genero comentario")
-    def obtenerCodUserStory(self):
-        return self.codUserStory
-    def obtenerCodProyecto(self):
-        return self.codProyecto
-    def obtenerDescripcion(self):
-        return self.descripcion
-    def modificarDescripcion(self,descripcion):
-        self.descripcion=descripcion
-    def marcarFechaComentario(self):
-        self.fecha = datetime.date.today()
-    #def usuarioComentando(self, codUsuario):
-    #   self.codComentario = codComentario
-    #   Que hace esta funcion?
-
-class burnDownChart:
+class burnDownChart(models.Model):
     codBurnDownChart = ""
     codSprintRel = ""
     codProyRel = ""
@@ -219,7 +231,7 @@ class burnDownChart:
     #TODO: Realizar user story para poder implementar en agregarSprintProyecto()
     y actualizarBurnDownChart()
 '''
-class proyecto:
+class proyecto(models.Model):
     nombreProyecto = ""
     fechaInicio = datetime.date.today()
     fechaFin = datetime.date.today()
