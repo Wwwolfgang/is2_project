@@ -12,7 +12,7 @@ class CustomUserAdmin(UserAdmin):
             'Opcionales',  # group heading of your choice; set to None for a blank space instead of a header
             {
                 'fields': (
-                    'descripcion',
+                    'is_administrator',
                 ),
             },
         ),
