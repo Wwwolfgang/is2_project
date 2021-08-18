@@ -23,7 +23,7 @@ def testComentarios():
 def testListaParticipantes():
     listaParticipantes = ["Cesar Rodas","Julio Lezcano"]
     for participante in listaParticipantes:
-        assert participante == ""
+        assert participante != ""
 
 def testTiempoEmpleado():
     tiempoEmpleado = 10
