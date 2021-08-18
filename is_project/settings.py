@@ -35,6 +35,7 @@ ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS").split(" ")
 # Application definition
 
 INSTALLED_APPS = [
+    'proyecto',
     'sso',
     'allauth',
     'allauth.account',
@@ -42,8 +43,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
     'django.contrib.sites',
     'livereload',
-
-    'django.contrib.admin',
+    'django.contrib.admin',    
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -97,6 +97,9 @@ DATABASES = {
         'PORT': os.environ.get('SQL_PORT', '5432'),
     }
 }
+""" 
+Los parámetros de la base de datos, sea de desarrollo o de producción son leidos del .env 
+"""
 
 
 # Password validation
@@ -146,6 +149,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SITE_ID = 5
 
 AUTH_USER_MODEL = 'sso.User'
+""" Ya que en sso.models se configuró un nuevo modelo de usuario, aqui se define que va ser el modelo para la autenticación """
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
@@ -174,3 +178,7 @@ SOCIALACCOUNT_PROVIDERS = {
         }
     }
 }
+""" 
+Se usa como proveedor de SSO a Google. Con esta configuración se configura todo el client_id y el secret, sacados de la 
+consola de developers de Google
+"""

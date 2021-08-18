@@ -40,10 +40,12 @@
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">sso.models.</span></span><span class="sig-name descname"><span class="pre">User</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sso.models.User" title="Enlazar permanentemente con esta definición">¶</a></dt>
 <dd><p>Esta clase es un usuario personalizado que hereda de la classe AbstractUser, diferente del usuario normal de Django.
 Esto será util para relacionar los usuarios con los roles de sistema y de proyecto.</p>
-<p>#TODO</p>
-<ul class="simple">
+<dl class="simple">
+<dt>TODO</dt><dd><ul class="simple">
 <li><p>Agregar los campos restantes del modelo</p></li>
 </ul>
+</dd>
+</dl>
 <dl class="py exception">
 <dt class="sig sig-object py" id="sso.models.User.DoesNotExist">
 <em class="property"><span class="pre">exception</span> </em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#sso.models.User.DoesNotExist" title="Enlazar permanentemente con esta definición">¶</a></dt>
@@ -54,12 +56,39 @@ Esto será util para relacionar los usuarios con los roles de sistema y de proye
 <em class="property"><span class="pre">exception</span> </em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#sso.models.User.MultipleObjectsReturned" title="Enlazar permanentemente con esta definición">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="py attribute">
-<dt class="sig sig-object py" id="sso.models.User.descripcion">
-<span class="sig-name descname"><span class="pre">descripcion</span></span><a class="headerlink" href="#sso.models.User.descripcion" title="Enlazar permanentemente con esta definición">¶</a></dt>
-<dd><p>Este es un campo de texto de prueba. A futuro será eliminado y se agregarán mas campos.</p>
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="sso.models.proyecto">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">sso.models.</span></span><span class="sig-name descname"><span class="pre">proyecto</span></span><a class="headerlink" href="#sso.models.proyecto" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Clase proyecto</p>
+<p>TODO: Realizar user story para poder implementar en agregarSprintProyecto()
+y actualizarBurnDownChart()</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sso.models.sprint">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">sso.models.</span></span><span class="sig-name descname"><span class="pre">sprint</span></span><a class="headerlink" href="#sso.models.sprint" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Clase sprint</p>
+<dl class="simple">
+<dt>TODO</dt><dd><ul class="simple">
+<li><p>Desarrollar user story</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sso.models.userStory">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">sso.models.</span></span><span class="sig-name descname"><span class="pre">userStory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nombreUserStory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">codigoUserStory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">listaParticipantes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">descripcionUserStory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">estado</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comentarios</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">estimacion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tiempoEmpleado</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sso.models.userStory" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Clase user story</p>
+<dl class="simple">
+<dt>TODO</dt><dd><ul class="simple">
+<li><p>Correcto funcionamiento de la clase para ser implementada en otros metodos</p></li>
+<li><p>Adicion de datos relacionados a user story en postgresql para realizar tests</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
@@ -122,7 +151,7 @@ Esto será util para relacionar los usuarios con los roles de sistema y de proye
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2021, Wolfgang Wiens.
+      &copy;2021, IS2 Equipo 15.
       
       |
       Powered by <a href="http://sphinx-doc.org/">Sphinx 4.1.2</a>

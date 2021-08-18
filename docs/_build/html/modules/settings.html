@@ -16,7 +16,8 @@
     <script src="../_static/translations.js"></script>
     <link rel="index" title="Índice" href="../genindex.html" />
     <link rel="search" title="Búsqueda" href="../search.html" />
-    <link rel="prev" title="All about me" href="all-about-me.html" />
+    <link rel="next" title="URLS" href="urls.html" />
+    <link rel="prev" title="Bienvenidos a la documentación de IS2_Project!" href="../index.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
@@ -41,6 +42,25 @@
 <a class="reference external" href="https://docs.djangoproject.com/en/3.2/topics/settings/">https://docs.djangoproject.com/en/3.2/topics/settings/</a></p>
 <p>For the full list of settings and their values, see
 <a class="reference external" href="https://docs.djangoproject.com/en/3.2/ref/settings/">https://docs.djangoproject.com/en/3.2/ref/settings/</a></p>
+<dl class="py data">
+<dt class="sig sig-object py" id="is_project.settings.AUTH_USER_MODEL">
+<span class="sig-prename descclassname"><span class="pre">is_project.settings.</span></span><span class="sig-name descname"><span class="pre">AUTH_USER_MODEL</span></span><em class="property"> <span class="pre">=</span> <span class="pre">'sso.User'</span></em><a class="headerlink" href="#is_project.settings.AUTH_USER_MODEL" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Ya que en sso.models se configuró un nuevo modelo de usuario, aqui se define que va ser el modelo para la autenticación</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="is_project.settings.DATABASES">
+<span class="sig-prename descclassname"><span class="pre">is_project.settings.</span></span><span class="sig-name descname"><span class="pre">DATABASES</span></span><em class="property"> <span class="pre">=</span> <span class="pre">{'default':</span> <span class="pre">{'ATOMIC_REQUESTS':</span> <span class="pre">False,</span> <span class="pre">'AUTOCOMMIT':</span> <span class="pre">True,</span> <span class="pre">'CONN_MAX_AGE':</span> <span class="pre">0,</span> <span class="pre">'ENGINE':</span> <span class="pre">'django.db.backends.postgresql_psycopg2',</span> <span class="pre">'HOST':</span> <span class="pre">'localhost',</span> <span class="pre">'NAME':</span> <span class="pre">'test_db',</span> <span class="pre">'OPTIONS':</span> <span class="pre">{},</span> <span class="pre">'PASSWORD':</span> <span class="pre">'root',</span> <span class="pre">'PORT':</span> <span class="pre">'5432',</span> <span class="pre">'TEST':</span> <span class="pre">{'CHARSET':</span> <span class="pre">None,</span> <span class="pre">'COLLATION':</span> <span class="pre">None,</span> <span class="pre">'MIGRATE':</span> <span class="pre">True,</span> <span class="pre">'MIRROR':</span> <span class="pre">None,</span> <span class="pre">'NAME':</span> <span class="pre">None},</span> <span class="pre">'TIME_ZONE':</span> <span class="pre">None,</span> <span class="pre">'USER':</span> <span class="pre">'root'}}</span></em><a class="headerlink" href="#is_project.settings.DATABASES" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Los parámetros de la base de datos, sea de desarrollo o de producción son leidos del .env</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="is_project.settings.SOCIALACCOUNT_PROVIDERS">
+<span class="sig-prename descclassname"><span class="pre">is_project.settings.</span></span><span class="sig-name descname"><span class="pre">SOCIALACCOUNT_PROVIDERS</span></span><em class="property"> <span class="pre">=</span> <span class="pre">{'google':</span> <span class="pre">{'APP':</span> <span class="pre">{'client_id':</span> <span class="pre">'45748304167-t4im5d8ra93ica13uh0sv64njpspr5cc.apps.googleusercontent.com',</span> <span class="pre">'key':</span> <span class="pre">'',</span> <span class="pre">'secret':</span> <span class="pre">'xYPjy7P7lYSE3kyCr5VHBUFI'},</span> <span class="pre">'AUTH_PARAMS':</span> <span class="pre">{'access_type':</span> <span class="pre">'online'},</span> <span class="pre">'SCOPE':</span> <span class="pre">['profile',</span> <span class="pre">'email']}}</span></em><a class="headerlink" href="#is_project.settings.SOCIALACCOUNT_PROVIDERS" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Se usa como proveedor de SSO a Google. Con esta configuración se configura todo el client_id y el secret, sacados de la 
+consola de developers de Google</p>
+</dd></dl>
+
 </section>
 
 
@@ -60,17 +80,22 @@
 
 
 <h3>Navegación</h3>
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<p class="caption" role="heading"><span class="caption-text">Proyecto is_project:</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="all-about-me.html">All about me</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="urls.html">URLS</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">SSO:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../sso/models.html">SSO Models</a></li>
 </ul>
 
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="all-about-me.html" title="capítulo anterior">All about me</a></li>
+      <li>Previous: <a href="../index.html" title="capítulo anterior">Bienvenidos a la documentación de IS2_Project!</a></li>
+      <li>Next: <a href="urls.html" title="próximo capítulo">URLS</a></li>
   </ul></li>
 </ul>
 </div>
@@ -97,7 +122,7 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2021, Wolfgang Wiens.
+      &copy;2021, IS2 Equipo 15.
       
       |
       Powered by <a href="http://sphinx-doc.org/">Sphinx 4.1.2</a>

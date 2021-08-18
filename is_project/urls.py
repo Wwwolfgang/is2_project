@@ -23,4 +23,14 @@ urlpatterns = [
     path('', TemplateView.as_view(template_name="sso/index.html")),
     path('accounts/', include('allauth.urls')),
     path('logout', LogoutView.as_view()),
+    #path('home/',include('sso.urls')),
 ]
+""" 
+Se agregaron algunas urls que a futuro seguro van a cambiar,
+
+Lista de urls
+    - admin es la ruta para el admin de Django
+    - / es la pagina inicial
+    - accounts son todas las urls relacionadas al sso de Google
+    - logout es la url para cerrar sesión
+"""
