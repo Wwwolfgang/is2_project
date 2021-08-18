@@ -2,8 +2,8 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 import datetime
-
 from django.db.models.fields import CharField
+from django.db.models.fields.related import ManyToManyField
 class User(AbstractUser):
     """
     Esta clase es un usuario personalizado que hereda de la classe AbstractUser, diferente del usuario normal de Django.
@@ -44,18 +44,6 @@ class comentario(models.Model):
     fecha = models.DateField(datetime.date.today())
     def __str__(self):
         return self
-    def generarCodComentario():
-        print("Se genero comentario")
-    def obtenerCodComentario(self):
-        return self.codComentario
-    def obtenerCodUserStory(self):
-        return self.codUserStory
-    def obtenerCodProyecto(self):
-        return self.codProyecto
-    def obtenerDescripcion(self):
-        return self.descripcion
-    def obtenerFecha(self):
-        return self.fecha
     def modificarDescripcion(self,descripcion):
         self.descripcion=descripcion
     def marcarFechaComentario(self):
@@ -100,41 +88,24 @@ class usuarioProyecto(models.Model):
         print("El sprint fue creado")
 
 
-class userStory:
+class userStory(models.Model):
     """ 
     Clase user story
 
     TODO
-        - Correcto funcionamiento de la clase para ser implementada en otros metodos
-        - Adicion de datos relacionados a user story en postgresql para realizar tests
+        -Vinculacion de la clase comentario con la clase userStory
     """
-    def __init__(self,nombreUserStory,codigoUserStory,listaParticipantes,descripcionUserStory,estado,comentarios,estimacion,tiempoEmpleado):
-        self.nombreUserStory = nombreUserStory
-        self.codigoUserStory = codigoUserStory
-        self.listaParticipantes = listaParticipantes
-        self.descripcionUserStory = descripcionUserStory
-        self.estado = estado
-        self.comentarios = comentarios
-        self.estimacion = estimacion
-        self.tiempoEmpleado = tiempoEmpleado
+    
+    nombreUserStory = models.CharField(max_length=50)
+    codigoUserStory = models.CharField(max_length=50)
+    listaParticipantes = ArrayField(models.CharField(max_length=50),max_length=10)
+    descripcionUserStory = models.CharField(max_length=50)
+    estado = models.CharField()
+    comentarios = ManyToManyField( comentario, related_name="comentario" )
+    estimacion = models.IntegerField()
+    tiempoEmpleado = models.IntegerField()
     def __str__(self):
         return self
-    def obtenerNombreUserStory(self):
-        return self.nombreUserStory
-    def obtenerCodigoUserStory(self):
-        return self.codigoUserStory
-    def obtenerListaParticipantes(self):
-        return self.listaParticipantes
-    def obtenerDescripcionUserStory(self):
-        return self.descripcionUserStory
-    def obtenerEstado(self):
-        return self.estado
-    def obtenerComentarios(self):
-        return self.comentarios
-    def obtenerEstimacion(self):
-        return self.estimacion
-    def obtenerTiempoEmpleado(self):
-        return self.tiempoEmpleado
     def modificarNombre(self, nombre):
         self.nombreUserStory = nombre
     def actualizarEstado(self, estado):
@@ -143,39 +114,50 @@ class userStory:
         self.descripcionUserStory = descripcionUserStory
     def agregarParticipantes(self, participante):
         self.listaParticipantes.append(participante)
+        self.listaParticipantes.sort
     def eliminarParpassicipantes(self, participante):
+        posicion = 0
         for i in self.listaParticipantes:
-            if( i == participante ):
-                self.listaParticipantes.remove(participante)
+            if( participante.__eq__(i) ):
+                self.listaParticipantes.pop(posicion)
                 return True
+            posicion = posicion + 1
         return False
+    def mostrarParticipantes(self):
+        for participante in self.listaParticipantes:
+            print(participante)
     def actualizarHistorial():
         print("Se actualizo el historial")
     def generarEstimacion(int,int2):
         print("Se estima que el user story dure 1 mes")
 
-class sprint:
+class sprint(models.Model):
     """ 
     Clase sprint
 
     TODO
-        - Desarrollar user story
+        - Vinculacion de la clase user story con la clase sprint
+        - Desarrollar sprint
     """
-    nombreSprint = ""
-    codSprint = ""
-    nroUserStories = 0
-    #listaStories = userStory[]
-    fechaInicio = datetime.date.today()
-    fechaFin = datetime.date.today()
+    nombreSprint = models.CharField(max_length=50)
+    codSprint = models.CharField(max_length=50)
+    nroUserStories = models.IntegerField()
+    listaStories = ManyToManyField( userStory, max_length= 100 )
+    fechaInicio = models.DateField()
+    fechaFin = models.DateField()
     duracionSprint = 0
     def modificarNombreSprint(self,nombreSprint):
         self.nombreSprint = nombreSprint
-    #def agregarUserStory(self, nuevoUserStory):
-    #   self.listaStories.append(nuevoUserStory)
-    #   self.nroUserStories = self.nroUserStories + 1
-    #def eliminarUserStory(self, codUserStory):
-    #    if( codUserStory == self.listaStories ):
-    #       eliminar()
+    def agregarUserStory(self, nuevoUserStory):
+       self.listaStories.append(nuevoUserStory)
+       self.listaStories.sort
+       self.nroUserStories = self.nroUserStories + 1
+    def eliminarUserStory(self, codigoUserStory):
+        posicion = 0
+        for userStory in self.listaStories:
+            if( userStory.codigoUserStory.__eq__(codigoUserStory) ):
+                self.listaStories.pop(posicion)
+            posicion = posicion + 1
     def actualizarFechaInicio(self):
         self.fechaInicio = datetime.date.today()
     def actualizarFechaFin(self):
