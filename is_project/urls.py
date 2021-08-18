@@ -23,6 +23,7 @@ urlpatterns = [
     path('', TemplateView.as_view(template_name="sso/index.html")),
     path('accounts/', include('allauth.urls')),
     path('logout', LogoutView.as_view()),
+    #path('home/',include('sso.urls')),
 ]
 """ 
 Se agregaron algunas urls que a futuro seguro van a cambiar,
