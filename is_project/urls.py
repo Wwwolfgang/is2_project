@@ -24,6 +24,7 @@ urlpatterns = [
     path('accounts/', include('allauth.urls')),
     path('logout', LogoutView.as_view()),
     #path('home/',include('sso.urls')),
+    path('proyecto/',include('proyecto.urls'))
 ]
 """ 
 Se agregaron algunas urls que a futuro seguro van a cambiar,

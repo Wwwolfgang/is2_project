@@ -1,0 +1,13 @@
+{% extends 'sso/base.html'%}
+
+{% block container %}
+<h1>Eliminar rol de proyecto</h1>
+
+<p>¿Estás seguro de que deseas eliminar el rol del proyecto?: {{RolProyecto}}?</p>
+
+<form action="" method="POST">
+  {% csrf_token %}
+  <input type="submit" value="Sí,eliminar.">
+</form>
+
+{% endblock %}
