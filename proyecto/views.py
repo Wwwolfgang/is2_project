@@ -33,7 +33,7 @@ def agregar_rol_proyecto_view(request):
         if form.is_valid():
             print(form.cleaned_data)
             form.save()
-            return redirect('/proyecto/listaProjRol/')  
+            return redirect('/proyecto/rol/listar')  
         contexto['form'] = form
         return render(request, 'proyecto/nuevo_rol_proyecto_view.html', context=contexto)
     else:
