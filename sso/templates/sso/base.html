@@ -26,6 +26,13 @@
                         </li>
                     </ul>
                 </div>
+                {% if user.is_administrator %}
+                    <div class="mx-2">
+                        <a class="btn btn-secondary" role="button" href="{% url 'sso:roles-sistema-listado' %}">
+                            Admin
+                        </a>
+                    </div>
+                {% endif %}
                 <div class="dropdown d-flex">
                     <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
                     {{user.first_name}} {{user.last_name}}
