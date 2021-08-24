@@ -1,0 +1,19 @@
+{% extends 'sso/base.html'%}
+{% block container %}
+<form action="" method="post">
+    {% csrf_token %}
+    <div class="main">
+        <h1>Roles</h1>
+            {% if rolproyecto_list %}
+            <ul>
+                {% for rol in rolproyecto_list %}
+                <li>
+                    <a href="{{ rol.get_absolute_url }}">{{ rol.nombre }}</a> 
+                </li>
+                {% endfor %}
+             </ul>
+            {% else %}
+                <p>No existen roles en el proyecto.</p>
+            {% endif %} 
+    </div>    
+{% endblock %}

@@ -1,23 +1,35 @@
+from django.http.response import Http404
 from django.shortcuts import redirect, render
-from django.urls import reverse
+from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import Permission
 from django.http import HttpResponse, HttpResponseRedirect
-
 
 from proyecto.forms import AgregarRolProyectoForm
 from proyecto.models import RolProyecto
 
-# Create your views here.
-from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from django.views.generic.edit import UpdateView, DeleteView
 from django.urls import reverse_lazy
+from django.views import generic
 
-class ActualizarRolProyecto(UpdateView):
+class ActualizarRolProyectoVista(UpdateView):
     model = RolProyecto
     fields = '__all__'
 
-class EliminarRolProyecto(DeleteView):
+class EliminarRolProyectoVista(DeleteView):
     model = RolProyecto
     success_url = reverse_lazy('roles')
+
+class ListaRolProyectoView(generic.ListView):
+    model = RolProyecto
+    template_name = 'proyecto/lista_rol_proyecto_2.html'
+
+#def detalles_rol_proyecto_view(request, primary_key):
+#    rol = get_object_or_404(RolProyecto, pk=primary_key)
+#    return render(request, 'proyecto/detalles_rol_proyecto.html', context={'rol': rol})
+
+class DetallesRolProyectoView(generic.DetailView):
+    model = RolProyecto
+    template_name = 'proyecto/detalles_rol_proyecto.html'
 
 
 def lista_rol_proyecto_view(request):
