@@ -6,11 +6,11 @@ from django.db.models.fields import CharField
 from django.db.models.fields.related import ManyToManyField
 
 class comentario(models.Model):
-    codComentario = models.CharField(max_length=50)
-    codUserStory = models.CharField(max_length=50)
-    codProyecto = models.CharField(max_length=50)
-    descripcion = models.CharField(max_length=50)
-    fecha = models.DateField(datetime.date.today)
+    codComentario   = models.CharField(max_length=50)
+    codUserStory    = models.CharField(max_length=50)
+    codProyecto     = models.CharField(max_length=50)
+    descripcion     = models.CharField(max_length=50)
+    fecha           = models.DateField(datetime.date.today)
     def __str__(self):
         return self
     def modificarDescripcion(self,descripcion):
@@ -61,17 +61,17 @@ class userStory(models.Model):
     Clase user story
 
     TODO
-        -Vinculacion de la clase comentario con la clase userStory
+        - Correcto funcionamiento de la clase para ser implementada en otros metodos
+        - Adicion de datos relacionados a user story en postgresql para realizar tests
     """
-    
-    nombreUserStory = models.CharField(max_length=50)
-    codigoUserStory = models.CharField(max_length=50)
-    listaParticipantes = ArrayField(models.CharField(max_length=50),max_length=10)
-    descripcionUserStory = models.CharField(max_length=50)
-    estado = models.CharField(max_length=10)
-    comentarios = ManyToManyField( comentario, related_name="comentario" )
-    estimacion = models.IntegerField()
-    tiempoEmpleado = models.IntegerField()
+    nombreUserStory     = models.CharField(max_length=50)
+    codigoUserStory     = models.CharField(max_length=50)
+    listaParticipantes  = ArrayField(models.CharField(max_length=50))
+    descripcionUserStory= models.CharField(max_length=50)
+    estado              = models.CharField(max_length=50)
+    comentarios         = models.ManyToManyField(comentario,related_name="comentario")
+    estimacion          = models.IntegerField()
+    tiempoEmpleado      = models.IntegerField()
     def __str__(self):
         return self
     def modificarNombre(self, nombre):
@@ -80,20 +80,6 @@ class userStory(models.Model):
         self.estado = estado
     def actualizarDescripcion(self, descripcionUserStory):
         self.descripcionUserStory = descripcionUserStory
-    def agregarParticipantes(self, participante):       #Se utiliza userStory.objects.aggregate()
-        self.listaParticipantes.append(participante)
-        self.listaParticipantes.sort
-    def eliminarParticipantes(self, participante):
-        posicion = 0
-        for i in self.listaParticipantes:
-            if( participante.__eq__(i) ):
-                self.listaParticipantes.pop(posicion)
-                return True
-            posicion = posicion + 1
-        return False
-    def mostrarParticipantes(self):
-        for participante in self.listaParticipantes:
-            print(participante)
     def actualizarHistorial():
         print("Se actualizo el historial")
     def generarEstimacion(int,int2):

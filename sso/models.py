@@ -19,6 +19,7 @@ class User(AbstractUser):
     class Meta:
         verbose_name_plural = "users"
 
+<<<<<<< Updated upstream
 
 class RolSistema(models.Model):
     name = models.CharField(verbose_name='Nombre del Rol', max_length=50, blank=False,null=False,help_text='Define el nombre del Rol de sistema')
@@ -35,3 +36,10 @@ class Permiso(models.Model):
         return self.name
     class Meta: 
         verbose_name_plural = 'permisos'
+=======
+        permissions = [
+            ('custom_acceder_ususario','Test de prueba')
+        ]
+
+
+>>>>>>> Stashed changes
