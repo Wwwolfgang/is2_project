@@ -11,6 +11,8 @@ db.sqlite3
 build
 source
 venv
+__pycache__
+.pytest_cache
 =======
 /cesar/
 /*/__pycache__/
