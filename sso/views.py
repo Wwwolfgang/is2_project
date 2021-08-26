@@ -1,7 +1,7 @@
 from django.db.models.base import Model
 from django.shortcuts import render
 from django.views.generic import ListView, UpdateView, DeleteView, DetailView,CreateView
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpResponseRedirect
 from django.contrib.auth.mixins import PermissionRequiredMixin,LoginRequiredMixin, UserPassesTestMixin
 from django.urls import reverse, reverse_lazy
 from django.views.generic.base import ContextMixin
@@ -98,4 +98,14 @@ class UserAssignSisRole(AdminUserMixin,UpdateView):
 
     def form_valid(self, form):
         form.save()
+        return HttpResponseRedirect(reverse('sso:roles-sistema-listado'))
+    
+    def test_func(self):
+        """ En esta función, se hace un test si el usuario quiere cambiar sus propios roles"""
+        usuario = self.get_object()
+        return self.request.user != usuario
+    
+    def handle_no_permission(self):
+        """ Se devuelve un mensaje de error """
+        messages.error(self.request,'Usted no es un Administrador o no puede cambiar sus propios roles')
         return HttpResponseRedirect(reverse('sso:roles-sistema-listado'))
