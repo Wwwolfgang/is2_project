@@ -5,7 +5,6 @@ from django.http import HttpResponseRedirect
 from django.views.generic import ListView, DetailView
 from django.urls import reverse
 
-
 class IndexView(ListView):
     model = Proyecto
     template_name = 'proyecto/index.html'
@@ -31,22 +30,21 @@ def create(request):
         if form.is_valid():
             form.save()
             return HttpResponseRedirect(reverse('proyecto:index'))
-            #return HttpResponseRedirect(reverse('proyecto:index'))
     form = ProyectoForm()
 
     return render(request,'proyecto/create.html',{'form': form})
 
 def edit(request, pk, template_name='proyecto/edit.html'):
     proyecto = get_object_or_404(Proyecto, pk=pk)
-    form = ProyectoForm(request.POST or None, instance=post)
+    form = ProyectoForm(request.POST or None)
     if form.is_valid():
         form.save()
-        return redirect('/home')
+        return redirect('/home/proyecto')
     return render(request, template_name, {'form':form})
 
-def delete(request, pk, template_name='proyecto/confirm_delete.html'):
+def delete(request, pk, template_name='proyecto/confirm-delete.html'):
     proyecto = get_object_or_404(Proyecto, pk=pk)
     if request.method=='POST':
-        Proyecto.delete()
-        return redirect('/home')
+        proyecto.delete()
+        return redirect('/home/proyecto')
     return render(request, template_name, {'object':proyecto})
