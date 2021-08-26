@@ -12,6 +12,8 @@
         {% block title %}{% endblock %}
     </head>
     <body>
+        {% include "includes/permission_denied.html" %}
+
         {% block content %}{% endblock %}
         {% block extra_js %}{% endblock %}
     </body>

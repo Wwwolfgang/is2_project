@@ -78,7 +78,6 @@
                             </tbody>
                         </table>
                     </td>
-                    {% if not user.is_administrator%}
                     <td>
                         <a class="btn btn-info btn-sm px-3" role="button" href="{% url 'sso:user-update' user.id %}">
                             <i class="fas fa-pen"></i>
@@ -90,7 +89,6 @@
                             <i class="fas fa-times"></i>
                         </a>
                     </td>
-                    {% endif %}
                 </tr>
                 {% endfor %}
             </tbody>
