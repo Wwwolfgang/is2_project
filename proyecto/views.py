@@ -20,13 +20,17 @@ class ProyectoDetailView(DetailView):
     model = Proyecto
     template_name = 'proyecto/proyecto-detalle.html'
 
+    def get_object(self, queryset=None):
+        id = self.kwargs['pk']
+        return self.model.objects.get(id=id)
+
 
 def create(request):
     if request.method == 'POST':
         form = ProyectoForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('/home')
+            return HttpResponseRedirect(reverse('proyecto:index'))
             #return HttpResponseRedirect(reverse('proyecto:index'))
     form = ProyectoForm()
 
