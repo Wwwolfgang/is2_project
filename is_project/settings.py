@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'guardian',
+    'widget_tweaks',
 ]
 CRISPY_TEMPLATE_PACK = 'bootstrap'
 

@@ -1,5 +1,4 @@
 .vscode
-<<<<<<< HEAD
 *.pyc
 */*/*/__pycache__/
 */*/__pycache__/
@@ -13,7 +12,5 @@ source
 venv
 __pycache__
 .pytest_cache
-=======
 /cesar/
 /*/__pycache__/
->>>>>>> cesar
