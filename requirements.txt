@@ -10,3 +10,6 @@ pytest-django
 django-livereload-server
 pdoc
 gunicorn
+fontawesome-free==5.15
+django-crispy-forms
+django-widget-tweaks
