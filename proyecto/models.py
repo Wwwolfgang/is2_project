@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.auth.models import AbstractUser
+from django.utils import timezone
+from sso.models import User
 import datetime
 # Create your models here.
 class Proyecto(models.Model):
@@ -11,48 +13,19 @@ class Proyecto(models.Model):
     y actualizarBurnDownChart()
     """
     nombreProyecto = models.CharField(max_length = 50)
-    fechaInicio = datetime.date.today()
-    fechaFin = datetime.date.today()
+    fechaInicio = models.DateField(null=False, blank=False, help_text="Fecha de inicialización del proyecto", default=timezone.now())
+    fechaFin = models.DateField(null=False, blank=False, help_text="Fecha estimada de finalización del proyecto", default=timezone.now())
     codProyecto = 0
-    estadoProyecto = 0
     nroSprints = 0
-
-    # listaSprints = Sprint[]
-    # listaUsuarios = Usuario[]
-    # listaRoles = Rol[]
-
-    def getNombreProyecto(self):
-        return self.nombreProyecto
-
-    def getFechaInicio(self):
-        return self.fechaInicio
-
-    def getEstadoProyecto(self):
-        return self.estadoProyecto
-
-    def setNombreProyecto(self, nombreProyecto):
-        self.nombreProyecto = nombreProyecto
-
-    def finalizarProyecto(self):
-        print("Se finalizo el proyecto")
-
-    def generarCodigoProyecto(self):
-        print("Codigo generado")
-        cod = 0
-        return cod #Función para traer siguiente código integer de la BD
-
-    def actualizarEstadoProyecto(self, estadoProyecto):
-        self.estadoProyecto = estadoProyecto
-
-    def setCodProyecto(self):
-        self.codProyecto = generarCodigoProyecto()
-
-    # def agregarSprintProyecto(self, sprintNuevo):
-    # self.listaSprints.add(sprintNuevo)
-    def obtenerCantidadSprints(self):
-        return self.nroSprints
-
-    def marcarSprintTerminado(self, codSprint):
-        self.estadoProyecto = codSprint
-    # def actualizarBurnDownChart(self, dificultad):
-    # self
+    duracionSprint = models.IntegerField(null=False, blank=False, default=14, help_text="Duración de un Sprint")
+    ESTADO_DE_PROYECTO_CHOICES = [
+        ('A', 'Activo'),
+        ('C', 'Cancelado'),
+        ('F', 'Finalizado'),
+    ]
+    estado_de_proyecto = models.CharField(
+        max_length=1,
+        choices=ESTADO_DE_PROYECTO_CHOICES,
+        default='A',
+    )
+    equipo = models.ManyToManyField(User)
