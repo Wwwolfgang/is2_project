@@ -36,7 +36,7 @@ def create(request):
 
 def edit(request, pk, template_name='proyecto/edit.html'):
     proyecto = get_object_or_404(Proyecto, pk=pk)
-    form = ProyectoForm(request.POST or None)
+    form = ProyectoForm(request.POST or None, instance=proyecto)
     if form.is_valid():
         form.save()
         return redirect('/home/proyecto')

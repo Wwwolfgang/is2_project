@@ -1,7 +1,6 @@
 {% extends 'proyecto/base.html' %}
 
 {% block container %}
-{% block content %}
 <div class="container">
     <div class="row"></div>
     <br />
@@ -12,15 +11,18 @@
                 {% csrf_token %}
                 <div class="form-row">
                     <div class="alert alert-warning">
-                        Are you sure you want to delete {{ object }}?
+                        ¿Desea eliminar este proyecto? (Esta acción no puede deshacerse) <br/>
+                        <h4>{{ object.nombreProyecto }} </h4>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-danger">
-                    <span class="glyphicon glyphicon-trash"></span>
-                </button>
+                <div>
+                    <a class="btn btn-warning" role="button" href="{% url 'proyecto:index' %}">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="my-2 btn btn-danger">Eliminar Proyecto</button>
+                </div>
             </form>
         </div>
     </div>
 </div>
-{% endblock %}
 {% endblock %}
