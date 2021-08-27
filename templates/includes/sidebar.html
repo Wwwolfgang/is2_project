@@ -60,15 +60,25 @@
 <nav>
 <div class="flex-shrink-0 p-3" style="max-width: 280px;">
     <ul class="list-unstyled ps-0">
+      <li class="border-top my-3"></li>
       <li class="mb-1">
         <button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle="collapse" data-bs-target="#home-collapse" aria-expanded="true">
           Home
         </button>
         <div class="collapse show" id="home-collapse">
           <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-            <li><a href="#" class="link-dark rounded">Overview</a></li>
-            <li><a href="#" class="link-dark rounded">Updates</a></li>
-            <li><a href="#" class="link-dark rounded">Reports</a></li>
+            <li><a href="/" class="link-dark rounded">Overview</a></li>
+            <li><a href="#" class="link-dark rounded">Notificaciones</a></li>
+          </ul>
+        </div>
+      </li>
+      <li class="mb-1">
+        <button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle="collapse" data-bs-target="#proyectos-collapse" aria-expanded="false">
+          Proyectos
+        </button>
+        <div class="collapse" id="proyectos-collapse">
+          <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+            <li><a href="{% url 'proyecto:index' %}" class="link-dark rounded">Mis Proyectos</a></li>
           </ul>
         </div>
       </li>
@@ -82,19 +92,6 @@
             <li><a href="#" class="link-dark rounded">Weekly</a></li>
             <li><a href="#" class="link-dark rounded">Monthly</a></li>
             <li><a href="#" class="link-dark rounded">Annually</a></li>
-          </ul>
-        </div>
-      </li>
-      <li class="mb-1">
-        <button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle="collapse" data-bs-target="#orders-collapse" aria-expanded="false">
-          Orders
-        </button>
-        <div class="collapse" id="orders-collapse">
-          <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-            <li><a href="#" class="link-dark rounded">New</a></li>
-            <li><a href="#" class="link-dark rounded">Processed</a></li>
-            <li><a href="#" class="link-dark rounded">Shipped</a></li>
-            <li><a href="#" class="link-dark rounded">Returned</a></li>
           </ul>
         </div>
       </li>
