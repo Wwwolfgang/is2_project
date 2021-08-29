@@ -8,9 +8,13 @@
 
         <!-- Bootstrap CSS -->
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+        <script src="{% static 'fontawesome_free/js/all.min.js' %}"></script>
+        <link href="{% static 'css/bsidebars.css' %}" rel="stylesheet"/>
         {% block title %}{% endblock %}
     </head>
     <body>
+        {% include "includes/permission_denied.html" %}
+
         {% block content %}{% endblock %}
         {% block extra_js %}{% endblock %}
     </body>

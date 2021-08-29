@@ -1,0 +1,19 @@
+{% extends 'proyecto/base.html' %}
+
+{% block container %}
+
+    <div class="container-fluid">
+        {{object.nombreProyecto}} <br/>
+
+
+        Duración de Sprint: {{object.duracionSprint}} días<br/>
+
+        Participantes:
+
+        {% for user in object.equipo.all %}
+        <p> {{user}} </p>
+        {% endfor %}
+
+    </div>
+
+{% endblock %}

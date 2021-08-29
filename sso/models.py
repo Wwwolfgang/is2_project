@@ -2,19 +2,26 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 import datetime
+
+from django.db.models.fields import CharField
 class User(AbstractUser):
     """
     Esta clase es un usuario personalizado que hereda de la classe AbstractUser, diferente del usuario normal de Django.
     Esto será util para relacionar los usuarios con los roles de sistema y de proyecto.
-    
-    TODO
-        - Agregar los campos restantes del modelo
     """
-    #descripcion = models.TextField(max_length=500, blank=True, null=True)
-    """Este es un campo de texto de prueba. A futuro será eliminado y se agregarán mas campos."""
+    is_administrator = models.BooleanField(verbose_name='Administrador',default=False)
 
     def __str__(self):
         return self.username
+
+    class Meta:
+        verbose_name_plural = "users"
+
+        permissions = [
+            ('custom_acceder_ususario','Test de prueba')
+        ]
+
+
 class comentario(models.Model):
     codComentario = models.CharField(max_length=50)
     codUserStory = models.CharField(max_length=50)
@@ -228,41 +235,3 @@ class burnDownChart(models.Model):
 
 
 
-class proyecto:
-    """ 
-    Clase proyecto
-    
-    TODO: Realizar user story para poder implementar en agregarSprintProyecto()
-    y actualizarBurnDownChart()
-    """
-    nombreProyecto = ""
-    fechaInicio = datetime.date.today()
-    fechaFin = datetime.date.today()
-    codProyecto = ""
-    estadoProyecto = 0
-    nroSprints = 0
-    #listaSprints = Sprint[]
-    #listaUsuarios = Usuario[]
-    #listaRoles = Rol[]
-    def obtenerNombreProyecto(self):
-        return self.nombreProyecto
-    def obtenerFechaInicio(self):
-        return self.fechaInicio
-    def obtenerEstadoProyecto(self):
-        return self.estadoProyecto
-    def ingresarNombreProyecto(self, nombreProyecto ):
-        self.nombreProyecto = nombreProyecto
-    def finalizarProyecto(self):
-        print("Se finalizo el proyecto")
-    def generarCodigoProyecto(self):
-        print("Codigo generado")
-    def actualizarEstadoProyecto(self, estadoProyecto ):
-        self.estadoProyecto = estadoProyecto
-    #def agregarSprintProyecto(self, sprintNuevo):
-        #self.listaSprints.add(sprintNuevo)
-    def obtenerCantidadSprints(self):
-        return self.nroSprints
-    def marcarSprintTerminado(self, codSprint):
-        self.estadoProyecto = codSprint
-    #def actualizarBurnDownChart(self, dificultad):
-        #self

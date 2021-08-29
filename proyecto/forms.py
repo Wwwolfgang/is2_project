@@ -1,5 +1,9 @@
 from proyecto.models import RolProyecto
 from django.contrib.auth.models import Permission
+from django import forms
+from .models import Proyecto
+from sso.models import User
+
 
 from django import forms
 
@@ -12,4 +16,9 @@ class AgregarRolProyectoForm(forms.ModelForm):
     class Meta:
         model = RolProyecto
         fields = '__all__'
+
+class ProyectoForm(forms.ModelForm):
+    class Meta:
+        model = Proyecto
+        fields = ["nombreProyecto", "duracionSprint", "fechaInicio", "fechaFin", "equipo"]
 

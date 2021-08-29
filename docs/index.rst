@@ -18,6 +18,7 @@ Bienvenidos a la documentación de IS2_Project!
    :caption: SSO:
 
    sso/models.rst
+   sso/views.rst
 
 Indices and tables
 ==================
