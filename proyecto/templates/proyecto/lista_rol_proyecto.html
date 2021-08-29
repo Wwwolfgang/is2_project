@@ -1,0 +1,14 @@
+{% extends 'sso/base.html'%}
+{% block container %}
+<form action="" method="post">
+    {% csrf_token %}
+    <div class="main">
+        {% for data in dataset %}.
+            {{ data.nombre }}<br/>
+            {% for permisos in data.permisos.all %}.
+                {{ permisos.codename }}<br/>
+            {% endfor %}
+        <hr/>
+        {% endfor %}
+    </div>    
+{% endblock %}

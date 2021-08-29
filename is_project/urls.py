@@ -24,7 +24,7 @@ urlpatterns = [
     path('accounts/', include('allauth.urls')),
     path('logout', LogoutView.as_view()),
     #path('home/',include('sso.urls')),
-   path('administration/',include('sso.urls')),
+    path('administration/',include('sso.urls')),
     path('home/',include('proyecto.urls')),
 ]
 """ 
