@@ -7,8 +7,9 @@
             {% if rolproyecto_list %}
             <ul>
                 {% for rol in rolproyecto_list %}
-                <li>
-                    <a href="/proyecto/rol/{{rol.id}}">{{ rol.nombre }}</a> 
+                <li class="py-2">
+                    {{rol.nombre}}
+                    <a href="{% url 'proyecto:rol-detalles' rol.id %}"  class="btn btn-info" type="button">Detalle</a> 
                 </li>
                 {% endfor %}
              </ul>
