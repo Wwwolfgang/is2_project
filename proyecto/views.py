@@ -1,3 +1,4 @@
+from django.contrib import messages
 from django.http.response import Http404
 from django.shortcuts import redirect, render
 from django.shortcuts import get_object_or_404
@@ -14,31 +15,19 @@ from django.views.generic.edit import UpdateView, DeleteView
 from django.urls import reverse_lazy
 from django.views import generic
 
-class ActualizarRolProyectoVista(UpdateView):
+class EliminarRolProyectoView(DeleteView):
     model = RolProyecto
-    fields = '__all__'
-
-class EliminarRolProyectoVista(DeleteView):
-    model = RolProyecto
-    success_url = reverse_lazy('roles')
+    template_name = 'proyecto/eliminar_rol_proyecto.html'
+    success_url = reverse_lazy('proyecto:roles')
 
 class ListaRolProyectoView(generic.ListView):
     model = RolProyecto
-    template_name = 'proyecto/lista_rol_proyecto_2.html'
-
-#def detalles_rol_proyecto_view(request, primary_key):
-#    rol = get_object_or_404(RolProyecto, pk=primary_key)
-#    return render(request, 'proyecto/detalles_rol_proyecto.html', context={'rol': rol})
+    template_name = 'proyecto/lista_rol_proyecto.html'
 
 class DetallesRolProyectoView(generic.DetailView):
     model = RolProyecto
     template_name = 'proyecto/detalles_rol_proyecto.html'
 
-
-def lista_rol_proyecto_view(request):
-    context ={}
-    context["dataset"] = RolProyecto.objects.all()
-    return render(request, "proyecto/lista_rol_proyecto.html", context)
 
 def agregar_rol_proyecto_view(request):
     contexto = {}
@@ -48,13 +37,30 @@ def agregar_rol_proyecto_view(request):
         if form.is_valid():
             print(form.cleaned_data)
             form.save()
-            return redirect('/home/roles')  
+            return redirect('/home/proyecto/roles')  
         contexto['form'] = form
         return render(request, 'proyecto/nuevo_rol_proyecto_view.html', context=contexto)
     else:
         form = AgregarRolProyectoForm()   
         contexto['form'] = form
         return render(request, 'proyecto/nuevo_rol_proyecto_view.html', context=contexto)
+
+def editar_rol_proyecto_view(request, id_rol):
+    rol = get_object_or_404(RolProyecto, pk=id_rol)
+    contexto = {}
+    if request.method == 'POST':
+        form = AgregarRolProyectoForm(request.POST, instance=rol)
+
+        if form.is_valid(): 
+            rol = form.save()
+            messages.success(request, 'Rol de proyecto actualizado exitosamente')
+            return redirect('/home/proyecto/roles')
+        contexto['form'] = form
+        return render(request, 'proyecto/editar_rol_proyecto.html', context=contexto)
+    else:
+        form = AgregarRolProyectoForm(instance=rol, initial={'permisos': [r.id for r in rol.get_permisos()]})   
+        contexto['form'] = form
+        return render(request, 'proyecto/editar_rol_proyecto.html', contexto)
 
 
 class IndexView(ListView):

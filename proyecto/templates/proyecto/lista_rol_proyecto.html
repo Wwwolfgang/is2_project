@@ -3,12 +3,24 @@
 <form action="" method="post">
     {% csrf_token %}
     <div class="main">
-        {% for data in dataset %}.
-            {{ data.nombre }}<br/>
-            {% for permisos in data.permisos.all %}.
-                {{ permisos.codename }}<br/>
-            {% endfor %}
-        <hr/>
-        {% endfor %}
+        <h1>Roles</h1>
+        <a href="{% url 'proyecto:agregar-rol'%}"  class="btn btn-info" type="button">Agregar rol</a>
+            {% if rolproyecto_list %}
+            <ul>
+                {% for rol in rolproyecto_list %}
+                <li class="py-2">
+                    {{rol.nombre}}
+                    <a href="{% url 'proyecto:rol-detalles' rol.id %}"  class="btn btn-info" type="button">Detalles</a>
+                    <a href="{% url 'proyecto:rol-eliminar' rol.id%}"  class="btn btn-info" type="button">Eliminar</a>
+                    <a href="{% url 'proyecto:rol-editar' rol.id%}"  class="btn btn-info" type="button">Editar</a>
+                    {% for permisos in rol.permisos.all %}
+                        <br>{{ permisos.codename }}<br/>
+                    {% endfor %}
+                </li>
+                {% endfor %}
+             </ul>
+            {% else %}
+                <p>No existen roles en el proyecto.</p>
+            {% endif %} 
     </div>    
 {% endblock %}
