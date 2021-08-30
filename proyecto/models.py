@@ -46,3 +46,10 @@ class Proyecto(models.Model):
         default='A',
     )
     equipo = models.ManyToManyField(User)
+
+    class Meta:
+        permissions = (
+            ("p_crear_proyecto","Permiso de crear nuevos proyectos."),
+            ("p_acceder_proyectos","Permiso de acceder proyectos."),
+                    
+        )

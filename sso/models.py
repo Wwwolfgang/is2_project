@@ -18,7 +18,5 @@ class User(AbstractUser):
         verbose_name_plural = "users"
 
         permissions = [
-            ('custom_acceder_ususario','Test de prueba'),
-            ('custom_acceder_proyecto','Acceder proyectos'),
-
+            ('p_is_user','El usuario es un usuario registrado que se le asignó un rol. Con este permiso tiene la posibilidad de ver más en el sistema.')
         ]

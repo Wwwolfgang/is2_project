@@ -1,9 +1,8 @@
 from django.contrib import messages
-from django.http.response import Http404
 from django.shortcuts import redirect, render
 from django.shortcuts import get_object_or_404
-from django.contrib.auth.models import Permission
-from django.http import HttpResponse, HttpResponseRedirect
+from django.contrib.auth.mixins import PermissionRequiredMixin,LoginRequiredMixin
+from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Proyecto
 from .forms import ProyectoForm
@@ -14,6 +13,7 @@ from proyecto.models import RolProyecto
 from django.views.generic.edit import UpdateView, DeleteView
 from django.urls import reverse_lazy
 from django.views import generic
+from django.contrib.auth.decorators import permission_required
 
 class EliminarRolProyectoView(DeleteView):
     model = RolProyecto
@@ -63,7 +63,9 @@ def editar_rol_proyecto_view(request, id_rol):
         return render(request, 'proyecto/editar_rol_proyecto.html', contexto)
 
 
-class IndexView(ListView):
+class ListaProyectos(PermissionRequiredMixin, ListView):
+    permission_required = ('proyecto.p_acceder_proyectos')
+    raise_exception = True
     model = Proyecto
     template_name = 'proyecto/index.html'
     context_object_name = 'proyecto_list'
@@ -82,6 +84,7 @@ class ProyectoDetailView(DetailView):
         return self.model.objects.get(id=id)
 
 
+@permission_required('proyecto.p_crear_proyecto','sso.p_is_user',raise_exception=True)
 def create(request):
     if request.method == 'POST':
         form = ProyectoForm(request.POST)
