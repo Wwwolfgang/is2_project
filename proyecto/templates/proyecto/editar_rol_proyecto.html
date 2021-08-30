@@ -1,0 +1,16 @@
+{% extends 'sso/base.html'%}
+{% block container %}
+<form action="" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <table>
+    {{ form.as_p }}
+    </table>
+    <div>
+        <a class="btn btn-warning" role="button" href="{% url 'proyecto:roles' %}">
+            Cancelar
+        </a>
+        <button type="submit" class="my-2 btn btn-success">Guardar</button>
+
+    </div>
+</form>
+{% endblock %}
