@@ -1,5 +1,6 @@
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
+from sso.models import User
 from django.contrib.auth.models import AbstractUser
 import datetime
 from django.db.models.fields import CharField
@@ -20,20 +21,9 @@ class comentario(models.Model):
     #   Que hace esta funcion?
     pass
 
-class usuario(models.Model):
-    username = ""
-    tokenSesion = False
-    direccionCorreo = ""
-    def crearProyecto():
-        print("El proyecto fue creado.\n")
-    def iniciarSistema():
-        print("El sistema fue inicializado.\n")
-    def cerrarSesion():
-        print("Se cerro la sesion.\n")
-
 class usuarioProyecto(models.Model):
-    codProyecto = ""
-    rolUsuario = ""
+    codProyecto     = models.CharField(max_length=50)
+    rolUsuario      = models.CharField(max_length=50)
     def cambiarRol(self, username):
         self.rolUsuario = username #?
     def solicitarCambioRol(self):
@@ -66,7 +56,7 @@ class userStory(models.Model):
     """
     nombreUserStory     = models.CharField(max_length=50)
     codigoUserStory     = models.CharField(max_length=50)
-    listaParticipantes  = ArrayField(models.CharField(max_length=50))
+    listaParticipantes  = models.ManyToManyField(User,related_name="participantes")
     descripcionUserStory= models.CharField(max_length=50)
     estado              = models.CharField(max_length=50)
     comentarios         = models.ManyToManyField(comentario,related_name="comentario")
@@ -93,13 +83,13 @@ class sprint(models.Model):
         - Vinculacion de la clase user story con la clase sprint
         - Desarrollar sprint
     """
-    nombreSprint = models.CharField(max_length=50)
-    codSprint = models.CharField(max_length=50)
-    nroUserStories = models.IntegerField()
-    listaStories = ManyToManyField( userStory, max_length= 100 )
-    fechaInicio = models.DateField()
-    fechaFin = models.DateField()
-    duracionSprint = 0
+    nombreSprint    = models.CharField(max_length=50)
+    codSprint       = models.CharField(max_length=50)
+    nroUserStories  = models.IntegerField()
+    listaStories    = ManyToManyField( userStory, max_length= 100 )
+    fechaInicio     = models.DateField()
+    fechaFin        = models.DateField()
+    duracionSprint  = models.IntegerField()
     def modificarNombreSprint(self,nombreSprint):
         self.nombreSprint = nombreSprint
     def agregarUserStory(self, nuevoUserStory):
@@ -126,9 +116,9 @@ class sprint(models.Model):
         print("Se actualizo la duracion de sprint")
 
 class rol(models.Model):
-    nombreRol = ""
-    claveProyecto = ""
-    permisos = [""]
+    nombreRol       = models.CharField(max_length=50)
+    claveProyecto   = models.CharField(max_length=50)
+    permisos        = ArrayField(models.CharField(max_length=50))
     def modificarRol(self, nombreRol, permisos):
         self.nombreRol = nombreRol
         self.permisos = permisos
@@ -140,26 +130,26 @@ class rol(models.Model):
     def obtenerClave(self):
         return self.claveProyecto
 
-#class kanban:
-    #columnas = userStory[]
-    #def moverUserStory(userStory codUserStory):
-    #   print("Se movio el user story")
-    #   return True
-    #def asignarUserStory( username ):
-    #   print("Se agrego al user story")
-    #def actualizarKanban():
-    #   print("Se actualizo el kanban")
+class kanban(models.Model):
+    columnas = models.ManyToManyField(userStory)
+    def moverUserStory(codUserStory):
+       print("Se movio el user story")
+       return True
+    def asignarUserStory( username ):
+       print("Se agrego al user story")
+    def actualizarKanban():
+       print("Se actualizo el kanban")
     #def generarKanban(userStory[]):
-    #def generarKanban(userStory listaStories):
-    #   print("Se genero el kanban")
+    def generarKanban(listaStories):
+       print("Se genero el kanban")
 
 class historialCambiosUS(models.Model):
-    codHistorialCambios = ""
-    codUserStory = ""
-    codProyecto = ""
-    codUsuario = ""
-    descripcionCambio = ""
-    fecha = datetime.date.today
+    codHistorialCambios = models.CharField(max_length=50)
+    codUserStory        = models.CharField(max_length=50)
+    codProyecto         = models.CharField(max_length=50)
+    codUsuario          = models.CharField(max_length=50)
+    descripcionCambio   = models.CharField(max_length=50)
+    fecha               = models.DateTimeField()
     def generarCambio(self, descripcion, codProyecto, codUsuario, codUserStory):
         self.codUserStory = codUserStory
         self.codProyecto = codProyecto
@@ -169,11 +159,11 @@ class historialCambiosUS(models.Model):
         return self.fecha
 
 class burnDownChart(models.Model):
-    codBurnDownChart = ""
-    codSprintRel = ""
-    codProyRel = ""
-    datosTeoricos = [0][0]
-    datosReales = [2][0]
+    codBurnDownChart    = models.CharField(max_length=50)
+    codSprintRel        = models.CharField(max_length=50)
+    codProyRel          = models.CharField(max_length=50)
+    datosTeoricos       = ArrayField(ArrayField(models.IntegerField()))
+    datosReales         = ArrayField(ArrayField(models.IntegerField()),max_length=2)
     def crearLineaTeorica( dificultadEstimadaTotal, totalDias ):
         print("Se creo la linea teorica")
     def actualizarLineaReal( storyPointsCompletado, dia ):
@@ -192,15 +182,15 @@ class proyecto:
     TODO: Realizar user story para poder implementar en agregarSprintProyecto()
     y actualizarBurnDownChart()
     """
-    nombreProyecto = ""
-    fechaInicio = datetime.date.today
-    fechaFin = datetime.date.today
-    codProyecto = ""
-    estadoProyecto = 0
-    nroSprints = 0
-    #listaSprints = Sprint[]
-    #listaUsuarios = Usuario[]
-    #listaRoles = Rol[]
+    nombreProyecto  = models.CharField(max_length=50)
+    fechaInicio     = models.DateTimeField()
+    fechaFin        = models.DateTimeField()
+    codProyecto     = models.CharField(max_length=50)
+    estadoProyecto  = models.IntegerField()
+    nroSprints      = models.IntegerField()
+    listaSprints    = models.ManyToManyField(sprint)
+    listaUsuarios   = models.ManyToManyField(User)
+    listaRoles      = models.ManyToManyField(rol)
     def obtenerNombreProyecto(self):
         return self.nombreProyecto
     def obtenerFechaInicio(self):
