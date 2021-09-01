@@ -17,10 +17,12 @@ class UpdateRolSistemaForm(forms.ModelForm):
     #     codename='custom_acceder_ususario'),
     #     widget=forms.CheckboxSelectMultiple
     # )
-    permissions = forms.ModelMultipleChoiceField(
-        queryset=Permission.objects.all(),
-        widget=forms.CheckboxSelectMultiple
-    )
+    def __init__(self, *args, **kwargs):
+        super(UpdateRolSistemaForm, self).__init__(*args, **kwargs)
+        self.fields['permissions'] = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple,
+                                                            choices=[(p.id, p.name) for p in Permission.objects.all() if
+                                                                     p.codename.startswith('pg_')])
+    
 
 
 class UserAssignRolForm(UserChangeForm):

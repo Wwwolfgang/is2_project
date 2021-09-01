@@ -14,7 +14,7 @@
         <p> {{user}} </p>
         {% endfor %}
 
-        <a href="{% url 'proyecto:roles' %}"  class="btn btn-info" type="button">Roles</a>
+        <a href="{% url 'proyecto:roles' object.id %}"  class="btn btn-info" type="button">Roles y Participantes</a>
 
     </div>
 
