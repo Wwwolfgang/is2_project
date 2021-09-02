@@ -34,11 +34,19 @@
                     {{ hidden_field }}
                     {% endfor %}
                     {% for field in form.visible_fields %}
-                    <div class="form-group">
-                        {{ field.label_tag }}
-                        {% render_field field class="form-control" %}
-                        {% if field.help_text %}
-                        <small class="form-text text-muted">{{ field.help_text }}</small>
+                    <div class="form-group class pb-5">
+                        {% if field.name != 'equipo' %}
+                            {{ field.label_tag }}
+                            {% render_field field class="form-control" %}
+                            {% if field.help_text %}
+                            <small class="form-text text-muted">{{ field.help_text }}</small>
+                            {% endif %}
+                        {% else %}
+                            {{field.label_tag }}
+                            {{field}}
+                            {% if field.help_text %}
+                            <small class="form-text text-muted">{{ field.help_text }}</small>
+                            {% endif %}
                         {% endif %}
                     </div>
                     {% endfor %}
