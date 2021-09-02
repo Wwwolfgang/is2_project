@@ -1,11 +1,9 @@
 {% extends 'sso/base.html' %}
 
 {% block container %}
-    <div class="container">
+    <div class="container-fluid">
         <table class="table caption-top table-bordered mx-1">
-            <caption>
-                <span ">Roles de Sistema</span>
-            </caption>
+            <h2>Roles de Sistema</h2>
             <thead>
                 <tr>
                     <th scope="col">#</th>
@@ -40,12 +38,8 @@
                 {% endfor %}
             </tbody>
         </table>
-    </div>
-    <div class="container">
-        <table class="table caption-top table-bordered mx-1">
-            <caption>
-                <span >Usuarios</span>
-            </caption>
+        <table class="table caption-top table-bordered mx-1 pt-3">
+            <h2>Usuarios</h2>
             <thead>
                 <tr>
                     <th scope="col">#</th>
@@ -78,7 +72,6 @@
                             </tbody>
                         </table>
                     </td>
-                    {% if not user.is_administrator%}
                     <td>
                         <a class="btn btn-info btn-sm px-3" role="button" href="{% url 'sso:user-update' user.id %}">
                             <i class="fas fa-pen"></i>
@@ -90,7 +83,6 @@
                             <i class="fas fa-times"></i>
                         </a>
                     </td>
-                    {% endif %}
                 </tr>
                 {% endfor %}
             </tbody>

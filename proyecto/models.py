@@ -5,6 +5,10 @@ from django.contrib.auth.models import AbstractUser
 import datetime
 from django.db.models.fields import CharField
 from django.db.models.fields.related import ManyToManyField
+from django.contrib.auth.models import Permission
+from django.db import models
+from django.utils import timezone
+from sso.models import User
 
 class comentario(models.Model):
     codComentario   = models.CharField(max_length=50)
@@ -115,20 +119,6 @@ class sprint(models.Model):
     def actualizarDuracionSprint(self,duracion):
         print("Se actualizo la duracion de sprint")
 
-class rol(models.Model):
-    nombreRol       = models.CharField(max_length=50)
-    claveProyecto   = models.CharField(max_length=50)
-    permisos        = ArrayField(models.CharField(max_length=50))
-    def modificarRol(self, nombreRol, permisos):
-        self.nombreRol = nombreRol
-        self.permisos = permisos
-        print("Se modifico el rol")
-    def obtenerNombreRol(self):
-        return self.nombreRol
-    def obtenerPermisos(self):
-        return self.permisos
-    def obtenerClave(self):
-        return self.claveProyecto
 
 class kanban(models.Model):
     columnas = models.ManyToManyField(userStory)
@@ -174,42 +164,51 @@ class burnDownChart(models.Model):
         print("Se borro el burn down chart")
 
 
-
-class proyecto:
-    """ 
-    Clase proyecto
+class RolProyecto(models.Model):
+    nombre = models.CharField(verbose_name='Nombre del rol', max_length=60, blank=False,null=False)
+    permisos = models.ManyToManyField(Permission)
+    participantes = models.ManyToManyField(User,blank=True,null=True)
+    proyecto = models.ForeignKey('proyecto', on_delete=models.CASCADE, blank=True, null=True)
+    class Meta:
+        permissions = (
+                    ("p_administrar_roles","Permite que el usuario pueda configurar, crear, importar y eliminar roles del proyecto. Solo los permisos del scrum master no se podrán modificar."),
+        )
+    def get_permisos(self):
+        return [p for p in self.permisos.all()]
     
+    def __str__(self):
+       return self.nombre
+
+
+class Proyecto(models.Model):
+    """
+    Clase proyecto
+
     TODO: Realizar user story para poder implementar en agregarSprintProyecto()
     y actualizarBurnDownChart()
     """
-    nombreProyecto  = models.CharField(max_length=50)
-    fechaInicio     = models.DateTimeField()
-    fechaFin        = models.DateTimeField()
-    codProyecto     = models.CharField(max_length=50)
-    estadoProyecto  = models.IntegerField()
-    nroSprints      = models.IntegerField()
-    listaSprints    = models.ManyToManyField(sprint)
-    listaUsuarios   = models.ManyToManyField(User)
-    listaRoles      = models.ManyToManyField(rol)
-    def obtenerNombreProyecto(self):
-        return self.nombreProyecto
-    def obtenerFechaInicio(self):
-        return self.fechaInicio
-    def obtenerEstadoProyecto(self):
-        return self.estadoProyecto
-    def ingresarNombreProyecto(self, nombreProyecto ):
-        self.nombreProyecto = nombreProyecto
-    def finalizarProyecto(self):
-        print("Se finalizo el proyecto")
-    def generarCodigoProyecto(self):
-        print("Codigo generado")
-    def actualizarEstadoProyecto(self, estadoProyecto ):
-        self.estadoProyecto = estadoProyecto
-    #def agregarSprintProyecto(self, sprintNuevo):
-        #self.listaSprints.add(sprintNuevo)
-    def obtenerCantidadSprints(self):
-        return self.nroSprints
-    def marcarSprintTerminado(self, codSprint):
-        self.estadoProyecto = codSprint
-    #def actualizarBurnDownChart(self, dificultad):
-        #self
+    nombreProyecto = models.CharField(max_length = 50)
+    fechaInicio = models.DateField(null=False, blank=False, help_text="Fecha de inicialización del proyecto", default=timezone.now())
+    fechaFin = models.DateField(null=False, blank=False, help_text="Fecha estimada de finalización del proyecto", default=timezone.now())
+    codProyecto = 0
+    nroSprints = 0
+    duracionSprint = models.IntegerField(null=False, blank=False, default=14, help_text="Duración de un Sprint")
+    ESTADO_DE_PROYECTO_CHOICES = [
+        ('A', 'Activo'),
+        ('C', 'Cancelado'),
+        ('F', 'Finalizado'),
+    ]
+    estado_de_proyecto = models.CharField(
+        max_length=1,
+        choices=ESTADO_DE_PROYECTO_CHOICES,
+        default='A',
+    )
+    equipo = models.ManyToManyField(User)
+
+    class Meta:
+        permissions = (
+            ("p_acceder_proyectos","Permiso de acceder proyecto."),
+            ("p_cancelar_proyectos","Permiso de cancelar proyecto."),
+            ("p_editar_proyectos","Permiso de editar proyecto."),
+            ("p_finalizar_proyectos","Permiso de finalizar proyecto."),      
+        )

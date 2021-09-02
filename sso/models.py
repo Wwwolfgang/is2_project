@@ -18,8 +18,10 @@ class User(AbstractUser):
         verbose_name_plural = "users"
 
         permissions = [
-            ('custom_acceder_ususario','Test de prueba')
+            ('pg_is_user','El usuario es un usuario registrado que se le asignó un rol. Con este permiso tiene la posibilidad de ver más en el sistema.'),
+            ('pg_puede_crear_proyecto','El usuario puede crear nuevos proyectos.')
         ]
+
 
 class RolSistema(models.Model):
     name = models.CharField(verbose_name='Nombre del Rol', max_length=50, blank=False,null=False,help_text='Define el nombre del Rol de sistema')
@@ -39,5 +41,3 @@ class Permiso(models.Model):
         permissions = [
             ('custom_acceder_ususario','Test de prueba')
         ]
-
-
