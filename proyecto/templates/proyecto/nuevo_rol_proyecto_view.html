@@ -5,6 +5,9 @@
     <table>
     {{form.as_p}}
     </table>
+    <a class="btn btn-warning" role="button" href="{% url 'proyecto:roles' proyect_id %}">
+      Cancelar
+    </a>
     <button type="submit" class="my-2 btn btn-success">Agregar rol</button>
   </form>
 {% endblock %}

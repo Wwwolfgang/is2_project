@@ -18,5 +18,6 @@ class User(AbstractUser):
         verbose_name_plural = "users"
 
         permissions = [
-            ('p_is_user','El usuario es un usuario registrado que se le asignó un rol. Con este permiso tiene la posibilidad de ver más en el sistema.')
+            ('pg_is_user','El usuario es un usuario registrado que se le asignó un rol. Con este permiso tiene la posibilidad de ver más en el sistema.'),
+            ('pg_puede_crear_proyecto','El usuario puede crear nuevos proyectos.')
         ]
