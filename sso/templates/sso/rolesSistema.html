@@ -1,5 +1,100 @@
 {% extends 'sso/base.html' %}
 
 {% block container %}
-    {% for %}
+    <div class="container">
+        <table class="table caption-top table-bordered mx-1">
+            <caption>
+                <span ">Roles de Sistema</span>
+            </caption>
+            <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Nombre</th>
+                    <th scope="col" colspan="4">Permisos</th>
+                    <th scope="col">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rol in roles_sistema %}
+                <tr>
+                    <th scope="row">{{forloop.counter}}</th>
+                    <td>{{ rol.name }}</td>
+                    <td colspan="4">
+                        <table class="table mb-0">
+                            <tbody>
+                                {% for permiso in rol.permissions.all %}
+                                <tr>
+                                    <th  scope="row">{{forloop.counter}}</th>
+                                    <td>{{permiso.name}}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </td>
+                    <td>
+                        <a class="btn btn-info btn-sm px-3" role="button" href="{% url 'sso:rol-sistema-update' rol.id %}">
+                            <i class="fas fa-pen"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="container">
+        <table class="table caption-top table-bordered mx-1">
+            <caption>
+                <span >Usuarios</span>
+            </caption>
+            <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Nombre</th>
+                    <th scope="col">Apellidos</th>
+                    <th scope="col">Administrador</th>
+                    <th scope="col">Rol</th>
+                    <th scope="col">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in usuarios %}
+                <tr>
+                    <th scope="row">{{forloop.counter}}</th>
+                    <td>{{user.first_name}}</td>
+                    <td>{{user.last_name}}</td>
+                    {% if user.is_administrator %}
+                        <td>Si</td>
+                    {% else %}
+                        <td>No</td>
+                    {% endif %}
+                    <td>
+                        <table class="table mb-0">
+                            <tbody>
+                                {% for rol in user.groups.all %}
+                                <tr>
+                                    <td>{{rol.name}}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </td>
+                    {% if not user.is_administrator%}
+                    <td>
+                        <a class="btn btn-info btn-sm px-3" role="button" href="{% url 'sso:user-update' user.id %}">
+                            <i class="fas fa-pen"></i>
+                        </a>
+                        <a class="btn btn-warning btn-sm px-3" role="button" href="{% url 'sso:rol-sistema-asignar' user.id %}">
+                            <i class="fas fa-user-plus"></i>
+                        </a>
+                        <a class="btn btn-danger btn-sm px-3" role="button" href="{% url 'sso:user-delete' user.id %}">
+                            <i class="fas fa-times"></i>
+                        </a>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
 {% endblock %}
