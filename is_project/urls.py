@@ -20,9 +20,12 @@ from django.contrib.auth.views import LogoutView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', TemplateView.as_view(template_name="sso/index.html")),
+    path('', TemplateView.as_view(template_name="sso/index.html"),name='page-home'),
     path('accounts/', include('allauth.urls')),
     path('logout', LogoutView.as_view()),
+    #path('home/',include('sso.urls')),
+    path('administration/',include('sso.urls')),
+    path('',include('proyecto.urls')),
 ]
 """ 
 Se agregaron algunas urls que a futuro seguro van a cambiar,

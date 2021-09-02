@@ -1,0 +1,11 @@
+{% extends "sso/base.html" %}
+{% block container %}
+<div class="card" style="width: 180rem;">
+    <div class="card-body">
+      <h5 class="card-title"><i color="red" class="fas fa-exclamation-triangle pr-2"></i>Vaya, parece que no tiene los permisos necesarios para esta acción!!</h5>
+      <a class="btn btn-warning btn-sm px-3" role="button" href="{{request.META.HTTP_REFERER}}">
+        <i class="fas fa-arrow-left"></i> Atrás
+        </a>
+    </div>
+</div>
+{% endblock %}

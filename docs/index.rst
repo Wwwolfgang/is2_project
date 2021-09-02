@@ -18,6 +18,18 @@ Bienvenidos a la documentación de IS2_Project!
    :caption: SSO:
 
    sso/models.rst
+   sso/views.rst
+   sso/urls.rst
+   sso/forms.rst
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Proyecto:
+
+   proyecto/models.rst
+   proyecto/views.rst
+   proyecto/urls.rst
+   proyecto/forms.rst
 
 Indices and tables
 ==================
