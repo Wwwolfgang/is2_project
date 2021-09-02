@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.contrib.auth.models import Permission
 from django.shortcuts import redirect, render
 from django.shortcuts import get_object_or_404
 from guardian.shortcuts import assign_perm
@@ -125,8 +126,12 @@ class ImportarRolView(PermissionRequiredMixin, FormView):
         proyecto = Proyecto.objects.get(id=self.kwargs['pk_proy'])
         for rol in form.cleaned_data['roles']:
             rol = RolProyecto.objects.get(id=rol)
+            permisos = RolProyecto.objects.get(id=rol.id).permisos.all().values_list('pk', flat=True)
             rol.pk = None
             rol.proyecto = proyecto
+            rol.save()
+            for permiso in permisos:
+                rol.permisos.add(permiso)
             rol.save()
 
         return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']}))
