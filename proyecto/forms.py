@@ -1,3 +1,4 @@
+from django.forms import fields
 from proyecto.models import RolProyecto
 from django.contrib.auth.models import Permission
 from django import forms
@@ -42,3 +43,16 @@ class ProyectoForm(forms.ModelForm):
                                                                p.has_perm('sso.pg_is_user')     
                                                             ])
 
+
+
+class ImportarRolProyectoForm(forms.Form):
+    class Meta:
+        fields = ["roles"]
+
+    def __init__(self, *args, **kwargs):
+        proyecto_id = kwargs.pop('pk_proy',None)
+        super(ImportarRolProyectoForm, self).__init__(*args, **kwargs)
+        self.fields['roles'] = forms.MultipleChoiceField(
+        widget=forms.CheckboxSelectMultiple,
+        choices=[(p.id, p.nombre) for p in RolProyecto.objects.exclude(proyecto__id=proyecto_id)]
+    )

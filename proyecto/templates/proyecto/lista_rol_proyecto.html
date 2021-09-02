@@ -2,7 +2,10 @@
 {% block container %}
     <div class="container-fluid">
         <table class="table caption-top table-bordered mx-1">
-        <h2>Roles del Proyecto <a href="{% url 'proyecto:agregar-rol' proyect_id %}"  class="btn btn-success" type="button">Agregar rol</a></h2>
+        <h2>Roles del Proyecto 
+            <a href="{% url 'proyecto:agregar-rol' proyect_id %}"  class="btn btn-success" type="button"><i class="fas fa-plus-circle me-2"></i>Agregar rol</a>
+            <a href="{% url 'proyecto:importar-roles' proyect_id %}"  class="btn btn-info " type="button"><i class="fas fa-cloud-download-alt me-2"></i>Importar rol</a>
+        </h2>
             <thead>
                 <tr>
                     <th scope="col">#</th>

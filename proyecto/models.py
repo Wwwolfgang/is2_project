@@ -4,7 +4,7 @@ from django.utils import timezone
 from sso.models import User
 # Create your models here.
 class RolProyecto(models.Model):
-    nombre = models.CharField(verbose_name='Nombre del rol', max_length=60, blank=False,null=False,unique=True)
+    nombre = models.CharField(verbose_name='Nombre del rol', max_length=60, blank=False,null=False)
     permisos = models.ManyToManyField(Permission)
     participantes = models.ManyToManyField(User,blank=True,null=True)
     proyecto = models.ForeignKey('proyecto', on_delete=models.CASCADE, blank=True, null=True)

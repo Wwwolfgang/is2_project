@@ -5,14 +5,12 @@ from guardian.shortcuts import assign_perm
 from django.contrib.auth.mixins import PermissionRequiredMixin,LoginRequiredMixin
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect, get_object_or_404
-from .forms import ProyectoForm
 from django.views.generic import ListView, DetailView
 from django.urls import reverse
-from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm
+from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoForm
 from proyecto.models import RolProyecto, Proyecto
 from django.views.generic.edit import UpdateView, DeleteView, FormView
 from django.urls import reverse_lazy
-from django.views import generic
 from guardian.decorators import permission_required_or_403,permission_required
 from guardian.shortcuts import assign_perm
 from sso.models import User
@@ -106,6 +104,40 @@ def editar_rol_proyecto_view(request, pk_proy, id_rol):
         return render(request, 'proyecto/editar_rol_proyecto.html', contexto)
 
 
+class ImportarRolView(PermissionRequiredMixin, FormView):
+    """ Vista para la importación de roles de otros proyectos. Da la lista de todos los roles que no están
+    asociados al proyecto, de los cuales se puede importar los roles al proyecto. """
+    template_name = 'proyecto/importar_rol.html'
+    permission_required = ('sso.pg_is_user')
+    form_class= ImportarRolProyectoForm
+
+    def get_context_data(self, **kwargs):
+        """ Inyecta los roles y el proyect_id al contexto. """
+        context = super(ImportarRolView,self).get_context_data(**kwargs)
+        context.update({
+            'roles': RolProyecto.objects.exclude(proyecto__id= self.kwargs.get('pk_proy')),
+            'proyect_id': self.kwargs.get('pk_proy')
+        })
+        return context
+
+    def form_valid(self, form):
+        """Valida los datos del form de eliminación de rol de sistema"""
+        proyecto = Proyecto.objects.get(id=self.kwargs['pk_proy'])
+        for rol in form.cleaned_data['roles']:
+            rol = RolProyecto.objects.get(id=rol)
+            rol.pk = None
+            rol.proyecto = proyecto
+            rol.save()
+
+        return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']}))
+
+    def get_form_kwargs(self):
+        """ Función que inyecta el id del proyecto como argumento. """
+        kwargs = super(ImportarRolView, self).get_form_kwargs()
+        kwargs['pk_proy'] = self.kwargs['pk_proy']
+        return kwargs
+
+
 class AssignUserRolProyecto(PermissionRequiredMixin, UpdateView):
     """ Vista para assignarle a los usuarios el rol de proyecto """
     model = RolProyecto
@@ -118,6 +150,13 @@ class AssignUserRolProyecto(PermissionRequiredMixin, UpdateView):
         """ Función que retorna el rol que vamos asignar a los usuarios. """
         id = self.kwargs['id_rol']
         return self.model.objects.get(id=id)
+
+    def get_context_data(self, **kwargs):
+        context = super(AssignUserRolProyecto, self).get_context_data(**kwargs)
+        context.update({
+            'proyect_id': self.kwargs['pk_proy'],
+        })
+        return context
 
     def get_form_kwargs(self):
         """ Función que inyecta el id del proyecto como argumento. """
@@ -138,8 +177,9 @@ class AssignUserRolProyecto(PermissionRequiredMixin, UpdateView):
             form.save()
             for per in permisos:
                 for participante in form.cleaned_data['participantes']:
-                    user = User.objects.get(id=participante)
-                    assign_perm(per,user,proyecto)
+                    if per.content_type.model == 'proyecto':
+                        user = User.objects.get(id=participante)
+                        assign_perm(per,user,proyecto)
 
         else:   
             messages.error(self.request, 'Rol de proyecto no pudo ser assignado porque el proyecto no está activo')
@@ -186,7 +226,7 @@ def edit(request, pk, template_name='proyecto/edit.html'):
     form = ProyectoForm(request.POST or None, instance=proyecto)
     if form.is_valid():
         form.save()
-        return redirect('/home/proyecto')
+        return HttpResponseRedirect(reverse('proyecto:index'))
     return render(request, template_name, {'form':form})
 
 
@@ -195,5 +235,5 @@ def delete(request, pk, template_name='proyecto/confirm-delete.html'):
     proyecto = get_object_or_404(Proyecto, pk=pk)
     if request.method=='POST':
         proyecto.delete()
-        return redirect('/home/proyecto')
+        return HttpResponseRedirect(reverse('proyecto:index'))
     return render(request, template_name, {'object':proyecto})
