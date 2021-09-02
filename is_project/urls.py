@@ -25,7 +25,7 @@ urlpatterns = [
     path('logout', LogoutView.as_view()),
     #path('home/',include('sso.urls')),
     path('administration/',include('sso.urls')),
-    path('home/',include('proyecto.urls')),
+    path('',include('proyecto.urls')),
 ]
 """ 
 Se agregaron algunas urls que a futuro seguro van a cambiar,

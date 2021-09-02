@@ -1,13 +1,29 @@
 {% extends 'sso/base.html'%}
 
 {% block container %}
-<h1>Eliminar rol de proyecto</h1>
-
-<p>¿Estás seguro de que deseas eliminar el rol del proyecto: {{RolProyecto}}?</p>
-
-<form action="" method="POST">
-  {% csrf_token %}
-  <input type="submit" value="Sí,eliminar">
-</form>
+<div class="container">
+  <div class="row"></div>
+  <br />
+  <div class="row">
+      <div class="col-md-2 col-xs-2 col-sm-2"></div>
+      <div class="col-md-10 col-xs-10 col-sm-10">
+          <form method="post">
+              {% csrf_token %}
+              <div class="form-row">
+                  <div class="alert alert-warning">
+                      ¿Desea eliminar este Rol? (Esta acción no puede deshacerse) <br/>
+                      <h4>{{ object.nombre }} </h4>
+                  </div>
+              </div>
+              <div>
+                  <a class="btn btn-warning" role="button" href="{% url 'proyecto:roles' proyect_id %}">
+                      Cancelar
+                  </a>
+                  <button type="submit" class="my-2 btn btn-danger">Eliminar Rol</button>
+              </div>
+          </form>
+      </div>
+  </div>
+</div>
 
 {% endblock %}
