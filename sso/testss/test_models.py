@@ -30,6 +30,7 @@ class User(TestCase):
         self.assertEqual(user.first_name, "Test")
 
 class RolSistema(TestCase):
+    
 
     def create_rol(self, name="Scrum Master"):
         return Group.objects.create(name=name)
