@@ -6,8 +6,8 @@ from django.contrib.auth.views import LogoutView
 from proyecto.views import agregar_rol_proyecto_view
 from django.urls import path
 from django.views.generic import TemplateView
-from .views import EliminarRolProyectoView, ProyectoDetailView, edit, create, delete, editar_rol_proyecto_view, ListaProyectos, AssignUserRolProyecto,ImportarRolView
-
+from .views import EliminarRolProyectoView, ProyectoDetailView, edit, create, delete, editar_rol_proyecto_view, ListaProyectos, AssignUserRolProyecto,ImportarRolView,iniciar_proyecto,cancelar_proyecto
+from .views import finalizar_proyecto
 app_name = 'proyecto'
 
 urlpatterns = [
@@ -18,6 +18,10 @@ urlpatterns = [
     path('proyecto/edit/<int:pk>/', edit, name='edit'),
     path('proyecto/create/', create, name='create'),
     path('proyecto/delete/<int:pk>/', delete, name='delete'),
+    path('iniciar/proyecto/<int:pk>/', iniciar_proyecto, name='iniciar-proyecto'),
+    path('cancelar/proyecto/<int:pk>/', cancelar_proyecto, name='cancelar-proyecto'),
+    path('finalizar/proyecto/<int:pk>/', finalizar_proyecto, name='finalizar-proyecto'),
+
     #URLS de roles de proyecto
     path('proyecto/<int:pk_proy>/rol/agregar',agregar_rol_proyecto_view,name='agregar-rol'),
     path('proyecto/<int:pk_proy>/roles/',views.ListaRolProyectoView.as_view(),name = 'roles'),

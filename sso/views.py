@@ -15,6 +15,7 @@ class AdminUserMixin(LoginRequiredMixin, UserPassesTestMixin):
     """
     Este mixin asegura, que solo administradores pueden acceder a las vistas donde se 
     aplicó el mixin. 
+    En caso de error envia un mensaje que será visible en la página.
     """
     def test_func(self):
         """ En esta función, se hace un test si el usuario es administrador """
@@ -29,6 +30,7 @@ class AdminUserMixin(LoginRequiredMixin, UserPassesTestMixin):
 class AdministrationUserMixin(LoginRequiredMixin, UserPassesTestMixin):
     """
     Este mixin asegura, que solo administradores pueden acceder al listado de roles y de los usuarios.
+    En caso de error envia un mensaje que será visible en la página.
     """
     def test_func(self):
         return self.request.user.is_administrator
@@ -58,7 +60,9 @@ class ListaRolesSistema(AdministrationUserMixin,ListView):
         return context
 
 class UpdateRolSistema(AdminUserMixin,UpdateView):
-    """ Vista para actualizar los permisos de un rol de sistema """
+    """ Vista para actualizar los permisos de un rol de sistema. Retorna un 
+    listado de permisos de los cuales se puede asignar nuevos permisos o quitar permisos del rol.
+    """
     model = Group
     template_name = "sso/group_form.html"
     form_class = UpdateRolSistemaForm
@@ -66,7 +70,7 @@ class UpdateRolSistema(AdminUserMixin,UpdateView):
 
 
 class DeleteUser(AdminUserMixin,DeleteView):
-    """ Vista para dar debaja de un Usuario """
+    """ Vista para dar debaja del sistema de un Usuario """
     model = User
     success_url = reverse_lazy('sso:roles-sistema-listado')
 
@@ -93,19 +97,21 @@ class UserAssignSisRole(AdminUserMixin,UpdateView):
     raise_exception = True
 
     def get_object(self, queryset=None):
+        """ Función que retorna el usuario al cual se va asignar los roles. """
         id = self.kwargs['pk']
         return self.model.objects.get(id=id)
 
     def form_valid(self, form):
+        """ Función para validar el Form. Guarda el form y redirecciona a la pagina de administración. """
         form.save()
         return HttpResponseRedirect(reverse('sso:roles-sistema-listado'))
     
-    def test_func(self):
-        """ En esta función, se hace un test si el usuario quiere cambiar sus propios roles"""
-        usuario = self.get_object()
-        return self.request.user != usuario
+    # def test_func(self):
+    #     """ En esta función, se hace un test si el usuario quiere cambiar sus propios roles"""
+    #     usuario = self.get_object()
+    #     return self.request.user != usuario
     
-    def handle_no_permission(self):
-        """ Se devuelve un mensaje de error """
-        messages.error(self.request,'Usted no es un Administrador o no puede cambiar sus propios roles')
-        return HttpResponseRedirect(reverse('sso:roles-sistema-listado'))
+    # def handle_no_permission(self):
+    #     """ Se devuelve un mensaje de error """
+    #     messages.error(self.request,'Usted no es un Administrador o no puede cambiar sus propios roles')
+    #     return HttpResponseRedirect(reverse('sso:roles-sistema-listado'))

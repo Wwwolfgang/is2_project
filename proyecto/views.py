@@ -1,9 +1,10 @@
 from django.contrib import messages
+from django.contrib.auth.models import Permission
 from django.shortcuts import redirect, render
 from django.shortcuts import get_object_or_404
 from guardian.shortcuts import assign_perm
 from django.contrib.auth.mixins import PermissionRequiredMixin,LoginRequiredMixin
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView
 from django.urls import reverse
@@ -14,8 +15,14 @@ from django.urls import reverse_lazy
 from guardian.decorators import permission_required_or_403,permission_required
 from guardian.shortcuts import assign_perm
 from sso.models import User
+from django.views.decorators.csrf import csrf_exempt
 
 class EliminarRolProyectoView(PermissionRequiredMixin, DeleteView):
+    """
+    Vista para eliminar un rol de proyecto.
+    Se selecciona un rol, se confirma la eliminación, y se retorna a la
+    página que lista los roles.
+    """
     model = RolProyecto
     template_name = 'proyecto/eliminar_rol_proyecto.html'
     permission_required = ('sso.pg_is_user')
@@ -38,6 +45,10 @@ class EliminarRolProyectoView(PermissionRequiredMixin, DeleteView):
     
 
 class ListaRolProyectoView(PermissionRequiredMixin, ListView):
+    """
+    Vista para listar los roles asociados a un proyecto.
+    Se presiona el botón de "Roles" y se despliega la lista de roles.
+    """
     model = RolProyecto
     template_name = 'proyecto/lista_rol_proyecto.html'
     permission_required = ('sso.pg_is_user')
@@ -60,6 +71,10 @@ class DetallesRolProyectoView(PermissionRequiredMixin, DetailView):
 
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
 def agregar_rol_proyecto_view(request,pk_proy):
+    """
+    Vista para agregar un rol de proyecto al proyecto.
+    Se toman como parámetros el nombre del nuevo rol y sus permisos asociados para crear el rol.
+    """
     contexto = {}
     contexto.update({
         'proyect_id': pk_proy
@@ -83,6 +98,11 @@ def agregar_rol_proyecto_view(request,pk_proy):
 
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
 def editar_rol_proyecto_view(request, pk_proy, id_rol):
+    """
+    Vista para editar el rol de un proyecto.
+    Al seleccionar el rol a editar se despliegan las opciones para renombrar el rol y reasignar los
+    permisos.
+    """
     rol = get_object_or_404(RolProyecto, pk=id_rol)
     contexto = {}
 
@@ -125,8 +145,12 @@ class ImportarRolView(PermissionRequiredMixin, FormView):
         proyecto = Proyecto.objects.get(id=self.kwargs['pk_proy'])
         for rol in form.cleaned_data['roles']:
             rol = RolProyecto.objects.get(id=rol)
+            permisos = RolProyecto.objects.get(id=rol.id).permisos.all().values_list('pk', flat=True)
             rol.pk = None
             rol.proyecto = proyecto
+            rol.save()
+            for permiso in permisos:
+                rol.permisos.add(permiso)
             rol.save()
 
         return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']}))
@@ -237,3 +261,27 @@ def delete(request, pk, template_name='proyecto/confirm-delete.html'):
         proyecto.delete()
         return HttpResponseRedirect(reverse('proyecto:index'))
     return render(request, template_name, {'object':proyecto})
+
+@csrf_exempt
+@permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
+def iniciar_proyecto(request, pk):
+    proyecto = Proyecto.objects.get(pk=pk)
+    proyecto.estado_de_proyecto = 'A'
+    proyecto.save()
+    return HttpResponse("Iniciado")
+
+@csrf_exempt
+@permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
+def cancelar_proyecto(request, pk):
+    proyecto = Proyecto.objects.get(pk=pk)
+    proyecto.estado_de_proyecto = 'C'
+    proyecto.save()
+    return HttpResponse("Cancelado")
+
+@csrf_exempt
+@permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
+def finalizar_proyecto(request, pk):
+    proyecto = Proyecto.objects.get(pk=pk)
+    proyecto.estado_de_proyecto = 'F'
+    proyecto.save()
+    return HttpResponse("Finalizado")
