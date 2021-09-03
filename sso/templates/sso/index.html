@@ -16,7 +16,7 @@
     {% else %}
         <div class="container d-flex justify-content-center " style="height: 400px;">
             {% if perms.sso.pg_is_user %}
-                <h1>Bienvenidos de vuelta {{user.first_name}}</h1>
+                <h1>Bienvenido de vuelta {{user.first_name}}</h1>
             {% else %}
                 <div class="row d-flex"></div>
                 <div class="col"><h1>Bienvenidos {{user.first_name}}</h1></div>
