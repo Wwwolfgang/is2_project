@@ -1,4 +1,4 @@
-from proyecto.models import RolProyecto
+from proyecto.models import Proyecto, RolProyecto
 from django.db.models import fields
 from django.db.models.query_utils import PathInfo
 from django.http import response
@@ -12,9 +12,6 @@ import pytest
 from pytest_django.asserts import assertTemplateUsed
 
 # Create your tests here.
-
-
-
 @pytest.mark.django_db
 class TestModelRolProyecto:
     """
@@ -45,17 +42,27 @@ class TestModelRolProyecto:
 
 @pytest.mark.django_db
 class TestViewsRolProyecto(TestCase):
-    def create_rol(self, name="Scrum Master"):
-        return Group.objects.create(name=name)
+    def rol_proyecto(self):
+        rol = RolProyecto.objects.create(nombre='roltest')
+        rol.permisos.set(list(Permission.objects.all().filter(codename__startswith='p_')))
+        rol.save()
+        return rol
 
-    def user(self, username="wolfgang", first_name="Wolfgang", last_name="Wiens Wohlgemuth",email="wwwolfgang469@gmail.com"):
-        return User.objects.create(username=username, first_name=first_name,last_name=last_name,email=email)
+    def test_editar_rol_proyecto_view(self):
+        """
+        Test encargado de comprobar que se cargue correctamente la página de editar rol.
+        """
+        rolproyecto = self.rol_proyecto()
+        proyecto = Proyecto.objects.create(nombreProyecto='proyectotest')
+        print(rolproyecto)
+        response = self.client.get(reverse('proyecto:rol-editar',kwargs={'pk_proy':proyecto.pk,'id_rol':rolproyecto.id}), follow=True)
+        self.assertEqual(response.status_code, 403)
 
-    def test_agregar_rol_proyecto_view(self):
+    def test_lista_rol_proyecto_view(self):
         """
-        Test encargado de comprobar que se cargue correctamente la página de agregar rol.
+        Test encargado de comprobar que se cargue correctamente la página de listar roles.
         """
-        rol = self.create_rol()
-        response = self.client.get(reverse('proyecto:agregar-rol',kwargs={'pk':rol.pk}), follow=True)
+        proyecto = Proyecto.objects.create(nombreProyecto='proyectotest')
+        response = self.client.get(reverse('proyecto:roles',kwargs={'pk_proy':proyecto.pk}),follow=True)
         self.assertEqual(response.status_code, 200)
  
