@@ -31,9 +31,21 @@ class RolProyecto(models.Model):
 class Proyecto(models.Model):
     """
     Clase proyecto
+    El modelo todavía no está completo
+    Por el momento se configura:
 
-    TODO: Realizar user story para poder implementar en agregarSprintProyecto()
-    y actualizarBurnDownChart()
+    - El nombre del Proyecto
+    - La fecha de inicio del Proyecto
+    - La fecha estimada de finalización del Proyecto
+    - Un codigo del Proyecto
+    - El numero de Sprints
+    - La duración por default de un Sprint
+    - El estado del proyecto siendo inicialmente Inicializado y después Activo, Finalizado o Cancelado
+    - El equipo de participantes en el proyecto. 
+    - TODO equipo de desarrolladores,etc
+    
+    También se definieron algunos permisos iniciales, cuya cantidad va aumentar. Estos permisos van a ser asignados al usuario por el proyecto.
+
     """
     nombreProyecto = models.CharField(max_length = 50)
     fechaInicio = models.DateField(null=False, blank=False, help_text="Fecha de inicialización del proyecto", default=timezone.now())
