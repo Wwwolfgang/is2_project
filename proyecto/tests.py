@@ -54,10 +54,6 @@ class TestViewsRolProyecto(unittest.TestCase):
     def test_agregar_rol_proyecto_view(self):
         """
         Test encargado de comprobar que no ocurra nigun error al cargar la pagina con un usuario que ha iniciado sesion.
-        Se espera:
-            Status code de la respuesta del servidor 300.
-        Mensaje de Error:
-            No se obtuvo la pagina correctamente. Se esperaba un status code 300.
         """
         response = self.client.get('proyecto/<int:pk_proy>/rol/agregar')
         self.assertEqual(response.status_code, 200)
