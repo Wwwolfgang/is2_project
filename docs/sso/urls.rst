@@ -1,5 +1,5 @@
-SSSo Urls
-=========
+SSO Urls
+========
 
 .. automodule:: sso.urls
    :members:

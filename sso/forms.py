@@ -18,6 +18,7 @@ class UpdateRolSistemaForm(forms.ModelForm):
     #     widget=forms.CheckboxSelectMultiple
     # )
     def __init__(self, *args, **kwargs):
+        """ Retorna un listado de permisos de los cuales el usuario puede elegir. """
         super(UpdateRolSistemaForm, self).__init__(*args, **kwargs)
         self.fields['permissions'] = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple,
                                                             choices=[(p.id, p.name) for p in Permission.objects.all() if

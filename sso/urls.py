@@ -1,7 +1,17 @@
+""" 
+Listado de urls de la app sso.
+Todas las rutas tienen un prefijo /administration/
+
+- la ruta inicial /administration/ nos lleva a la página de Administración con un listado de los roles de sistema y los usuarios del sistema. Desde aquí el administrador puede asignar roles, etc.
+- /administration/<pk>/update-rol-sistema direcciona a un Form para modificar permisos de roles.
+- /administration/<pk>/asignar-rol-sistema direcciona a un Form para asignar roles a un usuario.
+- /administration/<pk>/delete-user direcciona a un Form para confirmar la debaja del usuario.
+- /administration/<pk>/update-user direcciona a un Form para modificar un usuario p.E. su estado de Administrador.
+"""
+
 from django.urls import path
 from .views import ListaRolesSistema, DeleteUser, UpdateUser, UpdateRolSistema,UserAssignSisRole
 from django.views.generic import TemplateView
-
 
 app_name = 'sso'
 
