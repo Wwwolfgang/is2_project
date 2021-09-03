@@ -212,7 +212,7 @@ class AssignUserRolProyecto(PermissionRequiredMixin, UpdateView):
 
 
 class ListaProyectos(PermissionRequiredMixin, ListView):
-    permission_required = ('sso.pg_puede_crear_proyecto','sso.pg_is_user')
+    permission_required = ('sso.pg_puede_acceder_proyecto','sso.pg_is_user')
     raise_exception = True
     model = Proyecto
     template_name = 'proyecto/index.html'
@@ -225,7 +225,7 @@ class ListaProyectos(PermissionRequiredMixin, ListView):
 class ProyectoDetailView(PermissionRequiredMixin, DetailView):
     model = Proyecto
     template_name = 'proyecto/proyecto-detalle.html'
-    permission_required = ('sso.pg_is_user')
+    permission_required = ('sso.pg_is_user','sso.pg_puede_acceder_proyecto')
 
     def get_object(self, queryset=None):
         id = self.kwargs['pk']
@@ -244,6 +244,8 @@ def create(request):
 
     return render(request,'proyecto/create.html',{'form': form})
 
+@permission_required('sso.pg_puede_acceder_proyecto', return_403=True, accept_global_perms=True)
+@permission_required('sso.pg_puede_crear_proyecto', return_403=True, accept_global_perms=True)
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
 def edit(request, pk, template_name='proyecto/edit.html'):
     proyecto = get_object_or_404(Proyecto, pk=pk)
@@ -263,6 +265,8 @@ def delete(request, pk, template_name='proyecto/confirm-delete.html'):
     return render(request, template_name, {'object':proyecto})
 
 @csrf_exempt
+@permission_required('sso.pg_puede_acceder_proyecto', return_403=True, accept_global_perms=True)
+@permission_required('sso.pg_puede_crear_proyecto', return_403=True, accept_global_perms=True)
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
 def iniciar_proyecto(request, pk):
     proyecto = Proyecto.objects.get(pk=pk)
@@ -271,6 +275,8 @@ def iniciar_proyecto(request, pk):
     return HttpResponse("Iniciado")
 
 @csrf_exempt
+@permission_required('sso.pg_puede_acceder_proyecto', return_403=True, accept_global_perms=True)
+@permission_required('sso.pg_puede_crear_proyecto', return_403=True, accept_global_perms=True)
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
 def cancelar_proyecto(request, pk):
     proyecto = Proyecto.objects.get(pk=pk)
@@ -279,6 +285,8 @@ def cancelar_proyecto(request, pk):
     return HttpResponse("Cancelado")
 
 @csrf_exempt
+@permission_required('sso.pg_puede_acceder_proyecto', return_403=True, accept_global_perms=True)
+@permission_required('sso.pg_puede_crear_proyecto', return_403=True, accept_global_perms=True)
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
 def finalizar_proyecto(request, pk):
     proyecto = Proyecto.objects.get(pk=pk)

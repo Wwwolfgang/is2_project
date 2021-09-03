@@ -20,5 +20,6 @@ class User(AbstractUser):
 
         permissions = [
             ('pg_is_user','El usuario es un usuario registrado que se le asignó un rol. Con este permiso tiene la posibilidad de ver más en el sistema.'),
-            ('pg_puede_crear_proyecto','El usuario puede crear nuevos proyectos.')
+            ('pg_puede_crear_proyecto','El usuario puede crear nuevos proyectos.'),
+            ('pg_puede_acceder_proyecto','El usuario puede acceder los proyectos.')
         ]
