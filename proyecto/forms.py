@@ -7,6 +7,10 @@ from sso.models import User
 from django import forms
 
 class AgregarRolProyectoForm(forms.ModelForm):
+    """
+    Form para agregar un rol al proyecto.
+    Se despliega la lista de permisos para que puedan seleccionarse los roles.
+    """
     def __init__(self, *args, **kwargs):
         super(AgregarRolProyectoForm, self).__init__(*args, **kwargs)
         self.fields['permisos'] = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple,
@@ -18,6 +22,9 @@ class AgregarRolProyectoForm(forms.ModelForm):
 
 
 class UserAssignRolForm(forms.ModelForm):
+    """
+    Form para asignar un rol a los participantes del proyecto.
+    """
     class Meta:
         model = RolProyecto
         fields = ['participantes']
@@ -31,6 +38,10 @@ class UserAssignRolForm(forms.ModelForm):
 
 
 class ProyectoForm(forms.ModelForm):
+    """
+    Form de proyecto que recibe los parámetros asociados al nombre, duración del sprint, fecha de incio y fin
+    y el equipo encargado del proyecto.
+    """
     class Meta:
         model = Proyecto
         fields = ["nombreProyecto", "duracionSprint", "fechaInicio", "fechaFin", "equipo"]
@@ -46,6 +57,10 @@ class ProyectoForm(forms.ModelForm):
 
 
 class ImportarRolProyectoForm(forms.Form):
+    """
+    Form para importar roles de proyecto. Se seleccionan de entre todos los proyectos existentes
+    en el sistema y se extraen sus roles para desplegarse en pantalla. 
+    """
     class Meta:
         fields = ["roles"]
 

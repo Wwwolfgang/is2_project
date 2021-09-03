@@ -18,6 +18,11 @@ from sso.models import User
 from django.views.decorators.csrf import csrf_exempt
 
 class EliminarRolProyectoView(PermissionRequiredMixin, DeleteView):
+    """
+    Vista para eliminar un rol de proyecto.
+    Se selecciona un rol, se confirma la eliminación, y se retorna a la
+    página que lista los roles.
+    """
     model = RolProyecto
     template_name = 'proyecto/eliminar_rol_proyecto.html'
     permission_required = ('sso.pg_is_user')
@@ -40,6 +45,10 @@ class EliminarRolProyectoView(PermissionRequiredMixin, DeleteView):
     
 
 class ListaRolProyectoView(PermissionRequiredMixin, ListView):
+    """
+    Vista para listar los roles asociados a un proyecto.
+    Se presiona el botón de "Roles" y se despliega la lista de roles.
+    """
     model = RolProyecto
     template_name = 'proyecto/lista_rol_proyecto.html'
     permission_required = ('sso.pg_is_user')
@@ -62,6 +71,10 @@ class DetallesRolProyectoView(PermissionRequiredMixin, DetailView):
 
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
 def agregar_rol_proyecto_view(request,pk_proy):
+    """
+    Vista para agregar un rol de proyecto al proyecto.
+    Se toman como parámetros el nombre del nuevo rol y sus permisos asociados para crear el rol.
+    """
     contexto = {}
     contexto.update({
         'proyect_id': pk_proy
@@ -85,6 +98,11 @@ def agregar_rol_proyecto_view(request,pk_proy):
 
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
 def editar_rol_proyecto_view(request, pk_proy, id_rol):
+    """
+    Vista para editar el rol de un proyecto.
+    Al seleccionar el rol a editar se despliegan las opciones para renombrar el rol y reasignar los
+    permisos.
+    """
     rol = get_object_or_404(RolProyecto, pk=id_rol)
     contexto = {}
 

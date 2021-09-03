@@ -4,6 +4,11 @@ from django.utils import timezone
 from sso.models import User
 # Create your models here.
 class RolProyecto(models.Model):
+    """
+    Model del rol de proyecto.
+    Se almacena el nombre del rol, sus permisos, los participantes del proyecto que tienen el rol,
+    y el proyecto al que pertenece dicho rol.
+    """
     nombre = models.CharField(verbose_name='Nombre del rol', max_length=60, blank=False,null=False)
     permisos = models.ManyToManyField(Permission)
     participantes = models.ManyToManyField(User,blank=True,null=True)
@@ -12,7 +17,11 @@ class RolProyecto(models.Model):
         permissions = (
                     ("p_administrar_roles","Permite que el usuario pueda configurar, crear, importar y eliminar roles del proyecto. Solo los permisos del scrum master no se podrán modificar."),
         )
+
     def get_permisos(self):
+        """
+        Función que retorna la lista de permisos asociados al rol
+        """
         return [p for p in self.permisos.all()]
     
     def __str__(self):
@@ -22,9 +31,21 @@ class RolProyecto(models.Model):
 class Proyecto(models.Model):
     """
     Clase proyecto
+    El modelo todavía no está completo
+    Por el momento se configura:
 
-    TODO: Realizar user story para poder implementar en agregarSprintProyecto()
-    y actualizarBurnDownChart()
+    - El nombre del Proyecto
+    - La fecha de inicio del Proyecto
+    - La fecha estimada de finalización del Proyecto
+    - Un codigo del Proyecto
+    - El numero de Sprints
+    - La duración por default de un Sprint
+    - El estado del proyecto siendo inicialmente Inicializado y después Activo, Finalizado o Cancelado
+    - El equipo de participantes en el proyecto. 
+    - TODO equipo de desarrolladores,etc
+    
+    También se definieron algunos permisos iniciales, cuya cantidad va aumentar. Estos permisos van a ser asignados al usuario por el proyecto.
+
     """
     nombreProyecto = models.CharField(max_length = 50)
     fechaInicio = models.DateField(null=False, blank=False, help_text="Fecha de inicialización del proyecto", default=timezone.now())
