@@ -15,6 +15,7 @@ class User(AbstractUser):
         return self.username
 
     class Meta:
+        """ Listado inicial de permisos del sistema. Este listado a futuro va ser expandido y se podrá elegir más permisos. """
         verbose_name_plural = "users"
 
         permissions = [
