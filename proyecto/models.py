@@ -34,13 +34,14 @@ class Proyecto(models.Model):
     duracionSprint = models.IntegerField(null=False, blank=False, default=14, help_text="Duración de un Sprint")
     ESTADO_DE_PROYECTO_CHOICES = [
         ('A', 'Activo'),
+        ('I', 'Inicializado'),
         ('C', 'Cancelado'),
         ('F', 'Finalizado'),
     ]
     estado_de_proyecto = models.CharField(
         max_length=1,
         choices=ESTADO_DE_PROYECTO_CHOICES,
-        default='A',
+        default='I',
     )
     equipo = models.ManyToManyField(User)
 

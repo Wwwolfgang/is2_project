@@ -100,12 +100,12 @@ class UserAssignSisRole(AdminUserMixin,UpdateView):
         form.save()
         return HttpResponseRedirect(reverse('sso:roles-sistema-listado'))
     
-    def test_func(self):
-        """ En esta función, se hace un test si el usuario quiere cambiar sus propios roles"""
-        usuario = self.get_object()
-        return self.request.user != usuario
+    # def test_func(self):
+    #     """ En esta función, se hace un test si el usuario quiere cambiar sus propios roles"""
+    #     usuario = self.get_object()
+    #     return self.request.user != usuario
     
-    def handle_no_permission(self):
-        """ Se devuelve un mensaje de error """
-        messages.error(self.request,'Usted no es un Administrador o no puede cambiar sus propios roles')
-        return HttpResponseRedirect(reverse('sso:roles-sistema-listado'))
+    # def handle_no_permission(self):
+    #     """ Se devuelve un mensaje de error """
+    #     messages.error(self.request,'Usted no es un Administrador o no puede cambiar sus propios roles')
+    #     return HttpResponseRedirect(reverse('sso:roles-sistema-listado'))

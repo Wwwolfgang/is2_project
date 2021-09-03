@@ -1,6 +1,6 @@
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, UserManager
 import datetime
 
 from django.db.models.fields import CharField
@@ -10,7 +10,7 @@ class User(AbstractUser):
     Esto será util para relacionar los usuarios con los roles de sistema y de proyecto.
     """
     is_administrator = models.BooleanField(verbose_name='Administrador',default=False)
-
+    objects = UserManager()
     def __str__(self):
         return self.username
 

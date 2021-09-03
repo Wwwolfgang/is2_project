@@ -8,14 +8,38 @@
 
         Duración de Sprint: {{object.duracionSprint}} días<br/>
 
+        Estado: {{object.estado_de_proyecto}}<br/>
+
         Participantes:
 
         {% for user in object.equipo.all %}
-        <p> {{user}} </p>
+        <p> {{user.first_name}}{{user.last_name}} </p>
         {% endfor %}
 
         <a href="{% url 'proyecto:roles' object.id %}"  class="btn btn-info" type="button">Roles y Participantes</a>
+        
+        {% if object.estado_de_proyecto == "I" %}
+            <button hx-post="{% url 'proyecto:iniciar-proyecto' object.id %}" @click="reload()" class="btn btn-success" id="iniciar">Iniciar Proyecto</button>
+        {% endif %}
+        {% if object.estado_de_proyecto == "A" %}
+            <button hx-post="{% url 'proyecto:cancelar-proyecto' object.id %}" x-data @click="reload()" class="btn btn-danger" id="iniciar">Cancelar Proyecto</button>
+            <button hx-post="{% url 'proyecto:finalizar-proyecto' object.id %}" x-data @click="reload()" class="btn btn-outline-success" id="iniciar">Finalizar Proyecto</button>
+        {% endif %}
+        </div>
 
-    </div>
+{% endblock %}
+{% block extra_js %}
+<script>
+    function reload(){
+        setTimeout(()=>{console.log('Actualizado')},1000)
+        location.reload();
+    }
 
+</script>
+<script>
+    document.body.addEventListener(
+      'htmx:configRequest', (event) => {
+        event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+    })
+  </script>
 {% endblock %}

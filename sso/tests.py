@@ -1,33 +1,33 @@
 #import django.db
-import pytest
+# import pytest
 #from django.test import TestCase
-from sso.models import userStory
-from sso.models import comentario
-import datetime
-def testNombreUserStory():
-    nombreUserStory = "0001"
-    isNumber = '0123456789'
-    isSymbol = '!@#$%^&*()'
-    for i in range (10):
-        for j in range( nombreUserStory.__len__() ):
-            assert isNumber[i] != nombreUserStory[j] or isSymbol[i] != nombreUserStory[j]
+# from sso.models import userStory
+# from sso.models import comentario
+# import datetime
+# def testNombreUserStory():
+#     nombreUserStory = "0001"
+#     isNumber = '0123456789'
+#     isSymbol = '!@#$%^&*()'
+#     for i in range (10):
+#         for j in range( nombreUserStory.__len__() ):
+#             assert isNumber[i] != nombreUserStory[j] or isSymbol[i] != nombreUserStory[j]
 
-def testDescripcionUserStory():
-    descripcionUserStory="0001"
-    assert descripcionUserStory != ""
+# def testDescripcionUserStory():
+#     descripcionUserStory="0001"
+#     assert descripcionUserStory != ""
 
-def testComentarios():
-    comentario1 = comentario(codComentario = "0001",codUserStory = "0001",codProyecto = "0001",descripcion = "Primer comentario",fecha = datetime.date.today())
-    assert comentario1.obtenerCodComentario() != "" or comentario1.obtenerCodUserStory() != ""
+# def testComentarios():
+#     comentario1 = comentario(codComentario = "0001",codUserStory = "0001",codProyecto = "0001",descripcion = "Primer comentario",fecha = datetime.date.today())
+#     assert comentario1.obtenerCodComentario() != "" or comentario1.obtenerCodUserStory() != ""
 
-def testListaParticipantes():
-    listaParticipantes = ["Cesar Rodas","Julio Lezcano"]
-    for participante in listaParticipantes:
-        assert participante != ""
+# def testListaParticipantes():
+#     listaParticipantes = ["Cesar Rodas","Julio Lezcano"]
+#     for participante in listaParticipantes:
+#         assert participante != ""
 
-def testTiempoEmpleado():
-    tiempoEmpleado = 10
-    assert tiempoEmpleado >= 0 and tiempoEmpleado <= 30
+# def testTiempoEmpleado():
+#     tiempoEmpleado = 10
+#     assert tiempoEmpleado >= 0 and tiempoEmpleado <= 30
     #comentario1 = sso.models.comentario(codComentario = "0001",codUserStory = "0001",codProyecto = "0001",descripcion = "Primer comentario",fecha = datetime.date.today())
     #comentario2 = sso.models.comentario(codComentario = "0002",codUserStory = "0002",codProyecto = "0002",descripcion = "Segundo comentario",fecha = datetime.date.today())
     #comentario3 = sso.models.comentario(codComentario = "0003",codUserStory = "0003",codProyecto = "0003",descripcion = "Tercer comentario",fecha = datetime.date.today())
