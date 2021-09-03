@@ -167,7 +167,7 @@ class burnDownChart(models.Model):
 class RolProyecto(models.Model):
     nombre = models.CharField(verbose_name='Nombre del rol', max_length=60, blank=False,null=False)
     permisos = models.ManyToManyField(Permission)
-    participantes = models.ManyToManyField(User,blank=True,null=True)
+    participantes = models.ManyToManyField(User,blank=True)
     proyecto = models.ForeignKey('proyecto', on_delete=models.CASCADE, blank=True, null=True)
     class Meta:
         permissions = (
@@ -188,10 +188,10 @@ class Proyecto(models.Model):
     y actualizarBurnDownChart()
     """
     nombreProyecto = models.CharField(max_length = 50)
-    fechaInicio = models.DateField(null=False, blank=False, help_text="Fecha de inicialización del proyecto", default=timezone.now())
-    fechaFin = models.DateField(null=False, blank=False, help_text="Fecha estimada de finalización del proyecto", default=timezone.now())
-    codProyecto = 0
-    nroSprints = 0
+    fechaInicio = models.DateField(null=False, blank=False, help_text="Fecha de inicialización del proyecto", default=timezone.now)
+    fechaFin = models.DateField(null=False, blank=False, help_text="Fecha estimada de finalización del proyecto", default=timezone.now)
+    codProyecto = models.IntegerField()
+    nroSprints = models.IntegerField()
     duracionSprint = models.IntegerField(null=False, blank=False, default=14, help_text="Duración de un Sprint")
     ESTADO_DE_PROYECTO_CHOICES = [
         ('A', 'Activo'),

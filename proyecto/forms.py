@@ -56,3 +56,8 @@ class ImportarRolProyectoForm(forms.Form):
         widget=forms.CheckboxSelectMultiple,
         choices=[(p.id, p.nombre) for p in RolProyecto.objects.exclude(proyecto__id=proyecto_id)]
     )
+
+class importarParticipantesForm(forms.Form):
+    class Meta:
+        models: Proyecto
+        fields = ['equipo']
