@@ -1,4 +1,5 @@
 from django.db.models import fields
+from django.db.models.query_utils import PathInfo
 from django.http import response
 from django.test import TestCase
 from sso import models
@@ -8,6 +9,8 @@ from sso.forms import UpdateRolSistemaForm,UserAssignRolForm
 from django.contrib.auth.models import Group,Permission, User
 from django.test.client import Client, RequestFactory
 from allauth.utils import get_user_model
+import pytest
+from pytest_django.asserts import assertTemplateUsed
 
 class AdministrationViewTest(TestCase):
 
@@ -50,6 +53,5 @@ class AdministrationViewTest(TestCase):
         user_pk = user.pk
         resp = self.client.delete(reverse('sso:user-delete',kwargs={'pk': user.pk}), follow=True)
         user.refresh_from_db()
-        print(resp.status_code,user)
-        print(models.User.objects.all())
+        print('El usuario no fue eliminado')
         self.assertFalse(models.User.objects.filter(pk=user_pk).exists())
