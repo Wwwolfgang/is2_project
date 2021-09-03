@@ -19,13 +19,13 @@
                 <h1>Bienvenido de vuelta {{user.first_name}}</h1>
             {% else %}
                 <div class="row d-flex"></div>
-                <div class="col"><h1>Bienvenidos {{user.first_name}}</h1></div>
+                <div class="col"><h1>Bienvenido {{user.first_name}}</h1></div>
                 
                 <div class="col">
                     <h5>Iniciaste sesión en el sistema de gestión de proyectos</h5>
                     <h5>de la materia IS2</h5>
                     <h5>Todavía no tienes ningún permiso</h5>
-                    <a href="" class="btn btn-primary">Solicitar permisos</a>
+                    <a href="" class="btn btn-primary disabled" >Solicitar permisos</a>
                 </div>
                 
             {% endif %}
