@@ -4,7 +4,7 @@ from django.shortcuts import redirect, render
 from django.shortcuts import get_object_or_404
 from guardian.shortcuts import assign_perm
 from django.contrib.auth.mixins import PermissionRequiredMixin,LoginRequiredMixin
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView
 from django.urls import reverse
@@ -15,6 +15,7 @@ from django.urls import reverse_lazy
 from guardian.decorators import permission_required_or_403,permission_required
 from guardian.shortcuts import assign_perm
 from sso.models import User
+from django.views.decorators.csrf import csrf_exempt
 
 class EliminarRolProyectoView(PermissionRequiredMixin, DeleteView):
     model = RolProyecto
@@ -242,3 +243,27 @@ def delete(request, pk, template_name='proyecto/confirm-delete.html'):
         proyecto.delete()
         return HttpResponseRedirect(reverse('proyecto:index'))
     return render(request, template_name, {'object':proyecto})
+
+@csrf_exempt
+@permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
+def iniciar_proyecto(request, pk):
+    proyecto = Proyecto.objects.get(pk=pk)
+    proyecto.estado_de_proyecto = 'A'
+    proyecto.save()
+    return HttpResponse("Iniciado")
+
+@csrf_exempt
+@permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
+def cancelar_proyecto(request, pk):
+    proyecto = Proyecto.objects.get(pk=pk)
+    proyecto.estado_de_proyecto = 'C'
+    proyecto.save()
+    return HttpResponse("Cancelado")
+
+@csrf_exempt
+@permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
+def finalizar_proyecto(request, pk):
+    proyecto = Proyecto.objects.get(pk=pk)
+    proyecto.estado_de_proyecto = 'F'
+    proyecto.save()
+    return HttpResponse("Finalizado")
