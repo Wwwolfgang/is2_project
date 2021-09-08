@@ -1,0 +1,28 @@
+{% extends 'proyecto/proyecto-detalle.html' %}
+
+{% block proyect_content %}
+<div class="container">
+    <div class="row"></div>
+    <br />
+    <div class="row">
+        <div class="col-md-2 col-xs-2 col-sm-2"></div>
+        <div class="col-md-10 col-xs-10 col-sm-10">
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-row">
+                    <div class="alert alert-warning">
+                        ¿Desea eliminar este Participante del proyecto?<br/>
+                        <h4>{{ object.first_name }} {{object.last_name}} </h4>
+                    </div>
+                </div>
+                <div>
+                    <a class="btn btn-warning" role="button" href="{% url 'proyecto:roles' proyect_id %}">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="my-2 btn btn-danger">Eliminar Participante</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

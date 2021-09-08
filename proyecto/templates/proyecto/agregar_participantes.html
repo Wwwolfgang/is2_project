@@ -1,0 +1,25 @@
+{% extends 'proyecto/proyecto-detalle.html' %}
+
+{% block proyect_content %}
+{% load widget_tweaks %}
+
+<div class="container-fluid">
+    <div class="row">
+        <h5 style="text-align:start;">
+            Agregar Participantes
+        </h5>
+        <div class="col-md-10 col-xs-10 col-sm-10">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                {% for field in form.visible_fields %}
+                <div class="form-group">
+                    Participantes en el Proyecto:
+                        {{field}}
+                </div>
+                {%endfor%}
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

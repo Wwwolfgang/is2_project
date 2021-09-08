@@ -1,6 +1,8 @@
 from django.contrib.auth.models import Permission
 from django.db import models
-from django.utils import timezone
+from datetime import datetime
+
+from django.db.models.deletion import CASCADE
 from sso.models import User
 # Create your models here.
 class RolProyecto(models.Model):
@@ -11,7 +13,7 @@ class RolProyecto(models.Model):
     """
     nombre = models.CharField(verbose_name='Nombre del rol', max_length=60, blank=False,null=False)
     permisos = models.ManyToManyField(Permission)
-    participantes = models.ManyToManyField(User,blank=True,null=True)
+    participantes = models.ManyToManyField(User,blank=True)
     proyecto = models.ForeignKey('proyecto', on_delete=models.CASCADE, blank=True, null=True)
     class Meta:
         permissions = (
@@ -48,10 +50,8 @@ class Proyecto(models.Model):
 
     """
     nombreProyecto = models.CharField(max_length = 50)
-    fechaInicio = models.DateField(null=False, blank=False, help_text="Fecha de inicialización del proyecto", default=timezone.now())
-    fechaFin = models.DateField(null=False, blank=False, help_text="Fecha estimada de finalización del proyecto", default=timezone.now())
-    codProyecto = 0
-    nroSprints = 0
+    fechaInicio = models.DateField(null=False, blank=False, help_text="Fecha de inicialización del proyecto", default=datetime.now )
+    fechaFin = models.DateField(null=False, blank=False, help_text="Fecha estimada de finalización del proyecto", default=datetime.now )
     duracionSprint = models.IntegerField(null=False, blank=False, default=14, help_text="Duración de un Sprint")
     ESTADO_DE_PROYECTO_CHOICES = [
         ('A', 'Activo'),
@@ -64,7 +64,8 @@ class Proyecto(models.Model):
         choices=ESTADO_DE_PROYECTO_CHOICES,
         default='I',
     )
-    equipo = models.ManyToManyField(User)
+    owner = models.ForeignKey(User,blank=True,null=True,on_delete=CASCADE,related_name='creador')
+    equipo = models.ManyToManyField(User,blank=True)
 
     class Meta:
         permissions = (

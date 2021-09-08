@@ -6,8 +6,8 @@ from django.contrib.auth.views import LogoutView
 from proyecto.views import agregar_rol_proyecto_view
 from django.urls import path
 from django.views.generic import TemplateView
-from .views import EliminarRolProyectoView, ProyectoDetailView, edit, create, delete, editar_rol_proyecto_view, ListaProyectos, AssignUserRolProyecto,ImportarRolView,iniciar_proyecto,cancelar_proyecto
-from .views import finalizar_proyecto
+from .views import EliminarRolProyectoView, ProyectoDetailView, edit, delete, editar_rol_proyecto_view, ListaProyectos, AssignUserRolProyecto,ImportarRolView,iniciar_proyecto,cancelar_proyecto, CreateProyectoView
+from .views import finalizar_proyecto, AgregarParticipanteProyecto
 app_name = 'proyecto'
 
 urlpatterns = [
@@ -16,8 +16,9 @@ urlpatterns = [
     path('proyectos/', ListaProyectos.as_view(), name='index'),
     path('proyecto/<int:pk>/', ProyectoDetailView.as_view(), name='detail'),
     path('proyecto/edit/<int:pk>/', edit, name='edit'),
-    path('proyecto/create/', create, name='create'),
+    path('proyecto/create/', CreateProyectoView.as_view(), name='create'),
     path('proyecto/delete/<int:pk>/', delete, name='delete'),
+    path('proyecto/<int:pk_proy>/agregar-participantes/',AgregarParticipanteProyecto.as_view(), name='agregar-participantes-proyecto'),
     path('iniciar/proyecto/<int:pk>/', iniciar_proyecto, name='iniciar-proyecto'),
     path('cancelar/proyecto/<int:pk>/', cancelar_proyecto, name='cancelar-proyecto'),
     path('finalizar/proyecto/<int:pk>/', finalizar_proyecto, name='finalizar-proyecto'),
