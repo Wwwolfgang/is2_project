@@ -223,7 +223,7 @@ class ListaProyectos(PermissionRequiredMixin, ListView):
     context_object_name = 'proyecto_list'
 
     def get_queryset(self):
-        return User.objects.get(id=self.request.user.id).proyecto_set.all() | Proyecto.objects.filter(owner_id=self.request.user.id)
+        return User.objects.get(id=self.request.user.id).proyecto_set.all().exclude(estado_de_proyecto='C') | Proyecto.objects.filter(owner_id=self.request.user.id).exclude(estado_de_proyecto='C')
 
 
 class ProyectoDetailView(PermissionRequiredMixin, DetailView):
@@ -340,10 +340,11 @@ def edit(request, pk, template_name='proyecto/edit.html'):
 
 
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
-def delete(request, pk, template_name='proyecto/confirm-delete.html'):
+def cancelar(request, pk, template_name='proyecto/confirm-cancel.html'):
     proyecto = get_object_or_404(Proyecto, pk=pk)
     if request.method=='POST':
-        proyecto.delete()
+        proyecto.estado_de_proyecto = 'C'
+        proyecto.save()
         return HttpResponseRedirect(reverse('proyecto:index'))
     return render(request, template_name, {'object':proyecto})
 

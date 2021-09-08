@@ -13,7 +13,6 @@
                 {% csrf_token %}
                 {% for field in form.visible_fields %}
                 <div class="form-group">
-                    {% if field.name != 'equipo' %}
                         {% if field.name == 'nombreProyecto'%}
                             Nombre del Proyecto
                             {% render_field field class="form-control" %}
@@ -45,10 +44,6 @@
                             {% endif %}
                         {% endif %}
 
-                    {% else %}
-                        Participantes en el Proyecto:
-                        {{field}}
-                    {% endif %}
                 </div>
                 {% endfor %}
                 <button type="submit" class="btn btn-primary">Guardar</button>

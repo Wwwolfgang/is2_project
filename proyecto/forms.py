@@ -49,14 +49,9 @@ class ProyectoEditForm(forms.ModelForm):
     """
     class Meta:
         model = Proyecto
-        fields = ["nombreProyecto", "duracionSprint", "fechaInicio", "fechaFin", "equipo"]
+        fields = ["nombreProyecto", "duracionSprint", "fechaInicio", "fechaFin"]
 
-    def __init__(self, *args, **kwargs):
-        super(ProyectoEditForm,self).__init__(*args, **kwargs)
-        owner = self.instance.owner
-        self.fields['equipo'] = CustomUserMCF(queryset= User.objects.filter(proyecto__id=self.instance.pk).exclude(pk=owner.pk),
-        widget=forms.CheckboxSelectMultiple
-    )
+
 
 
 class ProyectoCreateForm(forms.ModelForm):

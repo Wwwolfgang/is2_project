@@ -40,8 +40,8 @@
         </div>
         {% if user.pk == proyecto.owner.id %}
             <div class="col-md-1">
-                <a href="{% url 'proyecto:delete' proyecto.pk %}" type="button" class="btn btn-danger">
-                    Eliminar
+                <a href="{% url 'proyecto:cancelar' proyecto.pk %}" type="button" class="btn btn-danger">
+                    Cancelar
                 </a>
             </div>
         {% endif %}
