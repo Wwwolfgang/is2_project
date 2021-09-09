@@ -14,9 +14,22 @@
         </div>
 
     {% else %}
-        <div class="container d-flex justify-content-center " style="height: 400px;">
+        <div class="container" style="height: 400px;">
             {% if perms.sso.pg_is_user %}
-                <h1>Bienvenido de vuelta {{user.first_name}}</h1>
+                <div class="row">
+                    <h1>Bienvenido de vuelta {{user.first_name}}</h1>
+                </div>
+                <div class="row pt-5">
+                    <h4>Tus proyectos</h4>
+                    <ul class="list-group list-group-flush">
+                        {% for proyecto in mis_proyectos %}
+                        <li class="list-group-item ">
+                            <a href="{% url 'proyecto:detail' proyecto.id %}"> {{ proyecto.nombreProyecto }} </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                
             {% else %}
                 <div class="row d-flex"></div>
                 <div class="col"><h1>Bienvenido {{user.first_name}}</h1></div>
