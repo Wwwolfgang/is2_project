@@ -226,6 +226,17 @@ class ListaProyectos(PermissionRequiredMixin, ListView):
         return User.objects.get(id=self.request.user.id).proyecto_set.all().exclude(estado_de_proyecto='C') | Proyecto.objects.filter(owner_id=self.request.user.id).exclude(estado_de_proyecto='C')
 
 
+class ListaProyectosCancelados(PermissionRequiredMixin, ListView):
+    permission_required = ('sso.pg_puede_acceder_proyecto','sso.pg_is_user')
+    raise_exception = True
+    model = Proyecto
+    template_name = 'proyecto/proyectos-cancelados.html'
+    context_object_name = 'proyecto_list_cancelados'
+
+    def get_queryset(self):
+        return User.objects.get(id=self.request.user.id).proyecto_set.all().filter(estado_de_proyecto='C') | Proyecto.objects.filter(owner_id=self.request.user.id).filter(estado_de_proyecto='C')
+
+
 class ProyectoDetailView(PermissionRequiredMixin, DetailView):
     model = Proyecto
     template_name = 'proyecto/proyecto-detalle.html'
