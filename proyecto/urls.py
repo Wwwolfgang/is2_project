@@ -6,7 +6,7 @@ from django.contrib.auth.views import LogoutView
 from proyecto.views import agregar_rol_proyecto_view
 from django.urls import path
 from django.views.generic import TemplateView
-from .views import EliminarRolProyectoView, ProyectoDetailView, edit, create, delete, editar_rol_proyecto_view, ListaProyectos, AssignUserRolProyecto,ImportarRolView
+from .views import EliminarRolProyectoView, ProyectoDetailView, agregar_user_story_view, edit, create, delete, editar_rol_proyecto_view, ListaProyectos, AssignUserRolProyecto,ImportarRolView
 
 app_name = 'proyecto'
 
@@ -26,4 +26,7 @@ urlpatterns = [
     path('proyecto/<int:pk_proy>/rol/<int:pk>/eliminar',views.EliminarRolProyectoView.as_view(),name = 'rol-eliminar'),
     path('proyecto/<int:pk_proy>/rol/<int:id_rol>/editar',editar_rol_proyecto_view,name='rol-editar'),
     path('proyecto/<int:pk_proy>/rol/<int:id_rol>/assignar',AssignUserRolProyecto.as_view(),name='rol-assignar'),
+    #URLS de user story
+    path('proyecto/<int:pk_proy>/pbacklog',views.ProductBacklogView.as_view(),name='product-backlog'),
+    path('proyecto/<int:pk_proy>/pbacklog/agregarUS',agregar_user_story_view,name='agregar-us'),
 ]

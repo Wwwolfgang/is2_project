@@ -2,7 +2,7 @@ from django.forms import fields
 from proyecto.models import RolProyecto
 from django.contrib.auth.models import Permission
 from django import forms
-from .models import Proyecto
+from .models import Proyecto, UserStory
 from sso.models import User
 from django import forms
 
@@ -71,3 +71,13 @@ class ImportarRolProyectoForm(forms.Form):
         widget=forms.CheckboxSelectMultiple,
         choices=[(p.id, p.nombre) for p in RolProyecto.objects.exclude(proyecto__id=proyecto_id)]
     )
+
+class AgregarUserStoryForm(forms.ModelForm):
+    """
+    Form para crear un user story
+    """
+    def __init__(self, *args, **kwargs):
+        super(AgregarUserStoryForm, self).__init__(*args, **kwargs)
+    class Meta:
+        model = UserStory
+        fields = ['nombre','descripcion','tiempoEstimado']

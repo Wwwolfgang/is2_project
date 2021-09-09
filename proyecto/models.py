@@ -60,3 +60,25 @@ class Proyecto(models.Model):
             ("p_editar_proyectos","Permiso de editar proyecto."),
             ("p_finalizar_proyectos","Permiso de finalizar proyecto."),      
         )
+
+class UserStory(models.Model):
+    """
+    Clase user story
+    TODO: Agregar el campo 'encargado', que relacione el user story con el participante del proyecto encargado de 
+    realizar la tarea
+    """
+    nombre = models.CharField(verbose_name='Nombre del user story', max_length=20, blank=False,null=False)
+    descripcion = models.CharField(verbose_name='Descripción del user story', max_length=60, blank=False,null=False)
+    tiempoEstimado = models.PositiveIntegerField(blank=False)
+    #encargado = 
+    ESTADO_DE_USER_STORY_CHOICES = [
+        ('TD', 'To do'),
+        ('DG', 'Doing'),
+        ('DN', 'Done'),
+        ('QA','Quality Assurance')
+    ]
+    estado_user_story = models.CharField(
+        max_length=2,
+        choices=ESTADO_DE_USER_STORY_CHOICES,
+        default='TD',
+    )

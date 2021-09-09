@@ -8,14 +8,15 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView
 from django.urls import reverse
-from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoForm
-from proyecto.models import RolProyecto, Proyecto
+from proyecto.forms import AgregarRolProyectoForm, AgregarUserStoryForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoForm
+from proyecto.models import RolProyecto, Proyecto, UserStory
 from django.views.generic.edit import UpdateView, DeleteView, FormView
 from django.urls import reverse_lazy
 from guardian.decorators import permission_required_or_403,permission_required
 from guardian.shortcuts import assign_perm
 from sso.models import User
 
+#Views de Rol Proyecto
 class EliminarRolProyectoView(PermissionRequiredMixin, DeleteView):
     """
     Vista para eliminar un rol de proyecto.
@@ -209,7 +210,7 @@ class AssignUserRolProyecto(PermissionRequiredMixin, UpdateView):
 
         return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']}))
 
-
+#Views de proyecto
 class ListaProyectos(PermissionRequiredMixin, ListView):
     permission_required = ('sso.pg_puede_crear_proyecto','sso.pg_is_user')
     raise_exception = True
@@ -260,3 +261,41 @@ def delete(request, pk, template_name='proyecto/confirm-delete.html'):
         proyecto.delete()
         return HttpResponseRedirect(reverse('proyecto:index'))
     return render(request, template_name, {'object':proyecto})
+
+
+#Views de user story
+@permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
+def agregar_user_story_view(request, pk_proy):
+    """
+    Vista para agregar un user story al product backlog.
+    Se toman como parámetros el nombre, la descripción y el tiempo estimado por el scrum master.
+    """
+    contexto = {}
+    contexto.update({
+        'proyect_id': pk_proy
+    })
+    if request.method == 'POST':      
+        form = AgregarUserStoryForm(request.POST or None)
+        #Si el form se cargó correctamente, lo guardamos
+        if form.is_valid():
+            form.save()
+            #Redirigimos al product backlog
+            return redirect('proyecto:product-backlog', pk_proy)  
+        contexto['form'] = form
+        return render(request, 'proyecto/nuevo_user_story_view.html', context=contexto)
+    else:
+        form = AgregarUserStoryForm()
+        contexto['form'] = form
+        return render(request, 'proyecto/nuevo_user_story_view.html', context=contexto)
+
+class ProductBacklogView(PermissionRequiredMixin, ListView):
+    model = UserStory
+    template_name = 'proyecto/product_backlog.html'
+    permission_required = ('sso.pg_is_user')
+
+    def get_context_data(self, **kwargs):
+        context = super(ProductBacklogView, self).get_context_data(**kwargs)
+        context.update({
+            'proyect_id': self.kwargs['pk_proy'],
+        })
+        return context
