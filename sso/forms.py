@@ -42,3 +42,8 @@ class UserAssignRolForm(UserChangeForm):
         queryset=Group.objects.all(),
         widget=forms.CheckboxSelectMultiple
     )
+
+
+class PermisoSolicitudForm(forms.Form):
+    asunto = forms.CharField(label='Asunto de la solitud', max_length=100, required=True)
+    body = forms.CharField(widget=forms.Textarea,label='Solicitud',help_text='Especifique, que tipo de acceso o permisos necesita. Explique que acciones quiere hacer.',required=True)

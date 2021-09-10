@@ -1,0 +1,41 @@
+{% extends 'sso/base.html' %}
+
+{% block container %}
+{% load widget_tweaks %}
+
+<div class="container-fluid">
+    <div class="row">
+        <h5 style="text-align:start;">
+            Solicitud de permisos/acciones
+        </h5>
+        <div class="col-md-10 col-xs-10 col-sm-10 pb-5">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                {% for field in form.visible_fields %}
+                <div class="form-group class pb-3">
+                    {% if field.name == 'asunto'%}
+                        Asunto:
+                        {% render_field field class="form-control" %}
+                        {% if field.help_text %}
+                            <small class="form-text text-muted">{{ field.help_text }}</small>
+                        {% endif %}
+                    {% endif %}
+                    {% if field.name == 'body'%}
+                        Solicitud:
+                        {% render_field field class="form-control" %}
+                        {% if field.help_text %}
+                            <small class="form-text text-muted">{{ field.help_text }}</small>
+                        {% endif %}
+                    {% endif %}
+                </div>
+                {%endfor%}
+                <a class="btn btn-warning" role="button" href="{% url 'page-home' %}">
+                    Cancelar
+                </a>
+                <button type="submit" class="mx-2 my-2 btn btn-success"><i class="fas fa-envelope me-2"></i>Enviar</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

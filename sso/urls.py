@@ -10,7 +10,7 @@ Todas las rutas tienen un prefijo /administration/
 """
 
 from django.urls import path
-from .views import ListaRolesSistema, DeleteUser, UpdateUser, UpdateRolSistema,UserAssignSisRole,enviar_solicitud_accesso_view
+from .views import ListaRolesSistema, DeleteUser, UpdateUser, UpdateRolSistema,UserAssignSisRole,enviar_solicitud_accesso_view,SolicitarPermisosView
 from django.views.generic import TemplateView
 
 app_name = 'sso'
@@ -21,6 +21,7 @@ urlpatterns = [
     path('<pk>/asignar-rol-sistema', UserAssignSisRole.as_view(), name='rol-sistema-asignar'),
     path('<pk>/delete-user',DeleteUser.as_view(), name='user-delete'),
     path('<pk>/update-user',UpdateUser.as_view(), name='user-update'),
-    path('<pk>/enviar-solicitud/',enviar_solicitud_accesso_view,name='solicitar-accesso')
+    path('<pk>/enviar-solicitud/',enviar_solicitud_accesso_view,name='solicitar-accesso'),
+    path('<user_id>/solicitud-permisos/',SolicitarPermisosView.as_view(),name='solicitud-permisos'),
     
 ]
