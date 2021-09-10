@@ -1,0 +1,56 @@
+{% extends 'proyecto/proyecto-detalle.html' %}
+
+{% block proyect_content %}
+{% load widget_tweaks %}
+
+<div class="container-fluid">
+    <div class="row">
+        {% if edit == True %}
+            <h5 style="text-align:start;">
+                Editar Desarrollador
+            </h5>
+        {% else %}
+            <h5 style="text-align:start;">
+                Agregar Desarrollador
+            </h5>
+        {% endif %}
+        <div class="col-md-10 col-xs-10 col-sm-10 class pt-3 pb-5">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                {% for field in form.visible_fields %}
+                <div class="form-group class pb-3">
+                    {% if field.name == 'usuario'%}
+                        {% if edit %}
+                            Desarrollador
+                        {% else %}
+                            Eliga un desarrollador
+                        {% endif %}
+
+                        {% render_field field class="form-control" %}
+                        {% if field.help_text %}
+                            <small class="form-text text-muted">{{ field.help_text }}</small>
+                        {% endif %}
+                    {% endif %}
+                    {% if field.name == 'horas_diarias'%}
+                        Horas diarias
+                        {% render_field field class="form-control" %}
+                        {% if field.help_text %}
+                            <small class="form-text text-muted">{{ field.help_text }}</small>
+                        {% endif %}
+                    {% endif %}
+                </div>
+                {%endfor%}
+                    <a class="btn btn-warning" role="button" href="{% url 'proyecto:roles' proyect_id %}">
+                        Cancelar
+                    </a>
+                    {% if edit %}
+                        <button type="submit" class="mx-2 my-2 btn btn-success">Guardar</button>
+                    {% else %}
+                        <button type="submit" class="mx-2 my-2 btn btn-success">Agregar</button>
+                    {% endif %}
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -59,7 +59,6 @@
                 </tbody>
             </table>
         </div>
-        {% if participantes %}
         <div class="pt-5">
             <table class="table caption-top table-bordered mx-1">
                 <h2>Participantes del proyecto
@@ -98,8 +97,54 @@
                 </tbody>
             </table>
         </div>
-        {% else %}
-
-        {% endif %}
+        <div class="pt-5 pb-5">
+            <table class="table caption-top table-bordered mx-1">
+                <h2>Desarrolladores
+                    <a href="{% url 'proyecto:agregar-desarrollador-proyecto' proyect.id %}"  class="btn btn-success" type="button"><i class="fas fa-user-plus me-2"></i>Agregar desarrollador</a>
+                </h2>
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Desarrollador</th>
+                        <th scope="col">Horas diarias</th>
+                        <th scope="col">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for usuario in proyect.equipo_desarrollador.all %}
+                        {% if usuario.usuario.id == proyect.owner.id %}
+                        <tr>
+                            <th scope="row">{{forloop.counter}}</th>
+                            <td>{{usuario.usuario.first_name}} {{usuario.usuario.last_name}}<i class="fas fa-crown mx-2"></i></td>
+                            <td>{{usuario.horas_diarias}}</i></td>
+                            <td>
+                                <a class="btn btn-info btn-sm px-3" role="button" href="{% url 'proyecto:editar-desarrollador-proyecto' proyect.id usuario.pk %}">
+                                    <i class="fas fa-pen"></i>
+                                </a>
+                                <a class="btn btn-danger btn-sm px-3" role="button" href="{% url 'proyecto:debaja-participante-proyecto' proyect.id usuario.pk %}">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <th scope="row">{{forloop.counter}}</th>
+                            <td>{{usuario.usuario.first_name}} {{usuario.usuario.last_name}}</td>
+                            <td>{{usuario.horas_diarias}}</td>
+                            <td>
+                                <a class="btn btn-info btn-sm px-3" role="button" href="{% url 'proyecto:editar-desarrollador-proyecto' proyect.id usuario.pk %}">
+                                    <i class="fas fa-pen"></i>
+                                </a>
+                                <a class="btn btn-danger btn-sm px-3" role="button" href="{% url 'proyecto:debaja-desarrollador-proyecto' proyect.id usuario.pk %}">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>    
 {% endblock %}

@@ -1,8 +1,7 @@
 from django.forms import fields
-from proyecto.models import RolProyecto
 from django.contrib.auth.models import Permission
 from django import forms
-from .models import Proyecto
+from .models import Proyecto, ProyectUser,RolProyecto
 from sso.models import User
 from django import forms
 
@@ -110,3 +109,20 @@ class AgregarParticipanteForm(forms.Form):
         widget=forms.CheckboxSelectMultiple,
         choices=[(p.id, "%s" % p.first_name + " " + p.last_name) for p in User.objects.exclude(first_name__isnull=True).exclude(first_name__exact='').exclude(pk=proyecto.owner.pk).exclude(proyecto__id=proyecto.pk) if p.has_perm('sso.pg_is_user')]
     )
+
+
+class DesarrolladorCreateForm(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        proyect_id = kwargs.pop('pk_proy',None)
+        proyecto = Proyecto.objects.get(pk=proyect_id)
+        super().__init__(*args, **kwargs)
+        self.fields['usuario'] = forms.ModelChoiceField(
+            empty_label="Opciones",
+            queryset=proyecto.equipo.all() | User.objects.filter(pk=proyecto.owner.pk),
+        )
+        self.fields['horas_diarias'].required = True
+        self.fields['usuario'].required = True
+    class Meta:
+        model = ProyectUser
+        fields = ['usuario','horas_diarias']
