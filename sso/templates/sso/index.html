@@ -31,17 +31,25 @@
                 </div>
                 
             {% else %}
-                <div class="row d-flex"></div>
-                <div class="col"><h1>Bienvenido {{user.first_name}}</h1></div>
+                <div class="row">
+                    <h1>Bienvenido {{user.first_name}}</h1>
+                </div>
                 
-                <div class="col">
-                    <h5>Iniciaste sesión en el sistema de gestión de proyectos</h5>
-                    <h5>de la materia IS2</h5>
+                <div class="row d-flex justify-content-center pt-5">
+                    <h5>Iniciaste sesión en el sistema de gestión de proyectos de la materia IS2</h5>
                     <h5>Todavía no tienes ningún permiso</h5>
-                    <a href="" class="btn btn-primary disabled" >Solicitar permisos</a>
+                    <button hx-post="{% url 'sso:solicitar-accesso' user.pk %}" x-data class="btn btn-primary"><i class="fas fa-envelope me-2"></i>Enviar solicitud de acceso al Administrador</button>
                 </div>
                 
             {% endif %}
         </div>
     {% endif %}
+{% endblock %}
+{% block extra_js %}
+<script>
+    document.body.addEventListener(
+      'htmx:configRequest', (event) => {
+        event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+    })
+  </script>
 {% endblock %}

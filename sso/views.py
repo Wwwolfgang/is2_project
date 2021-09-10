@@ -9,8 +9,22 @@ from .models import User
 from django.contrib.auth.models import Group
 from .forms import UpdateRolSistemaForm, UserAssignRolForm
 from django.contrib import messages #import messages
+from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponseRedirect, HttpResponse
+from django.core.mail import send_mail
+from django.conf import settings
 
-
+@csrf_exempt
+def enviar_solicitud_accesso_view(request, pk):
+    user = User.objects.get(pk=pk)
+    send_mail(
+        subject='Usuario nuevo - solicitud de Accesso',
+        message='Hola mi nombre es ' + user.first_name + ' ' + user.last_name
+        + '\n' + 'Inicié sesión en la aplicación Gestión de Proyectos. Envio esta solicitud porque no tengo permisos y no puedo hacer nada.',
+        from_email=settings.EMAIL_HOST_USER,
+        recipient_list=[settings.RECIPIENT_ADDRESS]
+    )
+    return HttpResponse("Solicitud enviada")
 class AdminUserMixin(LoginRequiredMixin, UserPassesTestMixin):
     """
     Este mixin asegura, que solo administradores pueden acceder a las vistas donde se 
