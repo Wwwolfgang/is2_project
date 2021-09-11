@@ -9,7 +9,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView
 from django.urls import reverse
-from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoEditForm,ProyectoCreateForm,AgregarParticipanteForm, DesarrolladorCreateForm
+from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoEditForm,ProyectoCreateForm,AgregarParticipanteForm, DesarrolladorCreateForm,PermisoSolicitudForm
 from proyecto.models import RolProyecto, Proyecto, ProyectUser
 from django.views.generic.edit import UpdateView, DeleteView, FormView, CreateView
 from django.urls import reverse_lazy
@@ -18,6 +18,8 @@ from guardian.shortcuts import assign_perm
 from sso.models import User
 from django.views.decorators.csrf import csrf_exempt
 import json
+from django.core.mail import send_mail
+from django.conf import settings
 
 class EliminarRolProyectoView(PermissionRequiredMixin, DeleteView):
     """
@@ -433,7 +435,6 @@ class EditDesarrolladorView(PermissionRequiredMixin, UpdateView):
         return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']}))
 
 
-
 class EliminarDesarrolladorView(PermissionRequiredMixin, DeleteView):
     """
     Vista para eliminar un rol de proyecto.
@@ -466,3 +467,27 @@ class EliminarDesarrolladorView(PermissionRequiredMixin, DeleteView):
 
     def get_success_url(self,**kwargs):
         return reverse_lazy('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']})
+
+
+class SolicitarPermisosView(FormView):
+    template_name = "proyecto/solicitud_form.html"
+    form_class = PermisoSolicitudForm
+    raise_exception = True
+
+    def get_context_data(self, **kwargs):
+        context = super(SolicitarPermisosView, self).get_context_data(**kwargs)
+        context.update({
+            'proyect_id': self.kwargs['pk_proy'],
+        })
+        return context
+
+    def form_valid(self,form):
+        user = User.objects.get(pk=self.request.user.pk)
+        proyecto = Proyecto.objects.get(id=self.kwargs['pk_proy'])
+        send_mail(
+            subject=form.cleaned_data['asunto'],
+            message=form.cleaned_data['body'],
+            from_email=user.email,
+            recipient_list=[proyecto.owner.email]
+        )
+        return HttpResponseRedirect(reverse('proyecto:detail',kwargs={'pk':self.kwargs['pk_proy']}))

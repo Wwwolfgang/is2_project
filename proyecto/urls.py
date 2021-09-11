@@ -7,7 +7,7 @@ from proyecto.views import agregar_rol_proyecto_view
 from django.urls import path
 from django.views.generic import TemplateView
 from .views import EliminarRolProyectoView, ProyectoDetailView, edit, delete, editar_rol_proyecto_view, ListaProyectos, AssignUserRolProyecto,ImportarRolView,iniciar_proyecto,cancelar_proyecto, CreateProyectoView
-from .views import finalizar_proyecto, AgregarParticipanteProyecto, eliminarParticipanteView, AgregarDesarrolladorView,EditDesarrolladorView,EliminarDesarrolladorView
+from .views import finalizar_proyecto, AgregarParticipanteProyecto, eliminarParticipanteView, AgregarDesarrolladorView,EditDesarrolladorView,EliminarDesarrolladorView,SolicitarPermisosView
 app_name = 'proyecto'
 
 urlpatterns = [
@@ -35,4 +35,6 @@ urlpatterns = [
     path('proyecto/<int:pk_proy>/rol/<int:pk>/eliminar',views.EliminarRolProyectoView.as_view(),name = 'rol-eliminar'),
     path('proyecto/<int:pk_proy>/rol/<int:id_rol>/editar',editar_rol_proyecto_view,name='rol-editar'),
     path('proyecto/<int:pk_proy>/rol/<int:id_rol>/assignar',AssignUserRolProyecto.as_view(),name='rol-assignar'),
+
+    path('proyecto/<int:pk_proy>/solicitud-permisos/',SolicitarPermisosView.as_view(),name='solicitud-permisos-proyecto'),
 ]
