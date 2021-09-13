@@ -1,11 +1,13 @@
 from django.core import exceptions
+from django.db.models import query
 from django.db.models.base import Model
+from django.http.response import Http404, HttpResponse
 from django.shortcuts import render
 from django.views.generic import ListView, UpdateView, DeleteView, DetailView,CreateView
 from django.http import HttpResponseRedirect
 from django.contrib.auth.mixins import PermissionRequiredMixin,LoginRequiredMixin
 from django.urls import reverse, reverse_lazy
-from .models import User, userStory
+from .models import User, userStory, sprint
 from django.contrib.auth.models import Group
 from django.contrib import messages
 from django.contrib.auth.models import Permission
@@ -44,7 +46,7 @@ class ListaParticipantes(UpdateView):
                     query.listaParticipantes.remove(participante)
                     userStory = query
                     userStory.objects.save()
-                    return
+                    return HttpResponse("Se ha eliminado el usuario")
             print("Participante no encontrado")
             return
         except:
@@ -57,7 +59,7 @@ class ListaParticipantes(UpdateView):
             query.listaParticipantes.append(nombreParticipante)
             userStory = query
             userStory.objects.save()
-            return
+            return HttpResponse("Se ha agregado el usuario")
         except:
             print("Codigo no encontrado")
         return
@@ -70,7 +72,37 @@ class ListaParticipantes(UpdateView):
         except:
             print("Codigo no encontrado")
         return
-
+        
+class UserStoryView(UpdateView):
+    model = userStory
+    context_object_name = 'User Story'
+    template_name = 'proyecto/userstory/'
+    raise_exception = True
+    queryset = userStory.objects.all()
+    def agregar(self,userStoryNuevo : userStory):
+        self.template_name += 'agregar.html'
+        userStoryNuevo.save()
+        return HttpResponse("Se agrego el user story")
+    def listar(self, userStories : sprint):
+        self.template_name += 'listar.html'
+        return HttpResponse(userStories.listaStories)
+    def modificar(self,userStoryModificado : userStory):
+        self.template_name += 'modificar.html'
+        try:
+            self.queryset.get(codigoUserStory = userStoryModificado.codigoUserStory).delete()
+            userStory.save()
+            return HttpResponse("Se modifico el user story")
+        except:
+            Http404("Codigo no encontrado")
+        return
+    def cancelar(self,codigoUserStory : int):
+        self.template_name += 'cancelar.html'
+        try:
+            self.queryset.get(codigoUserStory = codigoUserStory).delete()
+            return HttpResponse("Se elimino el user story")
+        except:
+            Http404("Codigo no encontrado")
+        return
 class EliminarRolProyectoView(PermissionRequiredMixin, DeleteView):
     model = RolProyecto
     template_name = 'proyecto/eliminar_rol_proyecto.html'

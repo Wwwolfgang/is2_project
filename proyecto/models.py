@@ -18,46 +18,15 @@ class comentario(models.Model):
     fecha           = models.DateField(datetime.date.today)
     def __str__(self):
         return self
-    def modificarDescripcion(self,descripcion):
-        self.descripcion=descripcion
-    #def usuarioComentando(self, codUsuario):
-    #   self.codComentario = codComentario
-    #   Que hace esta funcion?
-    pass
 
 class usuarioProyecto(models.Model):
     codProyecto     = models.CharField(max_length=50)
     rolUsuario      = models.CharField(max_length=50)
-    def cambiarRol(self, username):
-        self.rolUsuario = username #?
-    def solicitarCambioRol(self):
-        if( self.rolUsuario == 1 ):
-            return True
-        return False
-    def agregarUsuarioProyecto():
-        print("Se agrego el usuario al proyecto")
-    def asignarUserStory(self,codUserStory, username):
-        print("Se ha asignado el usuario al user story")
-    def crearRolProyecto(self,codProyecto, listaPermisos, descripcion):
-        print("Se creo el rol")
-    def crearUserStory(nombreUserStory, descripcionUserStory):
-        print("El user story fue creado")
-    def cambiarUserStory( descripcionUserStory ):
-        print("El user story fue cambiado")
-    def modificarEstadoUserStory(codUserStory, estado):
-        print("El user story fue modificado")
-    def crearSprint(nombreSprint, duracionSprint):
-        print("El sprint fue creado")
+    def __str__(self):
+        return self
 
 
 class userStory(models.Model):
-    """ 
-    Clase user story
-
-    TODO
-        - Correcto funcionamiento de la clase para ser implementada en otros metodos
-        - Adicion de datos relacionados a user story en postgresql para realizar tests
-    """
     nombreUserStory     = models.CharField(max_length=50)
     codigoUserStory     = models.CharField(max_length=50)
     listaParticipantes  = models.ManyToManyField(User,related_name="participantes")
@@ -80,13 +49,6 @@ class userStory(models.Model):
         print("Se estima que el user story dure 1 mes")
 
 class sprint(models.Model):
-    """ 
-    Clase sprint
-
-    TODO
-        - Vinculacion de la clase user story con la clase sprint
-        - Desarrollar sprint
-    """
     nombreSprint    = models.CharField(max_length=50)
     codSprint       = models.CharField(max_length=50)
     nroUserStories  = models.IntegerField()
