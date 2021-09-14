@@ -1,6 +1,8 @@
+import proyecto
 from django.contrib import messages
 from django.contrib.auth import models
 from django.contrib.auth.models import Permission
+from django.db.models import fields
 from django.shortcuts import redirect, render
 from django.shortcuts import get_object_or_404
 from guardian.shortcuts import assign_perm
@@ -9,8 +11,9 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView
 from django.urls import reverse
-from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoEditForm,ProyectoCreateForm,AgregarParticipanteForm, DesarrolladorCreateForm,PermisoSolicitudForm
-from proyecto.models import RolProyecto, Proyecto, ProyectUser
+from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoEditForm,ProyectoCreateForm,AgregarParticipanteForm, DesarrolladorCreateForm,PermisoSolicitudForm,SprintCrearForm
+# from proyecto.forms import EquipoFormset
+from proyecto.models import RolProyecto, Proyecto, ProyectUser, Sprint, SprintDevTeam
 from django.views.generic.edit import UpdateView, DeleteView, FormView, CreateView
 from django.urls import reverse_lazy
 from guardian.decorators import permission_required_or_403,permission_required
@@ -20,6 +23,7 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 from django.core.mail import send_mail
 from django.conf import settings
+from django.forms.models import inlineformset_factory
 
 class EliminarRolProyectoView(PermissionRequiredMixin, DeleteView):
     """
@@ -240,6 +244,7 @@ class ProyectoDetailView(PermissionRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super(ProyectoDetailView,self).get_context_data(**kwargs)
         id = self.kwargs['pk']
+        sprints = Sprint.objects.filter(proyecto__pk=id)
         proyecto = self.model.objects.get(id=id)
         self.request.session['proyect_id'] = id
         self.request.session['proyect_name'] = proyecto.nombreProyecto
@@ -249,9 +254,9 @@ class ProyectoDetailView(PermissionRequiredMixin, DetailView):
                     'id': proyecto.id,
                     'nombre': proyecto.nombreProyecto,
                     'estado': proyecto.estado_de_proyecto,
-                    'duracionSprint': proyecto.duracionSprint
                 }
-            )
+            ),
+            'sprints': sprints
         }) 
         return context
 
@@ -490,4 +495,35 @@ class SolicitarPermisosView(FormView):
             from_email=user.email,
             recipient_list=[proyecto.owner.email]
         )
+        return HttpResponseRedirect(reverse('proyecto:detail',kwargs={'pk':self.kwargs['pk_proy']}))
+
+
+class AgregarSprintView(CreateView):
+    model = Sprint
+    template_name = "proyecto/agregar_sprint.html"
+    form_class = SprintCrearForm
+    raise_exception = True
+
+    def get_context_data(self, **kwargs):
+        context = super(AgregarSprintView,self).get_context_data(**kwargs)
+        sprints_count = Sprint.objects.filter(proyecto__id=self.kwargs['pk_proy']).exclude(estado_de_sprint='C').count()
+        context.update({
+            'proyect_id': self.kwargs['pk_proy'],
+            'count': sprints_count + 1
+        })
+        return context
+
+    # def get_form_kwargs(self):
+    #     """ Función que inyecta el id del proyecto como argumento. """
+    #     kwargs = super(AgregarSprintView, self).get_form_kwargs()
+    #     kwargs['pk_proy'] = self.kwargs['pk_proy']
+    #     return kwargs
+
+    def form_valid(self,form):
+        proyecto = Proyecto.objects.get(pk = self.kwargs['pk_proy'])
+        sprints_count = Sprint.objects.filter(proyecto__id=self.kwargs['pk_proy']).exclude(estado_de_sprint='C').count()
+        obj = form.save(commit=True)
+        obj.identificador = 'Sprint ' + str(sprints_count+1)
+        obj.proyecto = proyecto
+        obj.save()
         return HttpResponseRedirect(reverse('proyecto:detail',kwargs={'pk':self.kwargs['pk_proy']}))

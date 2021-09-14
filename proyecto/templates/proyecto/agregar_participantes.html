@@ -16,17 +16,10 @@
                         {{field}}
                 </div>
                 {%endfor%}
-                {% if form.fields.equipo|length  == 0 %}
-                    <div>No hay usuarios que se puedan agregar...</div>
-                    <a class="btn btn-warning" role="button" href="{% url 'proyecto:roles' object.id %}">
-                        Atrás
-                    </a>
-                {% else %}
-                    <a class="btn btn-warning" role="button" href="{% url 'proyecto:roles' object.id %}">
-                        Cancelar
-                    </a>
-                    <button type="submit" class="mx-2 my-2 btn btn-success">Agregar</button>
-                {% endif %}
+                <a class="btn btn-warning" role="button" href="{% url 'proyecto:roles' object.id %}">
+                    Cancelar
+                </a>
+                <button type="submit" class="mx-2 my-2 btn btn-success">Agregar</button>
             </form>
         </div>
     </div>

@@ -1,9 +1,12 @@
 from django.contrib.auth.models import Permission
 from django.db import models
 from datetime import datetime
+from django.db.models.base import Model
 
 from django.db.models.deletion import CASCADE
+from django.db.models.fields.related import ManyToManyField
 from sso.models import User
+from django.core.validators import MinValueValidator, MaxValueValidator
 # Create your models here.
 class RolProyecto(models.Model):
     """
@@ -52,7 +55,6 @@ class Proyecto(models.Model):
     nombreProyecto = models.CharField(max_length = 50)
     fechaInicio = models.DateField(null=False, blank=False, help_text="Fecha de inicialización del proyecto", default=datetime.now )
     fechaFin = models.DateField(null=False, blank=False, help_text="Fecha estimada de finalización del proyecto", default=datetime.now )
-    duracionSprint = models.IntegerField(null=False, blank=False, default=14, help_text="Duración de un Sprint")
     ESTADO_DE_PROYECTO_CHOICES = [
         ('A', 'Activo'),
         ('I', 'Inicializado'),
@@ -80,3 +82,29 @@ class Proyecto(models.Model):
 class ProyectUser(models.Model):
     usuario = models.ForeignKey(User,on_delete=CASCADE)
     horas_diarias = models.DecimalField(blank=False,decimal_places=2,max_digits=4,null=False,help_text='La cantidad de horas que trabaja el desarrollador por día.')
+
+
+class SprintDevTeam(models.Model):
+    team = models.ManyToManyField('proyectuser',blank=True)
+    sprint = models.ForeignKey('sprint', related_name='sprint_team',on_delete=CASCADE)
+
+class Sprint(models.Model):
+    identificador = models.CharField(default='Sprint',max_length=50)
+    fechaInicio = models.DateField(null=True)
+    fechaFin = models.DateField(help_text='Fecha estimada de finalización del Sprint. Dependiendo de esta fecha se mostrarán alertas.')
+    duracionSprint = models.IntegerField(null=False, blank=False, default=14,validators=[MinValueValidator(1),MaxValueValidator(60)], help_text="Duración estimada en días")
+    ESTADO_DE_SPRINT_CHOICES = [
+        ('A', 'Activo'),
+        ('I', 'Inicializado'),
+        ('C', 'Cancelado'),
+        ('F', 'Finalizado'),
+    ]
+    estado_de_sprint = models.CharField(
+        max_length=1,
+        choices=ESTADO_DE_SPRINT_CHOICES,
+        default='I',
+    )
+    proyecto = models.ForeignKey(Proyecto,on_delete=CASCADE, null=True)
+
+    def __str__(self):
+       return self.identificador

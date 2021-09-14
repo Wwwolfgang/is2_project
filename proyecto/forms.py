@@ -1,9 +1,10 @@
 from django.forms import fields
 from django.contrib.auth.models import Permission
 from django import forms
-from .models import Proyecto, ProyectUser,RolProyecto
+from .models import Proyecto, ProyectUser, RolProyecto, Sprint
 from sso.models import User
 from django import forms
+from django.forms.models import inlineformset_factory
 
 class AgregarRolProyectoForm(forms.ModelForm):
     """
@@ -48,7 +49,7 @@ class ProyectoEditForm(forms.ModelForm):
     """
     class Meta:
         model = Proyecto
-        fields = ["nombreProyecto", "duracionSprint", "fechaInicio", "fechaFin", "equipo"]
+        fields = ["nombreProyecto", "fechaInicio", "fechaFin", "equipo"]
 
     def __init__(self, *args, **kwargs):
         super(ProyectoEditForm,self).__init__(*args, **kwargs)
@@ -65,7 +66,7 @@ class ProyectoCreateForm(forms.ModelForm):
     """
     class Meta:
         model = Proyecto
-        fields = ["nombreProyecto", "duracionSprint", "fechaInicio", "fechaFin", "equipo"]
+        fields = ["nombreProyecto", "fechaInicio", "fechaFin", "equipo"]
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user_id',None)
@@ -131,3 +132,11 @@ class DesarrolladorCreateForm(forms.ModelForm):
 class PermisoSolicitudForm(forms.Form):
     asunto = forms.CharField(label='Asunto de la solitud', max_length=100, required=True)
     body = forms.CharField(widget=forms.Textarea,label='Solicitud',help_text='Especifique, que tipo de acceso o permisos necesita. Explique que acciones quiere hacer.',required=True)
+
+
+# EquipoFormset = inlineformset_factory(Sprint, SprintDevTeam, fields=('team',))
+
+class SprintCrearForm(forms.ModelForm):
+    class Meta:
+        model = Sprint
+        fields = ['duracionSprint','fechaFin']
