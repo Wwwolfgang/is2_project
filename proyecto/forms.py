@@ -1,10 +1,10 @@
 from django.forms import fields
-from proyecto.models import RolProyecto
 from django.contrib.auth.models import Permission
 from django import forms
-from .models import Proyecto
+from .models import Proyecto, ProyectUser, RolProyecto, Sprint
 from sso.models import User
 from django import forms
+from django.forms.models import inlineformset_factory
 
 class AgregarRolProyectoForm(forms.ModelForm):
     """
@@ -49,7 +49,7 @@ class ProyectoEditForm(forms.ModelForm):
     """
     class Meta:
         model = Proyecto
-        fields = ["nombreProyecto", "duracionSprint", "fechaInicio", "fechaFin"]
+        fields = ["nombreProyecto", "fechaInicio", "fechaFin"]
 
 
 
@@ -61,7 +61,7 @@ class ProyectoCreateForm(forms.ModelForm):
     """
     class Meta:
         model = Proyecto
-        fields = ["nombreProyecto", "duracionSprint", "fechaInicio", "fechaFin", "equipo"]
+        fields = ["nombreProyecto", "fechaInicio", "fechaFin", "equipo"]
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user_id',None)
@@ -105,3 +105,33 @@ class AgregarParticipanteForm(forms.Form):
         widget=forms.CheckboxSelectMultiple,
         choices=[(p.id, "%s" % p.first_name + " " + p.last_name) for p in User.objects.exclude(first_name__isnull=True).exclude(first_name__exact='').exclude(pk=proyecto.owner.pk).exclude(proyecto__id=proyecto.pk) if p.has_perm('sso.pg_is_user')]
     )
+
+
+class DesarrolladorCreateForm(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        proyect_id = kwargs.pop('pk_proy',None)
+        proyecto = Proyecto.objects.get(pk=proyect_id)
+        super().__init__(*args, **kwargs)
+        self.fields['usuario'] = forms.ModelChoiceField(
+            empty_label="Opciones",
+            queryset=proyecto.equipo.all() | User.objects.filter(pk=proyecto.owner.pk),
+        )
+        self.fields['horas_diarias'].required = True
+        self.fields['usuario'].required = True
+    class Meta:
+        model = ProyectUser
+        fields = ['usuario','horas_diarias']
+
+
+class PermisoSolicitudForm(forms.Form):
+    asunto = forms.CharField(label='Asunto de la solitud', max_length=100, required=True)
+    body = forms.CharField(widget=forms.Textarea,label='Solicitud',help_text='Especifique, que tipo de acceso o permisos necesita. Explique que acciones quiere hacer.',required=True)
+
+
+# EquipoFormset = inlineformset_factory(Sprint, SprintDevTeam, fields=('team',))
+
+class SprintCrearForm(forms.ModelForm):
+    class Meta:
+        model = Sprint
+        fields = ['duracionSprint','fechaFin']

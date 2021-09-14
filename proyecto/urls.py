@@ -7,7 +7,7 @@ from proyecto.views import agregar_rol_proyecto_view
 from django.urls import path
 from django.views.generic import TemplateView
 from .views import EliminarRolProyectoView, ProyectoDetailView, edit, cancelar, editar_rol_proyecto_view, ListaProyectos, ListaProyectosCancelados, AssignUserRolProyecto,ImportarRolView,iniciar_proyecto,cancelar_proyecto, CreateProyectoView
-from .views import finalizar_proyecto, AgregarParticipanteProyecto
+from .views import finalizar_proyecto, AgregarParticipanteProyecto, eliminarParticipanteView, AgregarDesarrolladorView,EditDesarrolladorView,EliminarDesarrolladorView,SolicitarPermisosView,AgregarSprintView
 app_name = 'proyecto'
 
 urlpatterns = [
@@ -20,6 +20,10 @@ urlpatterns = [
     path('proyecto/cancelar/<int:pk>/', cancelar, name='cancelar'),
     path('proyecto/proyectos-cancelados/', ListaProyectosCancelados.as_view(), name='cancelados'),
     path('proyecto/<int:pk_proy>/agregar-participantes/',AgregarParticipanteProyecto.as_view(), name='agregar-participantes-proyecto'),
+    path('proyecto/<int:pk_proy>/debaja-participante/<int:pk>/',eliminarParticipanteView, name='debaja-participante-proyecto'),
+    path('proyecto/<int:pk_proy>/agregar-desarrollador/',AgregarDesarrolladorView.as_view(), name='agregar-desarrollador-proyecto'),
+    path('proyecto/<int:pk_proy>/editar-desarrollador/<int:dev_pk>/',EditDesarrolladorView.as_view(), name='editar-desarrollador-proyecto'),
+    path('proyecto/<int:pk_proy>/sacar-desarrollador/<int:dev_pk>/',EliminarDesarrolladorView.as_view(), name='debaja-desarrollador-proyecto'),
     path('iniciar/proyecto/<int:pk>/', iniciar_proyecto, name='iniciar-proyecto'),
     path('cancelar/proyecto/<int:pk>/', cancelar_proyecto, name='cancelar-proyecto'),
     path('finalizar/proyecto/<int:pk>/', finalizar_proyecto, name='finalizar-proyecto'),
@@ -32,4 +36,9 @@ urlpatterns = [
     path('proyecto/<int:pk_proy>/rol/<int:pk>/eliminar',views.EliminarRolProyectoView.as_view(),name = 'rol-eliminar'),
     path('proyecto/<int:pk_proy>/rol/<int:id_rol>/editar',editar_rol_proyecto_view,name='rol-editar'),
     path('proyecto/<int:pk_proy>/rol/<int:id_rol>/assignar',AssignUserRolProyecto.as_view(),name='rol-assignar'),
+
+    path('proyecto/<int:pk_proy>/solicitud-permisos/',SolicitarPermisosView.as_view(),name='solicitud-permisos-proyecto'),
+
+    path('proyecto/<int:pk_proy>/agregar-sprint/',AgregarSprintView.as_view(),name='agregar-sprint'),
+
 ]

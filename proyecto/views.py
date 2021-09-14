@@ -1,6 +1,8 @@
+import proyecto
 from django.contrib import messages
 from django.contrib.auth import models
 from django.contrib.auth.models import Permission
+from django.db.models import fields
 from django.shortcuts import redirect, render
 from django.shortcuts import get_object_or_404
 from guardian.shortcuts import assign_perm
@@ -9,8 +11,9 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView
 from django.urls import reverse
-from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoEditForm,ProyectoCreateForm,AgregarParticipanteForm
-from proyecto.models import RolProyecto, Proyecto
+from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoEditForm,ProyectoCreateForm,AgregarParticipanteForm, DesarrolladorCreateForm,PermisoSolicitudForm,SprintCrearForm
+# from proyecto.forms import EquipoFormset
+from proyecto.models import RolProyecto, Proyecto, ProyectUser, Sprint, SprintDevTeam
 from django.views.generic.edit import UpdateView, DeleteView, FormView, CreateView
 from django.urls import reverse_lazy
 from guardian.decorators import permission_required_or_403,permission_required
@@ -18,6 +21,9 @@ from guardian.shortcuts import assign_perm
 from sso.models import User
 from django.views.decorators.csrf import csrf_exempt
 import json
+from django.core.mail import send_mail
+from django.conf import settings
+from django.forms.models import inlineformset_factory
 
 class EliminarRolProyectoView(PermissionRequiredMixin, DeleteView):
     """
@@ -244,11 +250,11 @@ class ProyectoDetailView(PermissionRequiredMixin, DetailView):
 
     def get_object(self, queryset=None):
         id = self.kwargs['pk']
-        return self.model.objects.get(id=id)
 
     def get_context_data(self, **kwargs):
         context = super(ProyectoDetailView,self).get_context_data(**kwargs)
         id = self.kwargs['pk']
+        sprints = Sprint.objects.filter(proyecto__pk=id)
         proyecto = self.model.objects.get(id=id)
         self.request.session['proyect_id'] = id
         self.request.session['proyect_name'] = proyecto.nombreProyecto
@@ -258,9 +264,9 @@ class ProyectoDetailView(PermissionRequiredMixin, DetailView):
                     'id': proyecto.id,
                     'nombre': proyecto.nombreProyecto,
                     'estado': proyecto.estado_de_proyecto,
-                    'duracionSprint': proyecto.duracionSprint
                 }
-            )
+            ),
+            'sprints': sprints
         }) 
         return context
 
@@ -287,7 +293,9 @@ class CreateProyectoView(CreateView):
 
 
 class AgregarParticipanteProyecto(PermissionRequiredMixin, UpdateView):
-    """ Vista para assignarle a los usuarios el rol de proyecto """
+    """ Vista para agregar o invitar nuevos participantes al proyecto. Solo se muestran usuarios
+    con el permiso mínimo, que todavía no fueron agregados y con no son el owner del proyecto.
+    """
     model = Proyecto
     permission_required = ('sso.pg_is_user')
     template_name = 'proyecto/agregar_participantes.html'
@@ -295,47 +303,34 @@ class AgregarParticipanteProyecto(PermissionRequiredMixin, UpdateView):
     raise_exception = True
 
     def get_object(self, queryset=None):
-        """ Función que retorna el rol que vamos asignar a los usuarios. """
+        """ Función que retorna el proyecto cuyo equipo va ser modificado """
         id = self.kwargs['pk_proy']
         return self.model.objects.get(id=id)
 
 
     def form_valid(self, form):
         """
-        Valida los datos del form de la asignación del rol.
-        primero obtiene el proyecto y el rol. Si el form es válido, assigna a cada participante seleccionado los permisos del rol por el objeto actual.
-        En caso de que el proyecto no está activo, no se puede assignar el rol.
+        En esta función se agrega los usuarios marcados por el usuario al campo equipo del proyecto
         """
-        form.save()
-
+        proyecto = Proyecto.objects.get(id=self.kwargs['pk_proy'])
+        equipo = form.cleaned_data['equipo']
+        for usuario in equipo:
+            user = User.objects.get(pk=usuario)
+            proyecto.equipo.add(user)
         return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']}))
 
 
-class EliminarParticipanteView(PermissionRequiredMixin, DeleteView):
+def eliminarParticipanteView(request, pk_proy, pk, template_name='proyecto/delete_confirm_participante.html'):
+    """ View para eliminar participantes de equipo de un proyecto. Es una vista de confirmación
+        , si el usuario elige "Eliminar" se elimina el usuario del proyecto.
     """
-    Vista para eliminar un rol de proyecto.
-    Se selecciona un rol, se confirma la eliminación, y se retorna a la
-    página que lista los roles.
-    """
-    model = Proyecto
-    template_name = 'proyecto/delete_confirm_participante.html'
-    permission_required = ('sso.pg_is_user')
+    proyecto = get_object_or_404(Proyecto, pk=pk_proy)
+    user = get_object_or_404(User, pk=pk)
 
-    def get_context_data(self, **kwargs):
-        context = super(EliminarParticipanteView, self).get_context_data(**kwargs)
-        context.update({
-            'proyect_id': self.kwargs['pk_proy'],
-        })
-        return context
-
-    def form_valid(self, form):
-        """Valida los datos del form de eliminación de rol de sistema"""
-        form.save()
-        return HttpResponseRedirect(self.get_success_url(self.kwargs['pk_proy']))
-
-
-    def get_success_url(self,**kwargs):
-        return reverse_lazy('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']})
+    if request.method=='POST':
+        proyecto.equipo.remove(user)
+        return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':pk_proy}))
+    return render(request, template_name, {'object':proyecto, 'usuario':user})
 
 
 @permission_required('sso.pg_puede_acceder_proyecto', return_403=True, accept_global_perms=True)
@@ -388,3 +383,158 @@ def finalizar_proyecto(request, pk):
     proyecto.estado_de_proyecto = 'F'
     proyecto.save()
     return HttpResponse("Finalizado")
+
+
+class AgregarDesarrolladorView(CreateView):
+    model = ProyectUser
+    template_name = "proyecto/proyecto_agregar_desarrollador.html"
+    form_class = DesarrolladorCreateForm
+    raise_exception = True
+
+    def get_context_data(self, **kwargs):
+        context = super(AgregarDesarrolladorView,self).get_context_data(**kwargs)
+        context.update({
+            'proyect_id': self.kwargs['pk_proy'],
+        })
+        return context
+
+    def get_form_kwargs(self):
+        """ Función que inyecta el id del proyecto como argumento. """
+        kwargs = super(AgregarDesarrolladorView, self).get_form_kwargs()
+        kwargs['pk_proy'] = self.kwargs['pk_proy']
+        return kwargs
+
+    def form_valid(self,form):
+        proyecto = Proyecto.objects.get(id=self.kwargs['pk_proy'])
+        dev = form.save()
+
+        proyecto.equipo_desarrollador.add(dev)
+
+        return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']}))
+
+
+class EditDesarrolladorView(PermissionRequiredMixin, UpdateView):
+    """ Vista para agregar o invitar nuevos participantes al proyecto. Solo se muestran usuarios
+    con el permiso mínimo, que todavía no fueron agregados y con no son el owner del proyecto.
+    """
+    model = ProyectUser
+    permission_required = ('sso.pg_is_user')
+    template_name = 'proyecto/proyecto_agregar_desarrollador.html'
+    form_class= DesarrolladorCreateForm
+    raise_exception = True
+
+    def get_object(self, queryset=None):
+        """ Función que retorna el proyecto cuyo equipo va ser modificado """
+        id = self.kwargs['dev_pk']
+        return self.model.objects.get(id=id)
+
+    def get_context_data(self, **kwargs):
+        context = super(EditDesarrolladorView,self).get_context_data(**kwargs)
+        context.update({
+            'proyect_id': self.kwargs['pk_proy'],
+            'edit': True
+        })
+        return context
+
+    def get_form_kwargs(self):
+        """ Función que inyecta el id del proyecto como argumento. """
+        kwargs = super(EditDesarrolladorView, self).get_form_kwargs()
+        kwargs['pk_proy'] = self.kwargs['pk_proy']
+        return kwargs
+
+
+    def form_valid(self, form):
+        """
+        En esta función se agrega los usuarios marcados por el usuario al campo equipo del proyecto
+        """
+        form.save()
+        return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']}))
+
+
+class EliminarDesarrolladorView(PermissionRequiredMixin, DeleteView):
+    """
+    Vista para eliminar un rol de proyecto.
+    Se selecciona un rol, se confirma la eliminación, y se retorna a la
+    página que lista los roles.
+    """
+    model = ProyectUser
+    template_name = 'proyecto/eliminar_desarrollador.html'
+    permission_required = ('sso.pg_is_user')
+
+    def get_object(self,queryset=None):
+        id = self.kwargs['dev_pk']
+        return self.model.objects.get(id=id)
+
+    def get_context_data(self, **kwargs):
+        context = super(EliminarDesarrolladorView, self).get_context_data(**kwargs)
+        context.update({
+            'proyect_id': self.kwargs['pk_proy'],
+        })
+        return context
+
+    def form_valid(self, form):
+        """Valida los datos del form de eliminación de rol de sistema"""
+        proyecto = Proyecto.objects.get(id=self.kwargs['pk_proy'])
+        dev = form.save()
+        proyecto.equipo_desarrollador.remove(dev)
+
+        return HttpResponseRedirect(self.get_success_url(self.kwargs['pk_proy']))
+
+
+    def get_success_url(self,**kwargs):
+        return reverse_lazy('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']})
+
+
+class SolicitarPermisosView(FormView):
+    template_name = "proyecto/solicitud_form.html"
+    form_class = PermisoSolicitudForm
+    raise_exception = True
+
+    def get_context_data(self, **kwargs):
+        context = super(SolicitarPermisosView, self).get_context_data(**kwargs)
+        context.update({
+            'proyect_id': self.kwargs['pk_proy'],
+        })
+        return context
+
+    def form_valid(self,form):
+        user = User.objects.get(pk=self.request.user.pk)
+        proyecto = Proyecto.objects.get(id=self.kwargs['pk_proy'])
+        send_mail(
+            subject=form.cleaned_data['asunto'],
+            message=form.cleaned_data['body'],
+            from_email=user.email,
+            recipient_list=[proyecto.owner.email]
+        )
+        return HttpResponseRedirect(reverse('proyecto:detail',kwargs={'pk':self.kwargs['pk_proy']}))
+
+
+class AgregarSprintView(CreateView):
+    model = Sprint
+    template_name = "proyecto/agregar_sprint.html"
+    form_class = SprintCrearForm
+    raise_exception = True
+
+    def get_context_data(self, **kwargs):
+        context = super(AgregarSprintView,self).get_context_data(**kwargs)
+        sprints_count = Sprint.objects.filter(proyecto__id=self.kwargs['pk_proy']).exclude(estado_de_sprint='C').count()
+        context.update({
+            'proyect_id': self.kwargs['pk_proy'],
+            'count': sprints_count + 1
+        })
+        return context
+
+    # def get_form_kwargs(self):
+    #     """ Función que inyecta el id del proyecto como argumento. """
+    #     kwargs = super(AgregarSprintView, self).get_form_kwargs()
+    #     kwargs['pk_proy'] = self.kwargs['pk_proy']
+    #     return kwargs
+
+    def form_valid(self,form):
+        proyecto = Proyecto.objects.get(pk = self.kwargs['pk_proy'])
+        sprints_count = Sprint.objects.filter(proyecto__id=self.kwargs['pk_proy']).exclude(estado_de_sprint='C').count()
+        obj = form.save(commit=True)
+        obj.identificador = 'Sprint ' + str(sprints_count+1)
+        obj.proyecto = proyecto
+        obj.save()
+        return HttpResponseRedirect(reverse('proyecto:detail',kwargs={'pk':self.kwargs['pk_proy']}))

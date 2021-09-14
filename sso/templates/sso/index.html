@@ -14,21 +14,42 @@
         </div>
 
     {% else %}
-        <div class="container d-flex justify-content-center " style="height: 400px;">
+        <div class="container" style="height: 400px;">
             {% if perms.sso.pg_is_user %}
-                <h1>Bienvenido de vuelta {{user.first_name}}</h1>
-            {% else %}
-                <div class="row d-flex"></div>
-                <div class="col"><h1>Bienvenido {{user.first_name}}</h1></div>
+                <div class="row">
+                    <h1>Bienvenido de vuelta {{user.first_name}}</h1>
+                </div>
+                <div class="row pt-5">
+                    <h4>Tus proyectos</h4>
+                    <ul class="list-group list-group-flush">
+                        {% for proyecto in mis_proyectos %}
+                        <li class="list-group-item ">
+                            <a href="{% url 'proyecto:detail' proyecto.id %}"> {{ proyecto.nombreProyecto }} </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
                 
-                <div class="col">
-                    <h5>Iniciaste sesión en el sistema de gestión de proyectos</h5>
-                    <h5>de la materia IS2</h5>
+            {% else %}
+                <div class="row">
+                    <h1>Bienvenido {{user.first_name}}</h1>
+                </div>
+                
+                <div class="row d-flex justify-content-center pt-5">
+                    <h5>Iniciaste sesión en el sistema de gestión de proyectos de la materia IS2</h5>
                     <h5>Todavía no tienes ningún permiso</h5>
-                    <a href="" class="btn btn-primary disabled" >Solicitar permisos</a>
+                    <button hx-post="{% url 'sso:solicitar-accesso' user.pk %}" x-data class="btn btn-primary"><i class="fas fa-envelope me-2"></i>Enviar solicitud de acceso al Administrador</button>
                 </div>
                 
             {% endif %}
         </div>
     {% endif %}
+{% endblock %}
+{% block extra_js %}
+<script>
+    document.body.addEventListener(
+      'htmx:configRequest', (event) => {
+        event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+    })
+  </script>
 {% endblock %}

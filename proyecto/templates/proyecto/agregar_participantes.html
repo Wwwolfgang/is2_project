@@ -8,15 +8,18 @@
         <h5 style="text-align:start;">
             Agregar Participantes
         </h5>
-        <div class="col-md-10 col-xs-10 col-sm-10">
+        <div class="col-md-10 col-xs-10 col-sm-10 pb-5">
             <form method="post" novalidate>
                 {% csrf_token %}
                 {% for field in form.visible_fields %}
                 <div class="form-group">
-                    Participantes en el Proyecto:
                         {{field}}
                 </div>
                 {%endfor%}
+                <a class="btn btn-warning" role="button" href="{% url 'proyecto:roles' object.id %}">
+                    Cancelar
+                </a>
+                <button type="submit" class="mx-2 my-2 btn btn-success">Agregar</button>
             </form>
         </div>
     </div>

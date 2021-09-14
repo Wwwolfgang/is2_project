@@ -1,10 +1,10 @@
-{% extends 'proyecto/base.html' %}
-{% block container %}
+{% extends 'proyecto/proyecto-detalle.html' %}
+{% block proyect_content %}
 {% load widget_tweaks %}
 <div class="container-fluid">
     <div class="row">
         <h2 style="text-align:start;">
-            Crear nuevo Proyecto
+            Sprint {{count}}
         </h2>
         <h6 style="text-align:start;">
             <font color="red"> Todos los campos son requeridos</font>
@@ -14,16 +14,9 @@
                 {% csrf_token %}
                 {% for field in form.visible_fields %}
                 <div class="form-group class pb-2">
-                        {% if field.name == 'nombreProyecto'%}
-                            Nombre del Proyecto
-                            {% render_field field class="form-control" %}
-                            {% if field.help_text %}
-                            <small class="form-text text-muted">{{ field.help_text }}</small>
-                            {% endif %}
-                        {% endif %}
-
-                        {% if field.name == 'fechaInicio'%}
-                            Fecha de inicio
+                    {% if field.name != 'equipo_desarrollador' %}
+                        {% if field.name == 'duracionSprint'%}
+                            Duración
                             {% render_field field class="form-control" %}
                             {% if field.help_text %}
                             <small class="form-text text-muted">{{ field.help_text }}</small>
@@ -37,13 +30,22 @@
                             <small class="form-text text-muted">{{ field.help_text }}</small>
                             {% endif %}
                         {% endif %}
+
+                    {% else %}
+                        Equipo de desarrolladores:
+                        {{field}}
+                    {% endif %}
                 </div>
                 {% endfor %}
-                <button type="submit" class="btn btn-primary">Crear Proyecto</button>
+                <button type="submit" class="btn btn-primary">Agregar Sprint</button>
             </form>
             <br>
         </div>
     </div>
 </div>
+
+{% endblock %}
+
+{% block extra_js %}
 
 {% endblock %}

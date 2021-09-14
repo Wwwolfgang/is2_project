@@ -8,27 +8,42 @@
         {{proyect|json_script:"proyecto"}}
 
         {% block proyect_content %}
-            {% if proyecto.estado_de_proyecto == "I" %}
-                <button hx-post="{% url 'proyecto:iniciar-proyecto' proyecto.id %}" @click="reload()" class="btn btn-success" id="iniciar">Iniciar Proyecto</button>
-            {% endif %}
-            {% if proyecto.estado_de_proyecto == "A" %}
-                <button hx-post="{% url 'proyecto:cancelar-proyecto' proyecto.id %}" x-data @click="reload()" class="btn btn-danger" id="iniciar">Cancelar Proyecto</button>
-                <button hx-post="{% url 'proyecto:finalizar-proyecto' proyecto.id %}" x-data @click="reload()" class="btn btn-outline-success" id="iniciar">Finalizar Proyecto</button>
-            {% endif %}
+            <div class="class pt-5">
+          
+                
+                <div class="row align-items-center">
+                    <div class="col-2">
+                        <h6 class="class mb-0">Sprints del Proyecto</h6>
+
+                    </div>
+                    <div class="col class pl-0"> <a href="{% url 'proyecto:agregar-sprint' proyecto.id%}" class="nav-link me-3" ><i class="fas fa-plus" ></i></a></div>
+                </div>
+                <div class="row align-items-center">
+                    {% for sprint in sprints %}
+                        <div class="col-3">
+                            <div class="card" style="width: 16rem;">
+                                <div class="card-body">
+                                  <h5 class="card-title">{{sprint.identificador}}</h5>
+                                  <h6 class="card-subtitle mb-2 text-muted">Card subtitle</h6>
+                                  <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+                                  <a href="#" class="card-link">Modificar</a>
+                                  <a href="#" class="card-link">Another link</a>
+                                </div>
+                              </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
         {% endblock %}
     </div>
 
 {% endblock %}
 {% block extra_js %}
 <script>
-    function reload(){
-        setTimeout(()=>{console.log('Actualizado')},1000)
-        location.reload();
-    }
-
-    const proyect = JSON.parse(document.getElementById('proyecto').textContent);
-    const proyectParsed = JSON.parse(proyect)
-    console.log(proyectParsed)
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
 </script>
 <script>
     document.body.addEventListener(
