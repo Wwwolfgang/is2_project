@@ -5,7 +5,6 @@
     <div class="container-fluid">
 
         {% include "includes/proyect_toolbar.html" with proyect=proyecto %}
-        {{proyect|json_script:"proyecto"}}
 
         {% block proyect_content %}
             <div class="class pt-5">
@@ -16,7 +15,7 @@
                         <h6 class="class mb-0">Sprints del Proyecto</h6>
 
                     </div>
-                    <div class="col class pl-0"> <a href="{% url 'proyecto:agregar-sprint' proyecto.id%}" class="nav-link me-3" ><i class="fas fa-plus" ></i></a></div>
+                    <div class="col class pl-0"> <a href="{% url 'proyecto:agregar-sprint' proyect.id%}" class="nav-link me-3" ><i class="fas fa-plus" ></i></a></div>
                 </div>
                 <div class="row align-items-center">
                     {% for sprint in sprints %}

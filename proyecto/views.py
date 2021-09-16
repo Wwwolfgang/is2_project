@@ -259,13 +259,7 @@ class ProyectoDetailView(PermissionRequiredMixin, DetailView):
         self.request.session['proyect_id'] = id
         self.request.session['proyect_name'] = proyecto.nombreProyecto
         context.update({
-            'proyect': json.dumps(
-                {
-                    'id': proyecto.id,
-                    'nombre': proyecto.nombreProyecto,
-                    'estado': proyecto.estado_de_proyecto,
-                }
-            ),
+            'proyect': proyecto,
             'sprints': sprints
         }) 
         return context
