@@ -7,10 +7,10 @@
             <table>
             {{form.as_p}}
             </table>
-            <a class="btn btn-warning" role="button" href="{% url 'proyecto:roles' proyect_id %}">
+            <a class="btn btn-warning" role="button" href="{% url 'proyecto:roles' object.id %}">
                 Cancelar
             </a>
-            <button type="submit" class="my-2 btn btn-success">Assignar</button>
+            <button type="submit" class="my-2 btn btn-success">Asignar</button>
           </form>
     </div>
 {% endblock %}

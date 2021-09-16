@@ -33,6 +33,9 @@
                         </div>
                     {% endfor %}
                 </div>
+                <div class="row">
+                    <a href="{% url 'proyecto:product-backlog' object.id %}"  class="btn btn-info" type="button">Product Backlog</a>
+                </div>
             </div>
         {% endblock %}
     </div>

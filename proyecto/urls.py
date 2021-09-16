@@ -6,7 +6,7 @@ from django.contrib.auth.views import LogoutView
 from proyecto.views import agregar_rol_proyecto_view
 from django.urls import path
 from django.views.generic import TemplateView
-from .views import EliminarRolProyectoView, ProyectoDetailView, edit, delete, editar_rol_proyecto_view, ListaProyectos, AssignUserRolProyecto,ImportarRolView,iniciar_proyecto,cancelar_proyecto, CreateProyectoView
+from .views import EliminarRolProyectoView, ProyectoDetailView,agregar_user_story_view, edit, delete, editar_rol_proyecto_view, ListaProyectos, AssignUserRolProyecto,ImportarRolView,iniciar_proyecto,cancelar_proyecto, CreateProyectoView
 from .views import finalizar_proyecto, AgregarParticipanteProyecto, eliminarParticipanteView, AgregarDesarrolladorView,EditDesarrolladorView,EliminarDesarrolladorView,SolicitarPermisosView,AgregarSprintView,EquipoSprintUpdateView
 app_name = 'proyecto'
 
@@ -41,4 +41,7 @@ urlpatterns = [
     path('proyecto/<int:pk_proy>/agregar-sprint/',AgregarSprintView.as_view(),name='agregar-sprint'),
     path('proyecto/<int:pk_proy>/sprint/<int:pk>/team/',EquipoSprintUpdateView.as_view(),name='sprint-team-edit'),
 
+    #URLS de user story
+    path('proyecto/<int:pk_proy>/pbacklog',views.ProductBacklogView.as_view(),name='product-backlog'),
+    path('proyecto/<int:pk_proy>/pbacklog/agregarUS',agregar_user_story_view,name='agregar-us'),
 ]

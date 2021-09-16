@@ -1,7 +1,7 @@
 from django.forms import fields, widgets
 from django.contrib.auth.models import Permission
 from django import forms
-from .models import Proyecto, ProyectUser, RolProyecto, Sprint
+from .models import Proyecto, ProyectUser, RolProyecto, Sprint, UserStory
 from sso.models import User
 from django import forms
 from django.forms.models import inlineformset_factory
@@ -141,3 +141,12 @@ class SprintCrearForm(forms.ModelForm):
 
 
 EquipoFormset = inlineformset_factory(Sprint, ProyectUser,fields=('usuario','horas_diarias',),form=DesarrolladorCreateForm,can_delete=True)
+class AgregarUserStoryForm(forms.ModelForm):
+    """
+    Form para crear un user story
+    """
+    def __init__(self, *args, **kwargs):
+        super(AgregarUserStoryForm, self).__init__(*args, **kwargs)
+    class Meta:
+        model = UserStory
+        fields = ['nombre','descripcion','tiempoEstimado']
