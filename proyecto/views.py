@@ -70,7 +70,8 @@ class DetallesRolProyectoView(PermissionRequiredMixin, DetailView):
 
 
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
-def agregar_rol_proyecto_view(request,pk_proy):
+@permission_required_or_403('proyecto.p_administrar_roles',(Proyecto,'pk','pk_proy'))
+def agregar_rol_proyecto_view(request, pk_proy):
     """
     Vista para agregar un rol de proyecto al proyecto.
     Se toman como parámetros el nombre del nuevo rol y sus permisos asociados para crear el rol.
