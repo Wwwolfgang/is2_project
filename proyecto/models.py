@@ -20,7 +20,7 @@ class RolProyecto(models.Model):
     proyecto = models.ForeignKey('proyecto', on_delete=models.CASCADE, blank=True, null=True)
     class Meta:
         permissions = (
-                    ("p_administrar_roles","Permite que el usuario pueda configurar, crear, importar y eliminar roles del proyecto. Solo los permisos del scrum master no se podrán modificar."),
+                    ('p_administrar_roles','Permite que el usuario pueda configurar, crear, importar y eliminar roles del proyecto. Solo los permisos del scrum master no se podrán modificar.'),
         )
 
     def get_permisos(self):
@@ -82,11 +82,8 @@ class Proyecto(models.Model):
 class ProyectUser(models.Model):
     usuario = models.ForeignKey(User,on_delete=CASCADE)
     horas_diarias = models.DecimalField(blank=False,decimal_places=2,max_digits=4,null=False,help_text='La cantidad de horas que trabaja el desarrollador por día.')
-
-
-class SprintDevTeam(models.Model):
-    team = models.ManyToManyField('proyectuser',blank=True)
     sprint = models.ForeignKey('sprint', related_name='sprint_team',on_delete=CASCADE)
+
 
 class Sprint(models.Model):
     identificador = models.CharField(default='Sprint',max_length=50)
@@ -108,3 +105,24 @@ class Sprint(models.Model):
 
     def __str__(self):
        return self.identificador
+class UserStory(models.Model):
+    """
+    Clase user story
+    TODO: Agregar el campo 'encargado', que relacione el user story con el participante del proyecto encargado de 
+    realizar la tarea
+    """
+    nombre = models.CharField(verbose_name='Nombre del user story', max_length=20, blank=False,null=False)
+    descripcion = models.CharField(verbose_name='Descripción del user story', max_length=60, blank=False,null=False)
+    tiempoEstimado = models.PositiveIntegerField(blank=False)
+    #encargado = 
+    ESTADO_DE_USER_STORY_CHOICES = [
+        ('TD', 'To do'),
+        ('DG', 'Doing'),
+        ('DN', 'Done'),
+        ('QA','Quality Assurance')
+    ]
+    estado_user_story = models.CharField(
+        max_length=2,
+        choices=ESTADO_DE_USER_STORY_CHOICES,
+        default='TD',
+    )

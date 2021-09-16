@@ -1,3 +1,4 @@
+from django.views.generic.detail import SingleObjectMixin
 import proyecto
 from django.contrib import messages
 from django.contrib.auth import models
@@ -11,9 +12,9 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView
 from django.urls import reverse
-from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoEditForm,ProyectoCreateForm,AgregarParticipanteForm, DesarrolladorCreateForm,PermisoSolicitudForm,SprintCrearForm
-# from proyecto.forms import EquipoFormset
-from proyecto.models import RolProyecto, Proyecto, ProyectUser, Sprint, SprintDevTeam
+from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoEditForm,ProyectoCreateForm,AgregarParticipanteForm, DesarrolladorCreateForm,PermisoSolicitudForm,SprintCrearForm, AgregarUserStoryForm
+from proyecto.forms import EquipoFormset
+from proyecto.models import RolProyecto, Proyecto, ProyectUser, Sprint, UserStory
 from django.views.generic.edit import UpdateView, DeleteView, FormView, CreateView
 from django.urls import reverse_lazy
 from guardian.decorators import permission_required_or_403,permission_required
@@ -25,6 +26,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.forms.models import inlineformset_factory
 
+#Views de Rol Proyecto
 class EliminarRolProyectoView(PermissionRequiredMixin, DeleteView):
     """
     Vista para eliminar un rol de proyecto.
@@ -220,7 +222,7 @@ class AssignUserRolProyecto(PermissionRequiredMixin, UpdateView):
 
         return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']}))
 
-
+#Views de proyecto
 class ListaProyectos(PermissionRequiredMixin, ListView):
     permission_required = ('sso.pg_puede_acceder_proyecto','sso.pg_is_user')
     raise_exception = True
@@ -532,3 +534,78 @@ class AgregarSprintView(CreateView):
         obj.proyecto = proyecto
         obj.save()
         return HttpResponseRedirect(reverse('proyecto:detail',kwargs={'pk':self.kwargs['pk_proy']}))
+
+
+class EquipoSprintUpdateView(SingleObjectMixin,FormView):
+
+    model = Sprint
+    template_name = 'proyecto/sprint_equipo_edit.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(EquipoSprintUpdateView,self).get_context_data(**kwargs)
+        context.update({
+            'proyect_id': self.kwargs['pk_proy'],
+        })
+        return context
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object(Sprint.objects.all())
+        return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object(Sprint.objects.all())
+        return super().post(request, *args, **kwargs)
+
+    def get_form(self, form_class=None):
+        return EquipoFormset(**self.get_form_kwargs(),form_kwargs={'proyecto':self.kwargs['pk_proy']}, instance=self.object)
+
+    def form_valid(self, form):
+        form.save()
+
+        messages.add_message(
+            self.request,
+            messages.SUCCESS,
+            'Equipo del sprint actualizado'
+        )
+
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_success_url(self):
+        return reverse('proyecto:detail', kwargs={'pk': self.kwargs['pk_proy'],})
+
+#Views de user story
+@permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
+def agregar_user_story_view(request, pk_proy):
+    """
+    Vista para agregar un user story al product backlog.
+    Se toman como parámetros el nombre, la descripción y el tiempo estimado por el scrum master.
+    """
+    contexto = {}
+    contexto.update({
+        'proyect_id': pk_proy
+    })
+    if request.method == 'POST':      
+        form = AgregarUserStoryForm(request.POST or None)
+        #Si el form se cargó correctamente, lo guardamos
+        if form.is_valid():
+            form.save()
+            #Redirigimos al product backlog
+            return redirect('proyecto:product-backlog', pk_proy)  
+        contexto['form'] = form
+        return render(request, 'proyecto/nuevo_user_story_view.html', context=contexto)
+    else:
+        form = AgregarUserStoryForm()
+        contexto['form'] = form
+        return render(request, 'proyecto/nuevo_user_story_view.html', context=contexto)
+
+class ProductBacklogView(PermissionRequiredMixin, ListView):
+    model = UserStory
+    template_name = 'proyecto/product_backlog.html'
+    permission_required = ('sso.pg_is_user')
+
+    def get_context_data(self, **kwargs):
+        context = super(ProductBacklogView, self).get_context_data(**kwargs)
+        context.update({
+            'proyect_id': self.kwargs['pk_proy'],
+        })
+        return context
