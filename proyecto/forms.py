@@ -1,4 +1,4 @@
-from django.forms import fields
+from django.forms import fields, widgets
 from django.contrib.auth.models import Permission
 from django import forms
 from .models import Proyecto, ProyectUser, RolProyecto, Sprint
@@ -115,7 +115,7 @@ class AgregarParticipanteForm(forms.Form):
 class DesarrolladorCreateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
-        proyect_id = kwargs.pop('pk_proy',None)
+        proyect_id = kwargs.pop('proyecto',None)
         proyecto = Proyecto.objects.get(pk=proyect_id)
         super().__init__(*args, **kwargs)
         self.fields['usuario'] = forms.ModelChoiceField(
@@ -134,9 +134,10 @@ class PermisoSolicitudForm(forms.Form):
     body = forms.CharField(widget=forms.Textarea,label='Solicitud',help_text='Especifique, que tipo de acceso o permisos necesita. Explique que acciones quiere hacer.',required=True)
 
 
-# EquipoFormset = inlineformset_factory(Sprint, SprintDevTeam, fields=('team',))
-
 class SprintCrearForm(forms.ModelForm):
     class Meta:
         model = Sprint
         fields = ['duracionSprint','fechaFin']
+
+
+EquipoFormset = inlineformset_factory(Sprint, ProyectUser,fields=('usuario','horas_diarias',),form=DesarrolladorCreateForm,can_delete=True)

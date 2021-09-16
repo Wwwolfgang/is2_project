@@ -27,7 +27,7 @@
                                   <h6 class="card-subtitle mb-2 text-muted">Card subtitle</h6>
                                   <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
                                   <a href="#" class="card-link">Modificar</a>
-                                  <a href="#" class="card-link">Another link</a>
+                                  <a href="{% url 'proyecto:sprint-team-edit' proyecto.id sprint.id%}" class="nav-link me-3"><i class="fas fa-users"></i></a>
                                 </div>
                               </div>
                         </div>
@@ -40,10 +40,6 @@
 {% endblock %}
 {% block extra_js %}
 <script>
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl)
-    })
 </script>
 <script>
     document.body.addEventListener(

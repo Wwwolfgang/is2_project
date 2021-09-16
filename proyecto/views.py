@@ -1,3 +1,4 @@
+from django.views.generic.detail import SingleObjectMixin
 import proyecto
 from django.contrib import messages
 from django.contrib.auth import models
@@ -12,8 +13,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView
 from django.urls import reverse
 from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoEditForm,ProyectoCreateForm,AgregarParticipanteForm, DesarrolladorCreateForm,PermisoSolicitudForm,SprintCrearForm
-# from proyecto.forms import EquipoFormset
-from proyecto.models import RolProyecto, Proyecto, ProyectUser, Sprint, SprintDevTeam
+from proyecto.forms import EquipoFormset
+from proyecto.models import RolProyecto, Proyecto, ProyectUser, Sprint
 from django.views.generic.edit import UpdateView, DeleteView, FormView, CreateView
 from django.urls import reverse_lazy
 from guardian.decorators import permission_required_or_403,permission_required
@@ -527,3 +528,41 @@ class AgregarSprintView(CreateView):
         obj.proyecto = proyecto
         obj.save()
         return HttpResponseRedirect(reverse('proyecto:detail',kwargs={'pk':self.kwargs['pk_proy']}))
+
+
+class EquipoSprintUpdateView(SingleObjectMixin,FormView):
+
+    model = Sprint
+    template_name = 'proyecto/sprint_equipo_edit.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(EquipoSprintUpdateView,self).get_context_data(**kwargs)
+        context.update({
+            'proyect_id': self.kwargs['pk_proy'],
+        })
+        return context
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object(Sprint.objects.all())
+        return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object(Sprint.objects.all())
+        return super().post(request, *args, **kwargs)
+
+    def get_form(self, form_class=None):
+        return EquipoFormset(**self.get_form_kwargs(),form_kwargs={'proyecto':self.kwargs['pk_proy']}, instance=self.object)
+
+    def form_valid(self, form):
+        form.save()
+
+        messages.add_message(
+            self.request,
+            messages.SUCCESS,
+            'Equipo del sprint actualizado'
+        )
+
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_success_url(self):
+        return reverse('proyecto:detail', kwargs={'pk': self.kwargs['pk_proy'],})

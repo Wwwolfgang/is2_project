@@ -37,6 +37,11 @@
                             <small class="form-text text-muted">{{ field.help_text }}</small>
                             {% endif %}
                         {% endif %}
+
+                        {% if field.name == 'equipo' %}
+                            {{field}}
+                        {% endif %}
+                        
                 </div>
                 {% endfor %}
                 <button type="submit" class="btn btn-primary">Crear Proyecto</button>

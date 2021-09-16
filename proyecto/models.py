@@ -82,11 +82,8 @@ class Proyecto(models.Model):
 class ProyectUser(models.Model):
     usuario = models.ForeignKey(User,on_delete=CASCADE)
     horas_diarias = models.DecimalField(blank=False,decimal_places=2,max_digits=4,null=False,help_text='La cantidad de horas que trabaja el desarrollador por día.')
-
-
-class SprintDevTeam(models.Model):
-    team = models.ManyToManyField('proyectuser',blank=True)
     sprint = models.ForeignKey('sprint', related_name='sprint_team',on_delete=CASCADE)
+
 
 class Sprint(models.Model):
     identificador = models.CharField(default='Sprint',max_length=50)
