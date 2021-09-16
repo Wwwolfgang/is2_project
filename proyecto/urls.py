@@ -7,7 +7,7 @@ from proyecto.views import agregar_rol_proyecto_view
 from django.urls import path
 from django.views.generic import TemplateView
 from .views import EliminarRolProyectoView, ProyectoDetailView, agregar_user_story_view, edit, cancelar, editar_rol_proyecto_view, ListaProyectos, AssignUserRolProyecto,ImportarRolView,iniciar_proyecto,cancelar_proyecto, CreateProyectoView
-from .views import finalizar_proyecto, AgregarParticipanteProyecto, eliminarParticipanteView, AgregarDesarrolladorView,EditDesarrolladorView,EliminarDesarrolladorView,SolicitarPermisosView,AgregarSprintView,EquipoSprintUpdateView
+from .views import finalizar_proyecto, AgregarParticipanteProyecto, eliminarParticipanteView, AgregarDesarrolladorView,EditDesarrolladorView,EliminarDesarrolladorView,SolicitarPermisosView,AgregarSprintView,EquipoSprintUpdateView, ListaProyectosCancelados
 app_name = 'proyecto'
 
 urlpatterns = [

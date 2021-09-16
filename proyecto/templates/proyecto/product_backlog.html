@@ -3,7 +3,7 @@
 <form action="" method="post" enctype="multipart/form-data">
     {% csrf_token %}
     <h3 class="round3" style="text-align:center;">Product Backlog</h3>
-    <a href="{% url 'proyecto:agregar-us' proyect_id %}"  class="btn btn-success" type="button"><i class="fas fa-plus-circle me-2"></i>Agregar user story</a>
+    <a href="{% url 'proyecto:agregar-us' proyecto_id %}"  class="btn btn-success" type="button"><i class="fas fa-plus-circle me-2"></i>Agregar user story</a>
     {% for us in object_list %}
         <li>{{us.nombre}}</li>
         <li>{{us.descripcion}}</li>

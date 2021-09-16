@@ -15,7 +15,7 @@
                         <h6 class="class mb-0">Sprints del Proyecto</h6>
 
                     </div>
-                    <div class="col class pl-0"> <a href="{% url 'proyecto:agregar-sprint' proyect.id%}" class="nav-link me-3" ><i class="fas fa-plus" ></i></a></div>
+                    <div class="col class pl-0"> <a href="{% url 'proyecto:agregar-sprint' proyecto.id%}" class="nav-link me-3" ><i class="fas fa-plus" ></i></a></div>
                 </div>
                 <div class="row align-items-center">
                     {% for sprint in sprints %}
@@ -32,8 +32,9 @@
                         </div>
                     {% endfor %}
                 </div>
+                {{object.id}}
                 <div class="row">
-                    <a href="{% url 'proyecto:product-backlog' object.id %}"  class="btn btn-info" type="button">Product Backlog</a>
+                    <a href="{% url 'proyecto:product-backlog' proyecto.id %}"  class="btn btn-info" type="button">Product Backlog</a>
                 </div>
             </div>
         {% endblock %}

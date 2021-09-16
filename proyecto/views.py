@@ -70,7 +70,7 @@ class ListaRolProyectoView(PermissionRequiredMixin, ListView):
         context.update({
             'roles': RolProyecto.objects.filter(proyecto__id= self.kwargs.get('pk_proy')),
             'participantes': proyecto.equipo.all() | user,
-            'proyect': proyecto
+            'proyecto': proyecto
         })
         return context
 
@@ -258,10 +258,10 @@ class ProyectoDetailView(PermissionRequiredMixin, DetailView):
         id = self.kwargs['pk']
         sprints = Sprint.objects.filter(proyecto__pk=id)
         proyecto = self.model.objects.get(id=id)
-        self.request.session['proyect_id'] = id
-        self.request.session['proyect_name'] = proyecto.nombreProyecto
+        self.request.session['proyecto_id'] = id
+        self.request.session['proyecto_nombre'] = proyecto.nombreProyecto
         context.update({
-            'proyect': proyecto,
+            'proyecto': proyecto,
             'sprints': sprints
         }) 
         return context
@@ -582,7 +582,7 @@ def agregar_user_story_view(request, pk_proy):
     """
     contexto = {}
     contexto.update({
-        'proyect_id': pk_proy
+        'proyecto_id': pk_proy
     })
     if request.method == 'POST':      
         form = AgregarUserStoryForm(request.POST or None)
@@ -606,6 +606,6 @@ class ProductBacklogView(PermissionRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super(ProductBacklogView, self).get_context_data(**kwargs)
         context.update({
-            'proyect_id': self.kwargs['pk_proy'],
+            'proyecto_id': self.kwargs['pk_proy'],
         })
         return context
