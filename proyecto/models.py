@@ -15,7 +15,7 @@ class RolProyecto(models.Model):
     proyecto = models.ForeignKey('proyecto', on_delete=models.CASCADE, blank=True, null=True)
     class Meta:
         permissions = (
-                    ("p_administrar_roles","Permite que el usuario pueda configurar, crear, importar y eliminar roles del proyecto. Solo los permisos del scrum master no se podrán modificar."),
+                    ('p_administrar_roles','Permite que el usuario pueda configurar, crear, importar y eliminar roles del proyecto. Solo los permisos del scrum master no se podrán modificar.'),
         )
 
     def get_permisos(self):
