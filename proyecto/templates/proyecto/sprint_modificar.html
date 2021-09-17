@@ -1,5 +1,5 @@
 {% extends 'proyecto/proyecto-detalle.html' %}
-{% block proyecto_content %}
+{% block proyect_content %}
 {% load widget_tweaks %}
 <div class="container-fluid">
     <form action="" method="post" enctype="multipart/form-data">
@@ -59,7 +59,7 @@
         {% endfor %}
         <hr>
         <p>
-            <a href="{% url 'proyecto:detail' proyecto_id %}" role="button" class="btn btn-secondary w-100">Cancel</a>
+            <a href="{% url 'proyecto:detail' proyect_id %}" role="button" class="btn btn-secondary w-100">Cancel</a>
             <button type="submit" value="Update collection" class="btn btn-primary w-100 mb-3">Guardar Equipo</button>
           </p>
       </form>

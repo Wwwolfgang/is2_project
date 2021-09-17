@@ -40,7 +40,7 @@ class EliminarRolProyectoView(PermissionRequiredMixin, DeleteView):
     def get_context_data(self, **kwargs):
         context = super(EliminarRolProyectoView, self).get_context_data(**kwargs)
         context.update({
-            'proyect_id': self.kwargs['pk_proy'],
+            'proyecto_id': self.kwargs['pk_proy'],
         })
         return context
 
@@ -89,7 +89,7 @@ def agregar_rol_proyecto_view(request,pk_proy):
     """
     contexto = {}
     contexto.update({
-        'proyect_id': pk_proy
+        'proyecto_id': pk_proy
     })
     if request.method == 'POST':
         form = AgregarRolProyectoForm(request.POST or None)
@@ -119,7 +119,7 @@ def editar_rol_proyecto_view(request, pk_proy, id_rol):
     contexto = {}
 
     contexto.update({
-        'proyect_id': pk_proy
+        'proyecto_id': pk_proy
     })
     if request.method == 'POST':
         form = AgregarRolProyectoForm(request.POST, instance=rol)
@@ -148,7 +148,7 @@ class ImportarRolView(PermissionRequiredMixin, FormView):
         context = super(ImportarRolView,self).get_context_data(**kwargs)
         context.update({
             'roles': RolProyecto.objects.exclude(proyecto__id= self.kwargs.get('pk_proy')),
-            'proyect_id': self.kwargs.get('pk_proy')
+            'proyecto_id': self.kwargs.get('pk_proy')
         })
         return context
 
@@ -190,7 +190,7 @@ class AssignUserRolProyecto(PermissionRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super(AssignUserRolProyecto, self).get_context_data(**kwargs)
         context.update({
-            'proyect_id': self.kwargs['pk_proy'],
+            'proyecto_id': self.kwargs['pk_proy'],
         })
         return context
 
@@ -390,7 +390,7 @@ class AgregarDesarrolladorView(CreateView):
     def get_context_data(self, **kwargs):
         context = super(AgregarDesarrolladorView,self).get_context_data(**kwargs)
         context.update({
-            'proyect_id': self.kwargs['pk_proy'],
+            'proyecto_id': self.kwargs['pk_proy'],
         })
         return context
 
@@ -427,7 +427,7 @@ class EditDesarrolladorView(PermissionRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super(EditDesarrolladorView,self).get_context_data(**kwargs)
         context.update({
-            'proyect_id': self.kwargs['pk_proy'],
+            'proyecto_id': self.kwargs['pk_proy'],
             'edit': True
         })
         return context
@@ -464,7 +464,7 @@ class EliminarDesarrolladorView(PermissionRequiredMixin, DeleteView):
     def get_context_data(self, **kwargs):
         context = super(EliminarDesarrolladorView, self).get_context_data(**kwargs)
         context.update({
-            'proyect_id': self.kwargs['pk_proy'],
+            'proyecto_id': self.kwargs['pk_proy'],
         })
         return context
 
@@ -489,7 +489,7 @@ class SolicitarPermisosView(FormView):
     def get_context_data(self, **kwargs):
         context = super(SolicitarPermisosView, self).get_context_data(**kwargs)
         context.update({
-            'proyect_id': self.kwargs['pk_proy'],
+            'proyecto_id': self.kwargs['pk_proy'],
         })
         return context
 
@@ -515,8 +515,11 @@ class AgregarSprintView(CreateView):
         context = super(AgregarSprintView,self).get_context_data(**kwargs)
         sprints_count = Sprint.objects.filter(proyecto__id=self.kwargs['pk_proy']).exclude(estado_de_sprint='C').count()
         context.update({
-            'proyect_id': self.kwargs['pk_proy'],
-            'count': sprints_count + 1
+            'proyecto_id': self.kwargs['pk_proy'],
+            'count': sprints_count + 1,
+            'sprint_count': Sprint.objects.filter(proyecto__id=self.kwargs['pk_proy']).filter(
+            estado_de_sprint='I').count()
+
         })
         return context
 
@@ -544,7 +547,7 @@ class EquipoSprintUpdateView(SingleObjectMixin,FormView):
     def get_context_data(self, **kwargs):
         context = super(EquipoSprintUpdateView,self).get_context_data(**kwargs)
         context.update({
-            'proyect_id': self.kwargs['pk_proy'],
+            'proyecto_id': self.kwargs['pk_proy'],
         })
         return context
 
