@@ -4,6 +4,7 @@
     <div class="container-fluid">
         {% if sprint_count > 0%}
 
+
         <h2><font color="red"> No se puede crear un sprint mientras se tiene uno por planificar</font></h2>
         <a href="{% url 'proyecto:detail' proyecto_id %}" role="button" class="btn btn-secondary ">Atrás</a>
         {% else %}
