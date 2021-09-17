@@ -31,7 +31,8 @@
                     {{user.first_name}} {{user.last_name}}
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-                    <li><a class="dropdown-item" href="{% url 'account_logout' %}">Cerrar sesión</a></li>
+                        <li><a class="dropdown-item" href="{% url 'account_logout' %}">Cerrar sesión</a></li>
+                        <li><a class="dropdown-item" href="{% url 'sso:solicitud-permisos' user.pk %}">Solicitar permisos</a></li>
                     </ul>
                 </div>
             </div>
