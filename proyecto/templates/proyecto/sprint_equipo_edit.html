@@ -1,0 +1,68 @@
+{% extends 'proyecto/proyecto-detalle.html' %}
+{% block proyect_content %}
+{% load widget_tweaks %}
+<div class="container-fluid">
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+    
+        {{ form.management_form }}
+        {{ form.non_form_errors }}
+    
+        <h3>Equipo del sprint</h3>
+        {% for dev_form in form.forms %}
+            {{dev_form.id}}
+            {% for hidden_field in dev_form.hidden_fields %}
+
+                {{ hidden_field }}
+                {{ hidden_field.errors }}
+            {% endfor %}
+            <hr>
+            <h5>
+                {% if dev_form.id %}
+                Desarrollador: {{ dev_form.instance.name }}
+                {% else %}
+                {% if form.forms|length > 1 %}
+                    Agrega otro desarrollador
+                {% else %}
+                    agrega un desarrollador
+                {% endif %}
+                {% endif %}
+            </h5>
+          
+          {% for field in dev_form.visible_fields %}
+                <div class="form-group class pb-3">
+                    {% if field.name == 'usuario'%}
+                        {% if edit %}
+                            Desarrollador
+                        {% else %}
+                            Eliga un desarrollador
+                        {% endif %}
+
+                        {% render_field field class="form-control" %}
+                        {% if field.help_text %}
+                            <small class="form-text text-muted">{{ field.help_text }}</small>
+                        {% endif %}
+                    {% endif %}
+                    {% if field.name == 'horas_diarias'%}
+                        Horas diarias
+                        {% render_field field class="form-control" %}
+                        {% if field.help_text %}
+                            <small class="form-text text-muted">{{ field.help_text }}</small>
+                        {% endif %}
+                    {% endif %}
+                </div>
+                {%endfor%}
+                {% if dev_form.instance.id %}
+                    Eliminar Desarrollador: 
+                    <td> {{dev_form.DELETE}}</td>
+                {% endif %}
+        {% endfor %}
+        <hr>
+        <p>
+            <a href="{% url 'proyecto:detail' proyect_id %}" role="button" class="btn btn-secondary w-100">Cancel</a>
+            <button type="submit" value="Update collection" class="btn btn-primary w-100 mb-3">Guardar Equipo</button>
+          </p>
+      </form>
+</div>
+
+{% endblock %}
