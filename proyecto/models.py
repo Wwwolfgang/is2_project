@@ -4,6 +4,7 @@ from datetime import datetime
 from django.db.models.base import Model
 
 from django.db.models.deletion import CASCADE
+from django.db.models.expressions import Case
 from django.db.models.fields.related import ManyToManyField
 from sso.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -85,6 +86,10 @@ class ProyectUser(models.Model):
     sprint = models.ForeignKey('sprint', related_name='sprint_team',on_delete=CASCADE)
 
 
+class ProductBacklog(models.Model):
+    proyecto = models.ForeignKey(Proyecto,on_delete=CASCADE)
+
+
 class Sprint(models.Model):
     identificador = models.CharField(default='Sprint',max_length=50)
     fechaInicio = models.DateField(null=True)
@@ -105,6 +110,8 @@ class Sprint(models.Model):
 
     def __str__(self):
        return self.identificador
+
+       
 class UserStory(models.Model):
     """
     Clase user story
@@ -112,8 +119,29 @@ class UserStory(models.Model):
     realizar la tarea
     """
     nombre = models.CharField(verbose_name='Nombre del user story', max_length=20, blank=False,null=False)
-    descripcion = models.CharField(verbose_name='Descripción del user story', max_length=60, blank=False,null=False)
-    tiempoEstimado = models.PositiveIntegerField(blank=False)
+    descripcion = models.TextField(verbose_name='Descripción del user story',blank=True)
+    tiempo_estimado_scrum_master = models.PositiveIntegerField(blank=True,null=True,help_text="Tiempo de duración estimado por el scrum master.")
+    tiempo_estimado_dev = models.PositiveIntegerField(blank=True,null=True,help_text="Tiempo de duración estimado por el desarrollador asignado.")
+    PRIORIDAD_DE_USER_STORY_CHOICES = [
+        ('B', 'Baja'),
+        ('A', 'Alta'),
+        ('M', 'Media'),
+        ('E','Emergencia')
+    ]
+    prioridad_user_story = models.CharField(
+        max_length=1,
+        choices=PRIORIDAD_DE_USER_STORY_CHOICES,
+        default='B',
+    )
+    ESTADO_APROBACION_USER_STORY = [
+        ('T', 'Temporal'),
+        ('A', 'Aprobado'),
+    ]
+    estado_aprobacion = models.CharField(
+        max_length=1,
+        choices= ESTADO_APROBACION_USER_STORY,
+        default='T',
+    )
     #encargado = 
     ESTADO_DE_USER_STORY_CHOICES = [
         ('TD', 'To do'),
@@ -126,3 +154,6 @@ class UserStory(models.Model):
         choices=ESTADO_DE_USER_STORY_CHOICES,
         default='TD',
     )
+    creador = models.ForeignKey(User,blank=True,null=True,on_delete=CASCADE)
+    sprint = models.ForeignKey('sprint',blank=True,null=True,on_delete=CASCADE)
+    product_backlog = models.ForeignKey('productbacklog',on_delete=CASCADE, blank=True,null=True)

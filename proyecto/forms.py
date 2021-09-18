@@ -33,8 +33,9 @@ class UserAssignRolForm(forms.ModelForm):
         proyecto_id = kwargs.pop('pk_proy',None)
         proyecto = Proyecto.objects.get(id=proyecto_id)
         super(UserAssignRolForm, self).__init__(*args, **kwargs)
-        self.fields['participantes'] = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple,
-                                                            choices=[(p.id, p.first_name) for p in proyecto.equipo.all()])
+        self.fields['participantes'] = CustomUserMCF(queryset= proyecto.equipo.all() | User.objects.filter(pk=proyecto.owner.pk),
+        widget=forms.CheckboxSelectMultiple
+    )
 
 
 class CustomUserMCF(forms.ModelMultipleChoiceField):
@@ -147,6 +148,11 @@ class AgregarUserStoryForm(forms.ModelForm):
     """
     def __init__(self, *args, **kwargs):
         super(AgregarUserStoryForm, self).__init__(*args, **kwargs)
+        self.fields['prioridad_user_story'] = forms.ChoiceField(
+            widget= forms.RadioSelect,
+            choices=[('B','Baja'),('A','Alta'),('M','Media'),('E','Emergencia')]
+        )  
+
     class Meta:
         model = UserStory
-        fields = ['nombre','descripcion','tiempoEstimado']
+        fields = ['nombre','descripcion','prioridad_user_story']

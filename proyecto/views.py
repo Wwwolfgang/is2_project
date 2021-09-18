@@ -1,20 +1,19 @@
-from django.views.generic.detail import SingleObjectMixin
+from django.views.generic.base import TemplateView
 import proyecto
+from django.views.generic.detail import SingleObjectMixin
 from django.contrib import messages
-from django.contrib.auth import models
-from django.contrib.auth.models import Permission
-from django.db.models import fields
 from django.shortcuts import redirect, render
 from django.shortcuts import get_object_or_404
-from guardian.shortcuts import assign_perm
+from guardian.shortcuts import assign_perm, remove_perm
 from django.contrib.auth.mixins import PermissionRequiredMixin,LoginRequiredMixin
 from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView
 from django.urls import reverse
+from proyecto import models
 from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoEditForm,ProyectoCreateForm,AgregarParticipanteForm, DesarrolladorCreateForm,PermisoSolicitudForm,SprintCrearForm, AgregarUserStoryForm
 from proyecto.forms import EquipoFormset
-from proyecto.models import RolProyecto, Proyecto, ProyectUser, Sprint, UserStory
+from proyecto.models import RolProyecto, Proyecto, ProyectUser, Sprint, UserStory, ProductBacklog
 from django.views.generic.edit import UpdateView, DeleteView, FormView, CreateView
 from django.urls import reverse_lazy
 from guardian.decorators import permission_required_or_403,permission_required
@@ -23,8 +22,6 @@ from sso.models import User
 from django.views.decorators.csrf import csrf_exempt
 import json
 from django.core.mail import send_mail
-from django.conf import settings
-from django.forms.models import inlineformset_factory
 
 #Views de Rol Proyecto
 class EliminarRolProyectoView(PermissionRequiredMixin, DeleteView):
@@ -214,8 +211,13 @@ class AssignUserRolProyecto(PermissionRequiredMixin, UpdateView):
             for per in permisos:
                 for participante in form.cleaned_data['participantes']:
                     if per.content_type.model == 'proyecto':
-                        user = User.objects.get(id=participante)
+                        user = participante
                         assign_perm(per,user,proyecto)
+                for past_part in form.initial['participantes']:
+                    if per.content_type.model == 'proyecto':
+                        if past_part not in form.cleaned_data['participantes']:
+                            remove_perm(per,past_part,proyecto)
+
 
         else:   
             messages.error(self.request, 'Rol de proyecto no pudo ser assignado porque el proyecto no está activo')
@@ -311,7 +313,7 @@ class AgregarParticipanteProyecto(PermissionRequiredMixin, UpdateView):
             proyecto.equipo.add(user)
         return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']}))
 
-
+@permission_required_or_403('proyecto.p_cancelar_proyectos',(Proyecto,'pk','pk_proy'))
 def eliminarParticipanteView(request, pk_proy, pk, template_name='proyecto/delete_confirm_participante.html'):
     """ View para eliminar participantes de equipo de un proyecto. Es una vista de confirmación
         , si el usuario elige "Eliminar" se elimina el usuario del proyecto.
@@ -337,7 +339,7 @@ def edit(request, pk, template_name='proyecto/edit.html'):
     return render(request, template_name, {'form':form})
 
 
-@permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
+@permission_required_or_403('proyecto.p_cancelar_proyectos',(Proyecto,'pk','pk'))
 def delete(request, pk, template_name='proyecto/confirm-delete.html'):
     proyecto = get_object_or_404(Proyecto, pk=pk)
     if request.method=='POST':
@@ -540,6 +542,7 @@ class EquipoSprintUpdateView(SingleObjectMixin,FormView):
         context = super(EquipoSprintUpdateView,self).get_context_data(**kwargs)
         context.update({
             'proyect_id': self.kwargs['pk_proy'],
+            'sprint': Sprint.objects.get(pk=self.kwargs['pk']),
         })
         return context
 
@@ -583,7 +586,16 @@ def agregar_user_story_view(request, pk_proy):
         form = AgregarUserStoryForm(request.POST or None)
         #Si el form se cargó correctamente, lo guardamos
         if form.is_valid():
-            form.save()
+            backlog = ProductBacklog.objects.filter(proyecto__id=pk_proy).count()
+
+            if backlog == 0:
+                ProductBacklog.objects.create(proyecto=get_object_or_404(Proyecto, pk=pk_proy))
+            
+            backlog = ProductBacklog.objects.get(proyecto__pk=pk_proy)
+            u_story = form.save()
+            u_story.product_backlog = backlog
+            u_story.creador = request.user
+            u_story.save()
             #Redirigimos al product backlog
             return redirect('proyecto:product-backlog', pk_proy)  
         contexto['form'] = form
@@ -592,6 +604,29 @@ def agregar_user_story_view(request, pk_proy):
         form = AgregarUserStoryForm()
         contexto['form'] = form
         return render(request, 'proyecto/nuevo_user_story_view.html', context=contexto)
+
+class UserStoryUdateView(UpdateView):
+    model = UserStory
+    form_class= AgregarUserStoryForm
+    template_name = 'proyecto/nuevo_user_story_view.html'
+    raise_exception = True
+
+    def get_object(self, queryset=None):
+        """ Función que retorna el rol que vamos asignar a los usuarios. """
+        id = self.kwargs['us_id']
+        return self.model.objects.get(id=id)
+
+    def get_context_data(self, **kwargs):
+        context = super(UserStoryUdateView, self).get_context_data(**kwargs)
+        context.update({
+            'proyecto_id': self.kwargs['pk_proy'],
+            'update': True,
+        })
+        return context
+
+    def get_success_url(self):
+        return reverse('proyecto:product-backlog', kwargs={'pk_proy': self.kwargs['pk_proy'],})
+
 
 class ProductBacklogView(PermissionRequiredMixin, ListView):
     model = UserStory
@@ -602,5 +637,29 @@ class ProductBacklogView(PermissionRequiredMixin, ListView):
         context = super(ProductBacklogView, self).get_context_data(**kwargs)
         context.update({
             'proyect_id': self.kwargs['pk_proy'],
+            'user_storys_nuevos': ProductBacklog.objects.get(proyecto__pk = self.kwargs['pk_proy']).userstory_set.filter(estado_aprobacion='T'),
+            'product_backlog': ProductBacklog.objects.get(proyecto__pk = self.kwargs['pk_proy']).userstory_set.filter(estado_aprobacion='A'),
+        })
+        return context
+
+
+def aprobar_user_story(request,pk_proy,pk):
+    if request.method == 'POST': 
+        user_story = get_object_or_404(UserStory,pk=pk)
+        user_story.estado_aprobacion = 'A'
+        user_story.save()
+    return HttpResponse('<a style="color: green;"  role="button"><i class="fas fa-check-square me-4"></i></i></a>')
+
+
+class SprintView(TemplateView):
+    model = Sprint
+    template_name = 'proyecto/sprint_detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(SprintView,self).get_context_data(**kwargs)
+        context.update({
+            'proyecto_id': self.kwargs['pk_proy'],
+            'sprint': Sprint.objects.get(pk=self.kwargs['sprint_id']),
+            'user_storys': ProductBacklog.objects.get(proyecto__pk = self.kwargs['pk_proy']).userstory_set.filter(estado_aprobacion='A').filter(sprint__isnull=True),
         })
         return context

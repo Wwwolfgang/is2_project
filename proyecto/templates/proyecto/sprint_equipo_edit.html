@@ -8,7 +8,7 @@
         {{ form.management_form }}
         {{ form.non_form_errors }}
     
-        <h3>Equipo del sprint</h3>
+        <h3>Equipo del {{sprint.identificador}}</h3>
         {% for dev_form in form.forms %}
             {{dev_form.id}}
             {% for hidden_field in dev_form.hidden_fields %}

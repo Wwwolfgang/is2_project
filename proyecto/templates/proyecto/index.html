@@ -38,13 +38,11 @@
                 Editar
             </a>
         </div>
-        {% if user.pk == proyecto.owner.id %}
             <div class="col-md-1">
                 <a href="{% url 'proyecto:delete' proyecto.pk %}" type="button" class="btn btn-danger">
                     Eliminar
                 </a>
             </div>
-        {% endif %}
     </div>
     {% endfor %}
 </div>

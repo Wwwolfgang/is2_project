@@ -1,14 +1,118 @@
-{% extends 'sso/base.html'%}
-{% block container %}
-<form action="" method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    <h3 class="round3" style="text-align:center;">Product Backlog</h3>
-    <a href="{% url 'proyecto:agregar-us' proyect_id %}"  class="btn btn-success" type="button"><i class="fas fa-plus-circle me-2"></i>Agregar user story</a>
-    {% for us in object_list %}
-        <li>{{us.nombre}}</li>
-        <li>{{us.descripcion}}</li>
-        <li>{{us.tiempoEstimado}}</li>
-    {% endfor %}
-</form>
+{% extends 'proyecto/proyecto-detalle.html' %}
+{% block extra_css %}
+    {% load static %}
+   <style scoped>
+       .col-scroll{
+           overflow: auto;
+       }
+   </style>  
+
 {% endblock %}
 
+{% block proyect_content %}
+<div class="container-fluid">
+    <div class="row class mt-2">
+        <div class="col-3">
+            <h2 style="text-align:start;">
+                User storys
+            </h2>
+        </div>
+        <div class="col-3">
+            <a href="{% url 'proyecto:agregar-us' proyect_id %}"  class="btn btn-outline-success" type="button"><i class="fas fa-plus-circle me-2"></i>Agregar user story</a>
+        </div>
+    </div>
+    
+    <div class="row class py-5">
+        <div class="col-6 border-end">
+            <h6>User storys no aprobados</h6>
+            {% for us in user_storys_nuevos %}
+                <div class="card w-51 mb-2" >
+                    <div class="card-header">
+                        <div class="row">
+                            <div class="col">
+                                {{us.nombre}}
+                                {% if us.prioridad_user_story == 'A' %}
+                                    <span class="badge rounded-pill bg-warning text-dark">{{us.get_prioridad_user_story_display}}</span>
+                                {% elif us.prioridad_user_story == 'B'%}
+                                    <span class="badge rounded-pill bg-success text-right">{{us.get_prioridad_user_story_display}}</span>
+                                {% elif us.prioridad_user_story == 'M'%}
+                                    <span class="badge rounded-pill bg-primary text-right">{{us.get_prioridad_user_story_display}}</span>
+                                {% elif us.prioridad_user_story == 'E'%}
+                                    <span class="badge rounded-pill bg-danger text-right">{{us.get_prioridad_user_story_display}}</span>
+                                {% endif %}
+                            </div>
+                            <div class="col d-flex justify-content-end align-content-center">
+                                <a style="color: green;" hx-post="{% url 'proyecto:aprobar-user-story' proyect_id us.pk %}" role="button"
+                                    ><i class="fas fa-check me-4"></i></a>
+                                <a style="color: #55acee;" href="{% url 'proyecto:user-story update' proyect_id us.pk %}" role="button"
+                                    ><i class="fas fa-pen fa-sm me-4"></i
+                                ></a>
+                                <a href="#" class="btn btn-outline-primary btn-sm">Abrir</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                    <h5 class="card-title">{{us.nombre}}</h5>
+                    <p class="card-text">{{us.descripcion}}</p>
+                    </div>
+                    <div class="card-footer text-muted">
+                        {% if us.creador %}
+                            {{us.creador}}
+                        {% endif %}
+                    </div>
+                 </div>
+            {% endfor %}
+        </div>
+        <div class="col-6">
+            <h6>Product Backlog</h6>
+            {% for us in product_backlog %}
+                <div class="card w-51 mb-2" >
+                    <div class="card-header">
+                        <div class="row">
+                            <div class="col">
+                                {{us.nombre}}
+                                {% if us.prioridad_user_story == 'A' %}
+                                    <span class="badge rounded-pill bg-warning text-dark">{{us.get_prioridad_user_story_display}}</span>
+                                {% elif us.prioridad_user_story == 'B'%}
+                                    <span class="badge rounded-pill bg-success text-right">{{us.get_prioridad_user_story_display}}</span>
+                                {% elif us.prioridad_user_story == 'M'%}
+                                    <span class="badge rounded-pill bg-primary text-right">{{us.get_prioridad_user_story_display}}</span>
+                                {% elif us.prioridad_user_story == 'E'%}
+                                    <span class="badge rounded-pill bg-danger text-right">{{us.get_prioridad_user_story_display}}</span>
+                                {% endif %}
+                            </div>
+                            <div class="col d-flex justify-content-end align-content-center">
+                                <a href="#" class="btn btn-outline-primary btn-sm">Abrir</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                    <h5 class="card-title">{{us.nombre}}</h5>
+                    <p class="card-text">{{us.descripcion}}</p>
+                    </div>
+                    <div class="card-footer text-muted">
+                        {% if us.creador %}
+                            {{us.creador}}
+                        {% endif %}
+                    </div>
+                 </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.body.addEventListener("myEvent", function(evt){
+    alert("myEvent was triggered!");
+    })
+</script>
+<script>
+    document.body.addEventListener(
+      'htmx:configRequest', (event) => {
+        event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+    })
+  </script>
+{% endblock %}

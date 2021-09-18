@@ -14,26 +14,20 @@
                 {% csrf_token %}
                 {% for field in form.visible_fields %}
                 <div class="form-group class pb-2">
-                    {% if field.name != 'equipo_desarrollador' %}
-                        {% if field.name == 'duracionSprint'%}
-                            Duración
-                            {% render_field field class="form-control" %}
-                            {% if field.help_text %}
-                            <small class="form-text text-muted">{{ field.help_text }}</small>
-                            {% endif %}
+                    {% if field.name == 'duracionSprint'%}
+                        Duración
+                        {% render_field field class="form-control" %}
+                        {% if field.help_text %}
+                        <small class="form-text text-muted">{{ field.help_text }}</small>
                         {% endif %}
+                    {% endif %}
 
-                        {% if field.name == 'fechaFin'%}
-                            Fecha de finalización
-                            {% render_field field class="form-control" %}
-                            {% if field.help_text %}
-                            <small class="form-text text-muted">{{ field.help_text }}</small>
-                            {% endif %}
+                    {% if field.name == 'fechaFin'%}
+                        Fecha de finalización
+                        {% render_field field class="form-control" %}
+                        {% if field.help_text %}
+                        <small class="form-text text-muted">{{ field.help_text }}</small>
                         {% endif %}
-
-                    {% else %}
-                        Equipo de desarrolladores:
-                        {{field}}
                     {% endif %}
                 </div>
                 {% endfor %}
@@ -43,9 +37,5 @@
         </div>
     </div>
 </div>
-
-{% endblock %}
-
-{% block extra_js %}
 
 {% endblock %}
