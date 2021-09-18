@@ -31,8 +31,8 @@ urlpatterns = [
     path('proyecto/participante/agregar',ListaParticipantes.as_view(), name = 'participantes'),
     #URLS de user story
     path('proyecto/userstory/',UserStoryView.as_view(),name='user-story'),
-    path('proyecto/userstory/agregar',UserStoryView.agregar(),name='user-story-agregar'),
-    path('proyecto/userstory/listar',UserStoryView.listar(),name='user-story-listar'),
-    path('proyecto/userstory/modificar',UserStoryView.modificar(),name='user-story-modificar'),
-    path('proyecto/userstory/cancelar',UserStoryView.cancelar(),name='user-story-cancelar'),
+    #path('proyecto/userstory/agregar',UserStoryView.agregar(),name='user-story-agregar'),
+    #path('proyecto/userstory/listar',UserStoryView.listar(),name='user-story-listar'),
+    #path('proyecto/userstory/modificar',UserStoryView.modificar(),name='user-story-modificar'),
+    #path('proyecto/userstory/cancelar',UserStoryView.cancelar(),name='user-story-cancelar'),
 ]

@@ -94,7 +94,7 @@ class UserStoryView(UpdateView):
             return HttpResponse("Se modifico el user story")
         except:
             Http404("Codigo no encontrado")
-        return
+        return HttpResponse()
     def cancelar(self,codigoUserStory : int):
         self.template_name += 'cancelar.html'
         try:
@@ -102,7 +102,8 @@ class UserStoryView(UpdateView):
             return HttpResponse("Se elimino el user story")
         except:
             Http404("Codigo no encontrado")
-        return
+        return HttpResponse()
+
 class EliminarRolProyectoView(PermissionRequiredMixin, DeleteView):
     model = RolProyecto
     template_name = 'proyecto/eliminar_rol_proyecto.html'
