@@ -4,14 +4,13 @@
 
     <div class="container-fluid">
 
-        {% include "includes/proyect_toolbar.html" with proyect=proyecto %}
-        {{proyect|json_script:"proyecto"}}
+        {% include "includes/proyect_toolbar.html" with proyecto=proyecto %}
 
-        {% block proyect_content %}
+        {% block proyecto_content %}
             <div class="class pt-5">
                 <div class="row class pb-5">
                     <div class="col class pl-0"> 
-                        <a href="{% url 'proyecto:product-backlog' object.id %}"  class="btn btn-outline-success" type="button"><i class="fas fa-clipboard-list me-2"></i></i>User storys</a>
+                        <a href="{% url 'proyecto:product-backlog' proyecto.id %}"  class="btn btn-outline-success" type="button"><i class="fas fa-clipboard-list me-2"></i></i>User storys</a>
                     </div>
                 </div>
                 <div class="row align-items-center">

@@ -9,7 +9,7 @@
 
 {% endblock %}
 
-{% block proyect_content %}
+{% block proyecto_content %}
 <div class="container-fluid">
     <div class="row class mt-2">
         <div class="col-3">
@@ -18,7 +18,7 @@
             </h2>
         </div>
         <div class="col-3">
-            <a href="{% url 'proyecto:agregar-us' proyect_id %}"  class="btn btn-outline-success" type="button"><i class="fas fa-plus-circle me-2"></i>Agregar user story</a>
+            <a href="{% url 'proyecto:agregar-us' proyecto_id %}"  class="btn btn-outline-success" type="button"><i class="fas fa-plus-circle me-2"></i>Agregar user story</a>
         </div>
     </div>
     
@@ -42,9 +42,9 @@
                                 {% endif %}
                             </div>
                             <div class="col d-flex justify-content-end align-content-center">
-                                <a style="color: green;" hx-post="{% url 'proyecto:aprobar-user-story' proyect_id us.pk %}" role="button"
+                                <a style="color: green;" hx-post="{% url 'proyecto:aprobar-user-story' proyecto_id us.pk %}" role="button"
                                     ><i class="fas fa-check me-4"></i></a>
-                                <a style="color: #55acee;" href="{% url 'proyecto:user-story update' proyect_id us.pk %}" role="button"
+                                <a style="color: #55acee;" href="{% url 'proyecto:user-story update' proyecto_id us.pk %}" role="button"
                                     ><i class="fas fa-pen fa-sm me-4"></i
                                 ></a>
                                 <a href="#" class="btn btn-outline-primary btn-sm">Abrir</a>

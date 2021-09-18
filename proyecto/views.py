@@ -37,7 +37,7 @@ class EliminarRolProyectoView(PermissionRequiredMixin, DeleteView):
     def get_context_data(self, **kwargs):
         context = super(EliminarRolProyectoView, self).get_context_data(**kwargs)
         context.update({
-            'proyect_id': self.kwargs['pk_proy'],
+            'proyecto_id': self.kwargs['pk_proy'],
         })
         return context
 
@@ -67,7 +67,7 @@ class ListaRolProyectoView(PermissionRequiredMixin, ListView):
         context.update({
             'roles': RolProyecto.objects.filter(proyecto__id= self.kwargs.get('pk_proy')),
             'participantes': proyecto.equipo.all() | user,
-            'proyect': proyecto
+            'proyecto': proyecto
         })
         return context
 
@@ -86,7 +86,7 @@ def agregar_rol_proyecto_view(request,pk_proy):
     """
     contexto = {}
     contexto.update({
-        'proyect_id': pk_proy
+        'proyecto_id': pk_proy
     })
     if request.method == 'POST':
         form = AgregarRolProyectoForm(request.POST or None)
@@ -116,7 +116,7 @@ def editar_rol_proyecto_view(request, pk_proy, id_rol):
     contexto = {}
 
     contexto.update({
-        'proyect_id': pk_proy
+        'proyecto_id': pk_proy
     })
     if request.method == 'POST':
         form = AgregarRolProyectoForm(request.POST, instance=rol)
@@ -145,7 +145,7 @@ class ImportarRolView(PermissionRequiredMixin, FormView):
         context = super(ImportarRolView,self).get_context_data(**kwargs)
         context.update({
             'roles': RolProyecto.objects.exclude(proyecto__id= self.kwargs.get('pk_proy')),
-            'proyect_id': self.kwargs.get('pk_proy')
+            'proyecto_id': self.kwargs.get('pk_proy')
         })
         return context
 
@@ -187,7 +187,7 @@ class AssignUserRolProyecto(PermissionRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super(AssignUserRolProyecto, self).get_context_data(**kwargs)
         context.update({
-            'proyect_id': self.kwargs['pk_proy'],
+            'proyecto_id': self.kwargs['pk_proy'],
         })
         return context
 
@@ -236,6 +236,17 @@ class ListaProyectos(PermissionRequiredMixin, ListView):
         return User.objects.get(id=self.request.user.id).proyecto_set.all().exclude(estado_de_proyecto='C') | Proyecto.objects.filter(owner_id=self.request.user.id).exclude(estado_de_proyecto='C')
 
 
+class ListaProyectosCancelados(PermissionRequiredMixin, ListView):
+    permission_required = ('sso.pg_puede_acceder_proyecto','sso.pg_is_user')
+    raise_exception = True
+    model = Proyecto
+    template_name = 'proyecto/proyectos-cancelados.html'
+    context_object_name = 'proyecto_list_cancelados'
+
+    def get_queryset(self):
+        return User.objects.get(id=self.request.user.id).proyecto_set.all().filter(estado_de_proyecto='C') | Proyecto.objects.filter(owner_id=self.request.user.id).filter(estado_de_proyecto='C')
+
+
 class ProyectoDetailView(PermissionRequiredMixin, DetailView):
     model = Proyecto
     template_name = 'proyecto/proyecto-detalle.html'
@@ -243,23 +254,16 @@ class ProyectoDetailView(PermissionRequiredMixin, DetailView):
 
     def get_object(self, queryset=None):
         id = self.kwargs['pk']
-        return self.model.objects.get(id=id)
 
     def get_context_data(self, **kwargs):
         context = super(ProyectoDetailView,self).get_context_data(**kwargs)
         id = self.kwargs['pk']
         sprints = Sprint.objects.filter(proyecto__pk=id)
         proyecto = self.model.objects.get(id=id)
-        self.request.session['proyect_id'] = id
-        self.request.session['proyect_name'] = proyecto.nombreProyecto
+        self.request.session['proyecto_id'] = id
+        self.request.session['proyecto_nombre'] = proyecto.nombreProyecto
         context.update({
-            'proyect': json.dumps(
-                {
-                    'id': proyecto.id,
-                    'nombre': proyecto.nombreProyecto,
-                    'estado': proyecto.estado_de_proyecto,
-                }
-            ),
+            'proyecto': proyecto,
             'sprints': sprints
         }) 
         return context
@@ -339,11 +343,12 @@ def edit(request, pk, template_name='proyecto/edit.html'):
     return render(request, template_name, {'form':form})
 
 
-@permission_required_or_403('proyecto.p_cancelar_proyectos',(Proyecto,'pk','pk'))
-def delete(request, pk, template_name='proyecto/confirm-delete.html'):
+@permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
+def cancelar(request, pk, template_name='proyecto/confirm-cancel.html'):
     proyecto = get_object_or_404(Proyecto, pk=pk)
     if request.method=='POST':
-        proyecto.delete()
+        proyecto.estado_de_proyecto = 'C'
+        proyecto.save()
         return HttpResponseRedirect(reverse('proyecto:index'))
     return render(request, template_name, {'object':proyecto})
 
@@ -387,7 +392,7 @@ class AgregarDesarrolladorView(CreateView):
     def get_context_data(self, **kwargs):
         context = super(AgregarDesarrolladorView,self).get_context_data(**kwargs)
         context.update({
-            'proyect_id': self.kwargs['pk_proy'],
+            'proyecto_id': self.kwargs['pk_proy'],
         })
         return context
 
@@ -402,7 +407,7 @@ class AgregarDesarrolladorView(CreateView):
         dev = form.save()
 
         proyecto.equipo_desarrollador.add(dev)
-        
+
         return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']}))
 
 
@@ -424,7 +429,7 @@ class EditDesarrolladorView(PermissionRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super(EditDesarrolladorView,self).get_context_data(**kwargs)
         context.update({
-            'proyect_id': self.kwargs['pk_proy'],
+            'proyecto_id': self.kwargs['pk_proy'],
             'edit': True
         })
         return context
@@ -461,7 +466,7 @@ class EliminarDesarrolladorView(PermissionRequiredMixin, DeleteView):
     def get_context_data(self, **kwargs):
         context = super(EliminarDesarrolladorView, self).get_context_data(**kwargs)
         context.update({
-            'proyect_id': self.kwargs['pk_proy'],
+            'proyecto_id': self.kwargs['pk_proy'],
         })
         return context
 
@@ -486,7 +491,7 @@ class SolicitarPermisosView(FormView):
     def get_context_data(self, **kwargs):
         context = super(SolicitarPermisosView, self).get_context_data(**kwargs)
         context.update({
-            'proyect_id': self.kwargs['pk_proy'],
+            'proyecto_id': self.kwargs['pk_proy'],
         })
         return context
 
@@ -512,8 +517,11 @@ class AgregarSprintView(CreateView):
         context = super(AgregarSprintView,self).get_context_data(**kwargs)
         sprints_count = Sprint.objects.filter(proyecto__id=self.kwargs['pk_proy']).exclude(estado_de_sprint='C').count()
         context.update({
-            'proyect_id': self.kwargs['pk_proy'],
-            'count': sprints_count + 1
+            'proyecto_id': self.kwargs['pk_proy'],
+            'count': sprints_count + 1,
+            'sprint_count': Sprint.objects.filter(proyecto__id=self.kwargs['pk_proy']).filter(
+            estado_de_sprint='I').count()
+
         })
         return context
 
@@ -541,7 +549,7 @@ class EquipoSprintUpdateView(SingleObjectMixin,FormView):
     def get_context_data(self, **kwargs):
         context = super(EquipoSprintUpdateView,self).get_context_data(**kwargs)
         context.update({
-            'proyect_id': self.kwargs['pk_proy'],
+            'proyecto_id': self.kwargs['pk_proy'],
             'sprint': Sprint.objects.get(pk=self.kwargs['pk']),
         })
         return context
@@ -580,7 +588,7 @@ def agregar_user_story_view(request, pk_proy):
     """
     contexto = {}
     contexto.update({
-        'proyect_id': pk_proy
+        'proyecto_id': pk_proy
     })
     if request.method == 'POST':      
         form = AgregarUserStoryForm(request.POST or None)
@@ -636,7 +644,7 @@ class ProductBacklogView(PermissionRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super(ProductBacklogView, self).get_context_data(**kwargs)
         context.update({
-            'proyect_id': self.kwargs['pk_proy'],
+            'proyecto_id': self.kwargs['pk_proy'],
             'user_storys_nuevos': ProductBacklog.objects.get(proyecto__pk = self.kwargs['pk_proy']).userstory_set.filter(estado_aprobacion='T'),
             'product_backlog': ProductBacklog.objects.get(proyecto__pk = self.kwargs['pk_proy']).userstory_set.filter(estado_aprobacion='A'),
         })
