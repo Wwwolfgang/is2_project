@@ -1,6 +1,6 @@
-{% extends 'proyecto/base.html' %}
+{% extends 'proyecto/proyecto-detalle.html' %}
 
-{% block container %}
+{% block proyect_content %}
 <div class="container">
     <div class="row"></div>
     <br />
@@ -11,15 +11,15 @@
                 {% csrf_token %}
                 <div class="form-row">
                     <div class="alert alert-warning">
-                        ¿Desea eliminar este proyecto? (Esta acción no puede deshacerse) <br/>
-                        <h4>{{ object.nombreProyecto }} </h4>
+                        ¿Desea eliminar este Participante del proyecto?<br/>
+                        <h4>{{ usuario.first_name }} {{usuario.last_name}} </h4>
                     </div>
                 </div>
                 <div>
-                    <a class="btn btn-warning" role="button" href="{% url 'proyecto:index' %}">
+                    <a class="btn btn-warning" role="button" href="{% url 'proyecto:roles' object.id %}">
                         Cancelar
                     </a>
-                    <button type="submit" class="my-2 btn btn-danger">Eliminar Proyecto</button>
+                    <button type="submit" class="my-2 btn btn-danger">Eliminar Participante</button>
                 </div>
             </form>
         </div>

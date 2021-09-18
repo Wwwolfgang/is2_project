@@ -1,0 +1,247 @@
+
+<!DOCTYPE html>
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>SSO Views &#8212; documentación de IS2_Project - 1.0</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/translations.js"></script>
+    <link rel="index" title="Índice" href="../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../search.html" />
+    <link rel="prev" title="SSO Models" href="models.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-sso.views">
+<span id="sso-views"></span><h1>SSO Views<a class="headerlink" href="#module-sso.views" title="Enlazar permanentemente con este título">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="sso.views.AdminUserMixin">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">sso.views.</span></span><span class="sig-name descname"><span class="pre">AdminUserMixin</span></span><a class="headerlink" href="#sso.views.AdminUserMixin" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Este mixin asegura, que solo administradores pueden acceder a las vistas donde se 
+aplicó el mixin.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="sso.views.AdminUserMixin.handle_no_permission">
+<span class="sig-name descname"><span class="pre">handle_no_permission</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sso.views.AdminUserMixin.handle_no_permission" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Si el usuario no es administrador, se muestra una alerta y se vuelve a la pagina de administración.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sso.views.AdminUserMixin.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sso.views.AdminUserMixin.test_func" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>En esta función, se hace un test si el usuario es administrador</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sso.views.AdministrationUserMixin">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">sso.views.</span></span><span class="sig-name descname"><span class="pre">AdministrationUserMixin</span></span><a class="headerlink" href="#sso.views.AdministrationUserMixin" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Este mixin asegura, que solo administradores pueden acceder al listado de roles y de los usuarios.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sso.views.DeleteUser">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">sso.views.</span></span><span class="sig-name descname"><span class="pre">DeleteUser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sso.views.DeleteUser" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Vista para dar debaja de un Usuario</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sso.views.DeleteUser.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#sso.views.DeleteUser.model" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="models.html#sso.models.User" title="sso.models.User"><code class="xref py py-class docutils literal notranslate"><span class="pre">sso.models.User</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sso.views.ListaRolesSistema">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">sso.views.</span></span><span class="sig-name descname"><span class="pre">ListaRolesSistema</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sso.views.ListaRolesSistema" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Vista que genera el listado de los Roles de Sistema. Es llamada al entrar en la sección de 
+administración, que será accedida solo por los administradores de sistema. En el listado de roles se podrá modificar los roles.
+En esta pantalla también se verá el listado de todos los usuarios accedidos al sistema.
+Se podrá modificar y dar debaja a usuario y asignarles roles de sistema.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="sso.views.ListaRolesSistema.get_context_data">
+<span class="sig-name descname"><span class="pre">get_context_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sso.views.ListaRolesSistema.get_context_data" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Get the context for this view.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sso.views.ListaRolesSistema.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#sso.views.ListaRolesSistema.model" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">django.contrib.auth.models.Group</span></code></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sso.views.UpdateRolSistema">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">sso.views.</span></span><span class="sig-name descname"><span class="pre">UpdateRolSistema</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sso.views.UpdateRolSistema" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Vista para actualizar los permisos de un rol de sistema</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sso.views.UpdateRolSistema.form_class">
+<span class="sig-name descname"><span class="pre">form_class</span></span><a class="headerlink" href="#sso.views.UpdateRolSistema.form_class" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">sso.forms.UpdateRolSistemaForm</span></code></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sso.views.UpdateRolSistema.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#sso.views.UpdateRolSistema.model" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">django.contrib.auth.models.Group</span></code></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sso.views.UpdateUser">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">sso.views.</span></span><span class="sig-name descname"><span class="pre">UpdateUser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sso.views.UpdateUser" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Vista para actualizar el nombre, apellido y el estado de ser Administrador de un usuario.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sso.views.UpdateUser.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#sso.views.UpdateUser.model" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="models.html#sso.models.User" title="sso.models.User"><code class="xref py py-class docutils literal notranslate"><span class="pre">sso.models.User</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sso.views.UserAssignSisRole">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">sso.views.</span></span><span class="sig-name descname"><span class="pre">UserAssignSisRole</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sso.views.UserAssignSisRole" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Vista para asignarle roles de sistema al Usuario. Se conecta con el form
+UserAssignRolForm para gestionar el formulario.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sso.views.UserAssignSisRole.form_class">
+<span class="sig-name descname"><span class="pre">form_class</span></span><a class="headerlink" href="#sso.views.UserAssignSisRole.form_class" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">sso.forms.UserAssignRolForm</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sso.views.UserAssignSisRole.form_valid">
+<span class="sig-name descname"><span class="pre">form_valid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">form</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sso.views.UserAssignSisRole.form_valid" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>If the form is valid, save the associated model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sso.views.UserAssignSisRole.get_object">
+<span class="sig-name descname"><span class="pre">get_object</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">queryset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sso.views.UserAssignSisRole.get_object" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Return the object the view is displaying.</p>
+<p>Require <cite>self.queryset</cite> and a <cite>pk</cite> or <cite>slug</cite> argument in the URLconf.
+Subclasses can override this to return any object.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sso.views.UserAssignSisRole.handle_no_permission">
+<span class="sig-name descname"><span class="pre">handle_no_permission</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sso.views.UserAssignSisRole.handle_no_permission" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Se devuelve un mensaje de error</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sso.views.UserAssignSisRole.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#sso.views.UserAssignSisRole.model" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="models.html#sso.models.User" title="sso.models.User"><code class="xref py py-class docutils literal notranslate"><span class="pre">sso.models.User</span></code></a></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sso.views.UserAssignSisRole.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sso.views.UserAssignSisRole.test_func" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>En esta función, se hace un test si el usuario quiere cambiar sus propios roles</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">IS2_Project</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navegación</h3>
+<p class="caption" role="heading"><span class="caption-text">Proyecto is_project:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules/settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/urls.html">URLS</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">SSO:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="models.html">SSO Models</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">SSO Views</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="models.html" title="capítulo anterior">SSO Models</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Búsqueda rápida</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Ir a" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, IS2 Equipo 15.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/sso/views.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

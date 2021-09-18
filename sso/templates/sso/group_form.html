@@ -7,7 +7,9 @@
     <h1>Modificar Rol {{group.name}}</h1>
     <form method="post">
         {% csrf_token %}
-        {{ form|crispy }}
+        <table>
+            {{ form.as_p}}
+        </table>
         <div>
             <a class="btn btn-warning" role="button" href="{% url 'sso:roles-sistema-listado' %}">
                 Cancelar

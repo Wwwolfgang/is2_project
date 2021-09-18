@@ -7,135 +7,34 @@ from django.db.models.fields import CharField
 from django.db.models.fields.related import ManyToManyField
 from django.contrib.auth.models import Permission
 from django.db import models
-from django.utils import timezone
+from datetime import datetime
+from django.db.models.base import Model
+
+from django.db.models.deletion import CASCADE
+from django.db.models.expressions import Case
+from django.db.models.fields.related import ManyToManyField
 from sso.models import User
-
-class comentario(models.Model):
-    codComentario   = models.CharField(max_length=50)
-    codUserStory    = models.CharField(max_length=50)
-    codProyecto     = models.CharField(max_length=50)
-    descripcion     = models.CharField(max_length=50)
-    fecha           = models.DateField(datetime.date.today)
-    def __str__(self):
-        return self
-
-class usuarioProyecto(models.Model):
-    codProyecto     = models.CharField(max_length=50)
-    rolUsuario      = models.CharField(max_length=50)
-    def __str__(self):
-        return self
-
-
-class userStory(models.Model):
-    nombreUserStory     = models.CharField(max_length=50)
-    codigoUserStory     = models.CharField(max_length=50)
-    listaParticipantes  = models.ManyToManyField(User,related_name="participantes")
-    descripcionUserStory= models.CharField(max_length=50)
-    estado              = models.CharField(max_length=50)
-    comentarios         = models.ManyToManyField(comentario,related_name="comentario")
-    estimacion          = models.IntegerField()
-    tiempoEmpleado      = models.IntegerField()
-    def __str__(self):
-        return self
-    def modificarNombre(self, nombre):
-        self.nombreUserStory = nombre
-    def actualizarEstado(self, estado):
-        self.estado = estado
-    def actualizarDescripcion(self, descripcionUserStory):
-        self.descripcionUserStory = descripcionUserStory
-    def actualizarHistorial():
-        print("Se actualizo el historial")
-    def generarEstimacion(int,int2):
-        print("Se estima que el user story dure 1 mes")
-
-class sprint(models.Model):
-    nombreSprint    = models.CharField(max_length=50)
-    codSprint       = models.CharField(max_length=50)
-    nroUserStories  = models.IntegerField()
-    listaStories    = ManyToManyField( userStory, max_length= 100 )
-    fechaInicio     = models.DateField()
-    fechaFin        = models.DateField()
-    duracionSprint  = models.IntegerField()
-    def modificarNombreSprint(self,nombreSprint):
-        self.nombreSprint = nombreSprint
-    def agregarUserStory(self, nuevoUserStory):
-       self.listaStories.append(nuevoUserStory)
-       self.listaStories.sort
-       self.nroUserStories = self.nroUserStories + 1
-    def eliminarUserStory(self, codigoUserStory):
-        posicion = 0
-        for userStory in self.listaStories:
-            if( userStory.codigoUserStory.__eq__(codigoUserStory) ):
-                self.listaStories.pop(posicion)
-            posicion = posicion + 1
-    def actualizarFechaInicio(self):
-        self.fechaInicio = datetime.date.today
-    def actualizarFechaFin(self):
-        self.fechaFin = datetime.date.today
-    def terminarSprint():
-        print("Se termino el sprint")
-    def generarCodigoSprint(self):
-        print("Se genero un codigo")
-    def ingresarDuracionSprint(self,duracion):
-        self.duracionSprint = duracion
-    def actualizarDuracionSprint(self,duracion):
-        print("Se actualizo la duracion de sprint")
-
-
-class kanban(models.Model):
-    columnas = models.ManyToManyField(userStory)
-    def moverUserStory(codUserStory):
-       print("Se movio el user story")
-       return True
-    def asignarUserStory( username ):
-       print("Se agrego al user story")
-    def actualizarKanban():
-       print("Se actualizo el kanban")
-    #def generarKanban(userStory[]):
-    def generarKanban(listaStories):
-       print("Se genero el kanban")
-
-class historialCambiosUS(models.Model):
-    codHistorialCambios = models.CharField(max_length=50)
-    codUserStory        = models.CharField(max_length=50)
-    codProyecto         = models.CharField(max_length=50)
-    codUsuario          = models.CharField(max_length=50)
-    descripcionCambio   = models.CharField(max_length=50)
-    fecha               = models.DateTimeField()
-    def generarCambio(self, descripcion, codProyecto, codUsuario, codUserStory):
-        self.codUserStory = codUserStory
-        self.codProyecto = codProyecto
-        self.codUsuario = codUsuario
-        self.descripcionCambio = descripcion
-    def obtenerFecha(self):
-        return self.fecha
-
-class burnDownChart(models.Model):
-    codBurnDownChart    = models.CharField(max_length=50)
-    codSprintRel        = models.CharField(max_length=50)
-    codProyRel          = models.CharField(max_length=50)
-    datosTeoricos       = ArrayField(ArrayField(models.IntegerField()))
-    datosReales         = ArrayField(ArrayField(models.IntegerField()),max_length=2)
-    def crearLineaTeorica( dificultadEstimadaTotal, totalDias ):
-        print("Se creo la linea teorica")
-    def actualizarLineaReal( storyPointsCompletado, dia ):
-        print("Se actualizo la linea real")
-    def dibujarBurnDownChart():
-        print("Se dibujo el burn down chart")
-    def borrarBurnDownChart():
-        print("Se borro el burn down chart")
-
-
+from django.core.validators import MinValueValidator, MaxValueValidator
+# Create your models here.
 class RolProyecto(models.Model):
+    """
+    Model del rol de proyecto.
+    Se almacena el nombre del rol, sus permisos, los participantes del proyecto que tienen el rol,
+    y el proyecto al que pertenece dicho rol.
+    """
     nombre = models.CharField(verbose_name='Nombre del rol', max_length=60, blank=False,null=False)
     permisos = models.ManyToManyField(Permission)
     participantes = models.ManyToManyField(User,blank=True)
     proyecto = models.ForeignKey('proyecto', on_delete=models.CASCADE, blank=True, null=True)
     class Meta:
         permissions = (
-                    ("p_administrar_roles","Permite que el usuario pueda configurar, crear, importar y eliminar roles del proyecto. Solo los permisos del scrum master no se podrán modificar."),
+                    ('p_administrar_roles','Permite que el usuario pueda configurar, crear, importar y eliminar roles del proyecto. Solo los permisos del scrum master no se podrán modificar.'),
         )
+
     def get_permisos(self):
+        """
+        Función que retorna la lista de permisos asociados al rol
+        """
         return [p for p in self.permisos.all()]
     
     def __str__(self):
@@ -145,27 +44,39 @@ class RolProyecto(models.Model):
 class Proyecto(models.Model):
     """
     Clase proyecto
+    El modelo todavía no está completo
+    Por el momento se configura:
 
-    TODO: Realizar user story para poder implementar en agregarSprintProyecto()
-    y actualizarBurnDownChart()
+    - El nombre del Proyecto
+    - La fecha de inicio del Proyecto
+    - La fecha estimada de finalización del Proyecto
+    - Un codigo del Proyecto
+    - El numero de Sprints
+    - La duración por default de un Sprint
+    - El estado del proyecto siendo inicialmente Inicializado y después Activo, Finalizado o Cancelado
+    - El equipo de participantes en el proyecto. 
+    - TODO equipo de desarrolladores,etc
+    
+    También se definieron algunos permisos iniciales, cuya cantidad va aumentar. Estos permisos van a ser asignados al usuario por el proyecto.
+
     """
     nombreProyecto = models.CharField(max_length = 50)
-    fechaInicio = models.DateField(null=False, blank=False, help_text="Fecha de inicialización del proyecto", default=timezone.now)
-    fechaFin = models.DateField(null=False, blank=False, help_text="Fecha estimada de finalización del proyecto", default=timezone.now)
-    codProyecto = models.IntegerField()
-    nroSprints = models.IntegerField()
-    duracionSprint = models.IntegerField(null=False, blank=False, default=14, help_text="Duración de un Sprint")
+    fechaInicio = models.DateField(null=False, blank=False, help_text="Fecha de inicialización del proyecto", default=datetime.now )
+    fechaFin = models.DateField(null=False, blank=False, help_text="Fecha estimada de finalización del proyecto", default=datetime.now )
     ESTADO_DE_PROYECTO_CHOICES = [
         ('A', 'Activo'),
+        ('I', 'Inicializado'),
         ('C', 'Cancelado'),
         ('F', 'Finalizado'),
     ]
     estado_de_proyecto = models.CharField(
         max_length=1,
         choices=ESTADO_DE_PROYECTO_CHOICES,
-        default='A',
+        default='I',
     )
-    equipo = models.ManyToManyField(User)
+    owner = models.ForeignKey(User,blank=True,null=True,on_delete=CASCADE,related_name='creador')
+    equipo = models.ManyToManyField(User,blank=True)
+    equipo_desarrollador = models.ManyToManyField('proyectuser',blank=True)
 
     class Meta:
         permissions = (
@@ -174,3 +85,82 @@ class Proyecto(models.Model):
             ("p_editar_proyectos","Permiso de editar proyecto."),
             ("p_finalizar_proyectos","Permiso de finalizar proyecto."),      
         )
+
+
+class ProyectUser(models.Model):
+    usuario = models.ForeignKey(User,on_delete=CASCADE)
+    horas_diarias = models.DecimalField(blank=False,decimal_places=2,max_digits=4,null=False,help_text='La cantidad de horas que trabaja el desarrollador por día.')
+    sprint = models.ForeignKey('sprint', related_name='sprint_team',on_delete=CASCADE)
+
+
+class ProductBacklog(models.Model):
+    proyecto = models.ForeignKey(Proyecto,on_delete=CASCADE)
+
+
+class Sprint(models.Model):
+    identificador = models.CharField(default='Sprint',max_length=50)
+    fechaInicio = models.DateField(null=True)
+    fechaFin = models.DateField(help_text='Fecha estimada de finalización del Sprint. Dependiendo de esta fecha se mostrarán alertas.')
+    duracionSprint = models.IntegerField(null=False, blank=False, default=14,validators=[MinValueValidator(1),MaxValueValidator(60)], help_text="Duración estimada en días")
+    ESTADO_DE_SPRINT_CHOICES = [
+        ('A', 'Activo'),
+        ('I', 'Inicializado'),
+        ('C', 'Cancelado'),
+        ('F', 'Finalizado'),
+    ]
+    estado_de_sprint = models.CharField(
+        max_length=1,
+        choices=ESTADO_DE_SPRINT_CHOICES,
+        default='I',
+    )
+    proyecto = models.ForeignKey(Proyecto,on_delete=CASCADE, null=True)
+
+    def __str__(self):
+       return self.identificador
+
+       
+class UserStory(models.Model):
+    """
+    Clase user story
+    TODO: Agregar el campo 'encargado', que relacione el user story con el participante del proyecto encargado de 
+    realizar la tarea
+    """
+    nombre = models.CharField(verbose_name='Nombre del user story', max_length=20, blank=False,null=False)
+    descripcion = models.TextField(verbose_name='Descripción del user story',blank=True)
+    tiempo_estimado_scrum_master = models.PositiveIntegerField(blank=True,null=True,help_text="Tiempo de duración estimado por el scrum master.")
+    tiempo_estimado_dev = models.PositiveIntegerField(blank=True,null=True,help_text="Tiempo de duración estimado por el desarrollador asignado.")
+    PRIORIDAD_DE_USER_STORY_CHOICES = [
+        ('B', 'Baja'),
+        ('A', 'Alta'),
+        ('M', 'Media'),
+        ('E','Emergencia')
+    ]
+    prioridad_user_story = models.CharField(
+        max_length=1,
+        choices=PRIORIDAD_DE_USER_STORY_CHOICES,
+        default='B',
+    )
+    ESTADO_APROBACION_USER_STORY = [
+        ('T', 'Temporal'),
+        ('A', 'Aprobado'),
+    ]
+    estado_aprobacion = models.CharField(
+        max_length=1,
+        choices= ESTADO_APROBACION_USER_STORY,
+        default='T',
+    )
+    #encargado = 
+    ESTADO_DE_USER_STORY_CHOICES = [
+        ('TD', 'To do'),
+        ('DG', 'Doing'),
+        ('DN', 'Done'),
+        ('QA','Quality Assurance')
+    ]
+    estado_user_story = models.CharField(
+        max_length=2,
+        choices=ESTADO_DE_USER_STORY_CHOICES,
+        default='TD',
+    )
+    creador = models.ForeignKey(User,blank=True,null=True,on_delete=CASCADE)
+    sprint = models.ForeignKey('sprint',blank=True,null=True,on_delete=CASCADE)
+    product_backlog = models.ForeignKey('productbacklog',on_delete=CASCADE, blank=True,null=True)

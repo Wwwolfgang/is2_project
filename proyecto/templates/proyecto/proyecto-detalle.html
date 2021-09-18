@@ -3,19 +3,55 @@
 {% block container %}
 
     <div class="container-fluid">
-        {{object.nombreProyecto}} <br/>
 
+        {% include "includes/proyect_toolbar.html" with proyecto=proyecto %}
 
-        Duración de Sprint: {{object.duracionSprint}} días<br/>
+        {% block proyecto_content %}
+            <div class="class pt-5">
+                <div class="row class pb-5">
+                    <div class="col class pl-0"> 
+                        <a href="{% url 'proyecto:product-backlog' proyecto.id %}"  class="btn btn-outline-success" type="button"><i class="fas fa-clipboard-list me-2"></i></i>User storys</a>
+                    </div>
+                </div>
+                <div class="row align-items-center">
+                    <div class="col-2">
+                        <h6 class="class mb-0">Sprints del Proyecto</h6>
 
-        Participantes:
-
-        {% for user in object.equipo.all %}
-        <p> {{user}} </p>
-        {% endfor %}
-
-        <a href="{% url 'proyecto:roles' object.id %}"  class="btn btn-info" type="button">Roles y Participantes</a>
-
+                    </div>
+                    <div class="col class pl-0"> <a href="{% url 'proyecto:agregar-sprint' proyecto.id%}" class="nav-link me-3" ><i class="fas fa-plus" ></i></a></div>
+                </div>
+                <div class="row align-items-center">
+                    {% for sprint in sprints %}
+                        <div class="col-3">
+                            <div class="card" style="width: 16rem;">
+                                <div class="card-body">
+                                    <div class="card-title">
+                                        <div class="row">
+                                            <div class="col"><h5>{{sprint.identificador}}</h5></div>
+                                            <div class="col d-flex justify-content-end align-content-center"><a href="{% url 'proyecto:sprint-detail' proyecto.id sprint.id %}" class="btn btn-outline-primary btn-sm">Abrir</a></div>
+                                        </div>
+                                    </div>
+                                  <h6 class="card-subtitle mb-2 text-muted">Card subtitle</h6>
+                                  <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+                                  <a href="#" class="card-link">Modificar</a>
+                                  <a href="{% url 'proyecto:sprint-team-edit' proyecto.id sprint.id%}" class="nav-link me-3"><i class="fas fa-users"></i></a>
+                                </div>
+                              </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endblock %}
     </div>
 
+{% endblock %}
+{% block extra_js %}
+<script>
+</script>
+<script>
+    document.body.addEventListener(
+      'htmx:configRequest', (event) => {
+        event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+    })
+  </script>
 {% endblock %}
