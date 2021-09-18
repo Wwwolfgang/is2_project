@@ -1,5 +1,4 @@
 from django.views.generic.base import TemplateView
-import proyecto
 from django.views.generic.detail import SingleObjectMixin
 from django.contrib import messages
 from django.shortcuts import redirect, render
@@ -10,7 +9,6 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView
 from django.urls import reverse
-from proyecto import models
 from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoEditForm,ProyectoCreateForm,AgregarParticipanteForm, DesarrolladorCreateForm,PermisoSolicitudForm,SprintCrearForm, AgregarUserStoryForm
 from proyecto.forms import EquipoFormset
 from proyecto.models import RolProyecto, Proyecto, ProyectUser, Sprint, UserStory, ProductBacklog
@@ -206,17 +204,16 @@ class AssignUserRolProyecto(PermissionRequiredMixin, UpdateView):
         proyecto = Proyecto.objects.get(id=self.kwargs['pk_proy'])
         permisos = RolProyecto.objects.get(id=self.kwargs['id_rol']).permisos.all()
 
-        if proyecto.estado_de_proyecto == 'A':
-            form.save()
-            for per in permisos:
-                for participante in form.cleaned_data['participantes']:
-                    if per.content_type.model == 'proyecto':
-                        user = participante
-                        assign_perm(per,user,proyecto)
-                for past_part in form.initial['participantes']:
-                    if per.content_type.model == 'proyecto':
-                        if past_part not in form.cleaned_data['participantes']:
-                            remove_perm(per,past_part,proyecto)
+        form.save()
+        for per in permisos:
+            for participante in form.cleaned_data['participantes']:
+                if per.content_type.model == 'proyecto':
+                    user = participante
+                    assign_perm(per,user,proyecto)
+            for past_part in form.initial['participantes']:
+                if per.content_type.model == 'proyecto':
+                    if past_part not in form.cleaned_data['participantes']:
+                        remove_perm(per,past_part,proyecto)
 
 
         else:   
