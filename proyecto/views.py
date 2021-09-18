@@ -284,6 +284,7 @@ class CreateProyectoView(CreateView):
         model.save()
         model.owner = user
         model.save()
+        ProductBacklog.objects.create(proyecto=get_object_or_404(Proyecto, pk=model.pk))
         return HttpResponseRedirect(reverse('proyecto:index'))
 
 
