@@ -136,6 +136,13 @@ class SprintCrearForm(forms.ModelForm):
         fields = ['duracionSprint','fechaFin']
 
 
+class SprintModificarForm(forms.ModelForm):
+    class Meta:
+        model = Sprint
+        fields = ['duracionSprint','fechaFin']
+
+
+
 EquipoFormset = inlineformset_factory(Sprint, ProyectUser,fields=('usuario','horas_diarias',),form=DesarrolladorCreateForm,can_delete=True)
 class AgregarUserStoryForm(forms.ModelForm):
     """

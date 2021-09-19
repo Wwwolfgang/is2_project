@@ -10,7 +10,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView
 from django.urls import reverse
 from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoEditForm,ProyectoCreateForm,AgregarParticipanteForm, DesarrolladorCreateForm,PermisoSolicitudForm,SprintCrearForm, AgregarUserStoryForm
-from proyecto.forms import EquipoFormset
+from proyecto.forms import EquipoFormset, SprintModificarForm
 from proyecto.models import RolProyecto, Proyecto, ProyectUser, Sprint, UserStory, ProductBacklog
 from django.views.generic.edit import UpdateView, DeleteView, FormView, CreateView
 from django.urls import reverse_lazy
@@ -576,6 +576,29 @@ class EquipoSprintUpdateView(SingleObjectMixin,FormView):
 
     def get_success_url(self):
         return reverse('proyecto:detail', kwargs={'pk': self.kwargs['pk_proy'],})
+
+
+class SprintUpdateView(UpdateView):
+    model = Sprint
+    form_class= SprintModificarForm
+    template_name = 'proyecto/sprint_modificar.html'
+    raise_exception = True
+
+    def get_object(self, queryset=None):
+        id = self.kwargs['sprint_id']
+        return self.model.objects.get(id=id)
+
+    def get_context_data(self, **kwargs):
+        context = super(SprintUpdateView, self).get_context_data(**kwargs)
+        context.update({
+            'proyecto_id': self.kwargs['pk_proy'],
+            'update': True,
+        })
+        return context
+
+    def get_success_url(self):
+        return reverse('proyecto:detail', kwargs={'pk': self.kwargs['pk_proy'],})
+
 
 #Views de user story
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)

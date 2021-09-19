@@ -8,7 +8,7 @@ from django.urls import path
 from django.views.generic import TemplateView
 from .views import EliminarRolProyectoView, ProyectoDetailView,agregar_user_story_view, edit, cancelar, editar_rol_proyecto_view, ListaProyectos, AssignUserRolProyecto,ImportarRolView,iniciar_proyecto,cancelar_proyecto, CreateProyectoView
 from .views import finalizar_proyecto, AgregarParticipanteProyecto, eliminarParticipanteView, AgregarDesarrolladorView,EditDesarrolladorView,EliminarDesarrolladorView,SolicitarPermisosView,AgregarSprintView,EquipoSprintUpdateView,aprobar_user_story
-from .views import UserStoryUdateView,SprintView,ListaProyectosCancelados
+from .views import UserStoryUdateView,SprintView,ListaProyectosCancelados,SprintUpdateView
 app_name = 'proyecto'
 
 urlpatterns = [
@@ -42,6 +42,7 @@ urlpatterns = [
 
     path('proyecto/<int:pk_proy>/agregar-sprint/',AgregarSprintView.as_view(),name='agregar-sprint'),
     path('proyecto/<int:pk_proy>/sprint/<int:sprint_id>/',SprintView.as_view(),name='sprint-detail'),
+    path('proyecto/<int:pk_proy>/sprint/<int:sprint_id>/edit/',SprintUpdateView.as_view(), name='sprint-edit'),
     path('proyecto/<int:pk_proy>/sprint/<int:pk>/team/',EquipoSprintUpdateView.as_view(),name='sprint-team-edit'),
 
     #URLS de user story
