@@ -1,5 +1,4 @@
 from django.db.models import Sum
-import proyecto
 from django.views.generic.base import TemplateView
 from django.views.generic.detail import SingleObjectMixin
 from django.contrib import messages
@@ -24,6 +23,83 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 from statistics import mean
 from django.core.mail import send_mail
+
+
+# class ListaParticipantes(UpdateView):
+#     """ 
+#     Lista 
+#     """
+#     model = userStory
+#     context_object_name = 'Participantes'
+#     template_name = 'proyecto/participantes.html'
+#     raise_exception = True
+#     queryset = userStory.objects.all()
+
+#     def eliminar(userStory: userStory,codigo, nombreParticipante):
+#         try:
+#             query = userStory.objects.get(codigoUserStory = codigo)
+#             for participante in query.listaParticipantes:
+#                 if( participante.username.__eq__(nombreParticipante) ):
+#                     query.listaParticipantes.remove(participante)
+#                     userStory = query
+#                     userStory.objects.save()
+#                     return HttpResponse("Se ha eliminado el usuario")
+#             print("Participante no encontrado")
+#             return
+#         except:
+#             print("Codigo no encontrado")
+#         return
+
+#     def agregar(userStory: userStory,codigo, nombreParticipante):
+#         try:
+#             query = userStory.objects.get(codigoUserStory = codigo)
+#             query.listaParticipantes.append(nombreParticipante)
+#             userStory = query
+#             userStory.objects.save()
+#             return HttpResponse("Se ha agregado el usuario")
+#         except:
+#             print("Codigo no encontrado")
+#         return
+#     def listar(userStory: userStory,codigo):
+#         try:
+#             query = userStory.objects.get(codigoUserStory = codigo)
+#             for participante in query.ListaParticipantes:
+#                 print(participante)
+#             return
+#         except:
+#             print("Codigo no encontrado")
+#         return
+        
+# class UserStoryView(UpdateView):
+#     model = userStory
+#     context_object_name = 'User Story'
+#     template_name = 'proyecto/userstory/'
+#     raise_exception = True
+#     queryset = userStory.objects.all()
+#     def agregar(self,userStoryNuevo : userStory):
+#         self.template_name += 'agregar.html'
+#         userStoryNuevo.save()
+#         return HttpResponse("Se agrego el user story")
+#     def listar(self, userStories : sprint):
+#         self.template_name += 'listar.html'
+#         return HttpResponse(userStories.listaStories)
+#     def modificar(self,userStoryModificado : userStory):
+#         self.template_name += 'modificar.html'
+#         try:
+#             self.queryset.get(codigoUserStory = userStoryModificado.codigoUserStory).delete()
+#             userStory.save()
+#             return HttpResponse("Se modifico el user story")
+#         except:
+#             Http404("Codigo no encontrado")
+#         return HttpResponse()
+#     def cancelar(self,codigoUserStory : int):
+#         self.template_name += 'cancelar.html'
+#         try:
+#             self.queryset.get(codigoUserStory = codigoUserStory).delete()
+#             return HttpResponse("Se elimino el user story")
+#         except:
+#             Http404("Codigo no encontrado")
+#         return HttpResponse()
 
 #Views de Rol Proyecto
 class EliminarRolProyectoView(PermissionRequiredMixin, DeleteView):
