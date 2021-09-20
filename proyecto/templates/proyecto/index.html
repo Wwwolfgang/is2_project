@@ -2,11 +2,9 @@
 {% block container %}
 <div class="container-fluid">
     <div class="row">
-        <div class="col-md-1 col-xs-1 col-sm-1"></div>
         <div class="col-md-10 col-xs-10 col-sm-10">
             <h3 class="round3" style="text-align:center;">Mis Proyectos</h3>
         </div>
-        <div class="col-md-1 col-xs-1 col-sm-1"></div>
     </div>
     <div class="row">
         <div class="col-md-10 col-xs-10 col-sm-10"></div>
@@ -14,6 +12,9 @@
             <br />
             <a href="{% url 'proyecto:create' %}" class="btn btn-success" type="button" >
                 Crear Proyecto
+            </a>
+            <a href="{% url 'proyecto:cancelados' %}" class="btn btn-info" type="button" >
+                Proyectos Cancelados
             </a>
         </div>
     </div>
@@ -40,12 +41,11 @@
                 Editar
             </a>
         </div>
-        <div class="col-md-1">
-            <a href="{% url 'proyecto:delete' proyecto.pk %}" type="button" class="btn btn-danger">
-                Eliminar
-            </a>
-        </div>
-        <div class="col-md-1 col-xs-1 col-sm-1"></div>
+            <div class="col-md-1">
+                <a href="{% url 'proyecto:cancelar' proyecto.pk %}" type="button" class="btn btn-danger">
+                    Cancelar
+                </a>
+            </div>
     </div>
     {% endfor %}
 </div>

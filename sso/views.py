@@ -4,13 +4,28 @@ from django.views.generic import ListView, UpdateView, DeleteView, DetailView,Cr
 from django.http import HttpResponseRedirect
 from django.contrib.auth.mixins import PermissionRequiredMixin,LoginRequiredMixin, UserPassesTestMixin
 from django.urls import reverse, reverse_lazy
-from django.views.generic.base import ContextMixin
+from django.views.generic.base import ContextMixin, TemplateView
+from django.views.generic.edit import FormView
 from .models import User
 from django.contrib.auth.models import Group
-from .forms import UpdateRolSistemaForm, UserAssignRolForm
+from .forms import UpdateRolSistemaForm, UserAssignRolForm, PermisoSolicitudForm
 from django.contrib import messages #import messages
+from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponseRedirect, HttpResponse
+from django.core.mail import send_mail
+from django.conf import settings
 
-
+@csrf_exempt
+def enviar_solicitud_accesso_view(request, pk):
+    user = User.objects.get(pk=pk)
+    send_mail(
+        subject='Usuario nuevo - solicitud de Accesso',
+        message='Hola mi nombre es ' + user.first_name + ' ' + user.last_name
+        + '\n' + 'Inicié sesión en la aplicación Gestión de Proyectos. Envio esta solicitud porque no tengo permisos y no puedo hacer nada.',
+        from_email=settings.EMAIL_HOST_USER,
+        recipient_list=[settings.RECIPIENT_ADDRESS]
+    )
+    return HttpResponse("Solicitud enviada")
 class AdminUserMixin(LoginRequiredMixin, UserPassesTestMixin):
     """
     Este mixin asegura, que solo administradores pueden acceder a las vistas donde se 
@@ -115,3 +130,19 @@ class UserAssignSisRole(AdminUserMixin,UpdateView):
     #     """ Se devuelve un mensaje de error """
     #     messages.error(self.request,'Usted no es un Administrador o no puede cambiar sus propios roles')
     #     return HttpResponseRedirect(reverse('sso:roles-sistema-listado'))
+
+
+class SolicitarPermisosView(FormView):
+    template_name = "sso/solicitud_form.html"
+    form_class = PermisoSolicitudForm
+    raise_exception = True
+
+    def form_valid(self,form):
+        user = User.objects.get(pk=self.kwargs['user_id'])
+        send_mail(
+            subject=form.cleaned_data['asunto'],
+            message=form.cleaned_data['body'],
+            from_email=user.email,
+            recipient_list=[settings.RECIPIENT_ADDRESS]
+        )
+        return HttpResponseRedirect(reverse('page-home'))

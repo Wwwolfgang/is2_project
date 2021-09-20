@@ -1,10 +1,11 @@
-{% extends 'proyecto/proyecto-detalle.html' %}
-
-{% block proyecto_content %}
+{% extends 'proyecto/base.html' %}
+{% block container %}
 {% load widget_tweaks %}
-
 <div class="container-fluid">
     <div class="row">
+        <h2 style="text-align:start;">
+            Crear nuevo Proyecto
+        </h2>
         <h6 style="text-align:start;">
             <font color="red"> Todos los campos son requeridos</font>
         </h6>
@@ -12,16 +13,9 @@
             <form method="post" novalidate>
                 {% csrf_token %}
                 {% for field in form.visible_fields %}
-                <div class="form-group">
+                <div class="form-group class pb-2">
                         {% if field.name == 'nombreProyecto'%}
                             Nombre del Proyecto
-                            {% render_field field class="form-control" %}
-                            {% if field.help_text %}
-                            <small class="form-text text-muted">{{ field.help_text }}</small>
-                            {% endif %}
-                        {% endif %}
-                        {% if field.name == 'duracionSprint'%}
-                            Duración de un Sprint
                             {% render_field field class="form-control" %}
                             {% if field.help_text %}
                             <small class="form-text text-muted">{{ field.help_text }}</small>
@@ -43,14 +37,15 @@
                             <small class="form-text text-muted">{{ field.help_text }}</small>
                             {% endif %}
                         {% endif %}
-
+                        {% if field.name == 'equipo' %}
+                            {{field}}
+                        {% endif %}
                 </div>
                 {% endfor %}
-                <button type="submit" class="btn btn-primary">Guardar</button>
+                <button type="submit" class="btn btn-primary">Crear Proyecto</button>
             </form>
             <br>
         </div>
-        <div class="col-md-1 col-xs-1 col-sm-1"></div>
     </div>
 </div>
 

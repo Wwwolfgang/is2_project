@@ -1,0 +1,48 @@
+{% extends 'proyecto/proyecto-detalle.html' %}
+{% block proyecto_content %}
+{% load widget_tweaks %}
+<form action="" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% if update == True %}
+      <h2 style="text-align:start;">
+        Actualizar User story
+      </h2>
+    {% else %}
+      <h2 style="text-align:start;">
+        Crear nuevo User story
+      </h2>
+    {% endif %}
+    {% for field in form.visible_fields %}
+      <div class="form-group class pb-2">
+          {% if field.name == 'nombre'%}
+              Titulo User story
+              {% render_field field class="form-control" %}
+              {% if field.help_text %}
+              <small class="form-text text-muted">{{ field.help_text }}</small>
+              {% endif %}
+          {% endif %}
+
+          {% if field.name == 'descripcion'%}
+              Descripción
+              {% render_field field class="form-control" %}
+              {% if field.help_text %}
+              <small class="form-text text-muted">{{ field.help_text }}</small>
+              {% endif %}
+          {% endif %}
+
+          {% if field.name == 'prioridad_user_story' %}
+            Prioridad
+              {{field}}
+          {% endif %}
+      </div>
+    {% endfor %}
+    <a class="btn btn-warning" role="button" href="{% url 'proyecto:product-backlog' proyecto_id %}">
+      Cancelar
+    </a>
+    {% if update == True %}
+      <button type="submit" class="my-2 btn btn-success">Actualizar user story</button>
+    {% else %}
+      <button type="submit" class="my-2 btn btn-success">Agregar user story</button>
+    {% endif %}
+  </form>
+{% endblock %}

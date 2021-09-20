@@ -1,93 +1,151 @@
-{% extends 'sso/base.html'%}
-{% block container %}
-    <div class="container-fluid">
-        <table class="table caption-top table-bordered mx-1">
-        <h2>Roles del Proyecto 
-            <a href="{% url 'proyecto:agregar-rol' proyect_id %}"  class="btn btn-success" type="button"><i class="fas fa-plus-circle me-2"></i>Agregar rol</a>
-            <a href="{% url 'proyecto:importar-roles' proyect_id %}"  class="btn btn-info " type="button"><i class="fas fa-cloud-download-alt me-2"></i>Importar rol</a>
-        </h2>
-            <thead>
-                <tr>
-                    <th scope="col">#</th>
-                    <th scope="col">Nombre</th>
-                    <th scope="col" colspan="4">Permisos</th>
-                    <th scope="col">Participantes</th>
-                    <th scope="col">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for rol in roles %}
-                <tr>
-                    <th scope="row">{{forloop.counter}}</th>
-                    <td>{{ rol.nombre }}</td>
-                    <td colspan="4">
-                        <table class="table mb-0">
-                            <tbody>
-                                {% for permiso in rol.permisos.all %}
-                                <tr>
-                                    <th  scope="row">{{forloop.counter}}</th>
-                                    <td>{{permiso.name}}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </td>
-                    <td>
-                        <table class="table mb-0">
-                            <tbody>
-                                {% for user in rol.participantes.all %}
-                                <tr>
-                                    <th  scope="row">{{forloop.counter}}</th>
-                                    <td>{{user.first_name}} {{user.last_name}}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </td>
-                    <td>
-                        <!-- <a href="{% url 'proyecto:rol-detalles' proyect_id rol.id %}"  class="btn btn-info" role="button">Detalles</a> -->
-                        <div class="row px-2 ">
-                            <a href="{% url 'proyecto:rol-editar' proyect_id rol.id%}"  class="btn btn-info btn-sm px-3" role="button"><i class="fas fa-pen me-2"></i>Editar</a>
-                            <a href="{% url 'proyecto:rol-assignar' proyect_id rol.id %}" class="btn btn-warning btn-sm px-3" role="button" ><i class="fas fa-user-plus me-2"></i>Assignar</a>
-                            <a href="{% url 'proyecto:rol-eliminar' proyect_id rol.id%}"  class="btn btn-danger btn-sm px-3" role="button"><i class="fas fa-times me-2"></i>Eliminar</a>
-                        </div>
-                        
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% if participantes %}
-        <table class="table caption-top table-bordered mx-1 pt-3">
-            <h2>Participantes</h2>
-            <thead>
-                <tr>
-                    <th scope="col">#</th>
-                    <th scope="col">Nombre</th>
-                    <th scope="col">Apellidos</th>
-                    <th scope="col">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for user in participantes %}
-                <tr>
-                    <th scope="row">{{forloop.counter}}</th>
-                    <td>{{user.first_name}}</td>
-                    <td>{{user.last_name}}</td>
-                    <td>
-                        <a class="btn btn-info btn-sm px-3" role="button" href="#">
-                            <i class="fas fa-pen"></i>
-                        </a>
-                        <a class="btn btn-danger btn-sm px-3" role="button" href="#">
-                            <i class="fas fa-times"></i>
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
+{% extends 'proyecto/proyecto-detalle.html' %}
 
-        {% endif %}
+{% block proyecto_content %}
+    <div class="container-fluid">
+        <div>
+            <table class="table caption-top table-bordered mx-1">
+            <h2>Roles del Proyecto 
+                <a href="{% url 'proyecto:agregar-rol' proyecto.id %}"  class="btn btn-success" type="button"><i class="fas fa-plus-circle me-2"></i>Agregar rol</a>
+                <a href="{% url 'proyecto:importar-roles' proyecto.id %}"  class="btn btn-info " type="button"><i class="fas fa-cloud-download-alt me-2"></i>Importar rol</a>
+            </h2>
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Nombre</th>
+                        <th scope="col" colspan="4">Permisos</th>
+                        <th scope="col">Participantes</th>
+                        <th scope="col">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rol in roles %}
+                    <tr>
+                        <th scope="row">{{forloop.counter}}</th>
+                        <td>{{ rol.nombre }}</td>
+                        <td colspan="4">
+                            <table class="table mb-0">
+                                <tbody>
+                                    {% for permiso in rol.permisos.all %}
+                                    <tr>
+                                        <th  scope="row">{{forloop.counter}}</th>
+                                        <td>{{permiso.name}}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </td>
+                        <td>
+                            <table class="table mb-0">
+                                <tbody>
+                                    {% for user in rol.participantes.all %}
+                                    <tr>
+                                        <th  scope="row">{{forloop.counter}}</th>
+                                        <td>{{user.first_name}} {{user.last_name}}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </td>
+                        <td>
+                            <!-- <a href="{% url 'proyecto:rol-detalles' proyecto.id rol.id %}"  class="btn btn-info" role="button">Detalles</a> -->
+                            <div class="row px-2 ">
+                                <a href="{% url 'proyecto:rol-editar' proyecto.id rol.id%}"  class="btn btn-info btn-sm px-3" role="button"><i class="fas fa-pen me-2"></i>Editar</a>
+                                <a href="{% url 'proyecto:rol-assignar' proyecto.id rol.id %}" class="btn btn-warning btn-sm px-3" role="button" ><i class="fas fa-user-plus me-2"></i>Assignar</a>
+                                <a href="{% url 'proyecto:rol-eliminar' proyecto.id rol.id%}"  class="btn btn-danger btn-sm px-3" role="button"><i class="fas fa-times me-2"></i>Eliminar</a>
+                            </div>
+                            
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="pt-5">
+            <table class="table caption-top table-bordered mx-1">
+                <h2>Participantes del proyecto
+                    <a href="{% url 'proyecto:agregar-participantes-proyecto' proyecto.id %}"  class="btn btn-success" type="button"><i class="fas fa-user-plus me-2"></i>Agregar Participantes</a>
+                </h2>
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Nombre</th>
+                        <th scope="col">Apellidos</th>
+                        <th scope="col">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for usuario in participantes %}
+                        {% if usuario.id == proyect.owner.id %}
+                        <tr>
+                            <th scope="row">{{forloop.counter}}</th>
+                            <td>{{usuario.first_name}}</td>
+                            <td>{{usuario.last_name}}<i class="fas fa-crown mx-2"></i></td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <th scope="row">{{forloop.counter}}</th>
+                            <td>{{usuario.first_name}}</td>
+                            <td>{{usuario.last_name}}</td>
+                            <td>
+                                <a class="btn btn-danger btn-sm px-3" role="button" href="{% url 'proyecto:debaja-participante-proyecto' proyecto.id usuario.pk %}">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <!-- <div class="pt-5 pb-5">
+            <table class="table caption-top table-bordered mx-1">
+                <h2>Desarrolladores
+                    <a href="{% url 'proyecto:agregar-desarrollador-proyecto' proyecto.id %}"  class="btn btn-success" type="button"><i class="fas fa-user-plus me-2"></i>Agregar desarrollador</a>
+                </h2>
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Desarrollador</th>
+                        <th scope="col">Horas diarias</th>
+                        <th scope="col">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for usuario in proyect.equipo_desarrollador.all %}
+                        {% if usuario.usuario.id == proyect.owner.id %}
+                        <tr>
+                            <th scope="row">{{forloop.counter}}</th>
+                            <td>{{usuario.usuario.first_name}} {{usuario.usuario.last_name}}<i class="fas fa-crown mx-2"></i></td>
+                            <td>{{usuario.horas_diarias}}</i></td>
+                            <td>
+                                <a class="btn btn-info btn-sm px-3" role="button" href="{% url 'proyecto:editar-desarrollador-proyecto' proyecto.id usuario.pk %}">
+                                    <i class="fas fa-pen"></i>
+                                </a>
+                                <a class="btn btn-danger btn-sm px-3" role="button" href="{% url 'proyecto:debaja-participante-proyecto' proyecto.id usuario.pk %}">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <th scope="row">{{forloop.counter}}</th>
+                            <td>{{usuario.usuario.first_name}} {{usuario.usuario.last_name}}</td>
+                            <td>{{usuario.horas_diarias}}</td>
+                            <td>
+                                <a class="btn btn-info btn-sm px-3" role="button" href="{% url 'proyecto:editar-desarrollador-proyecto' proyecto.id usuario.pk %}">
+                                    <i class="fas fa-pen"></i>
+                                </a>
+                                <a class="btn btn-danger btn-sm px-3" role="button" href="{% url 'proyecto:debaja-desarrollador-proyecto' proyecto.id usuario.pk %}">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div> -->
     </div>    
 {% endblock %}
