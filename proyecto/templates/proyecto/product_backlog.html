@@ -47,7 +47,7 @@
                                 <a style="color: #55acee;" href="{% url 'proyecto:user-story update' proyecto_id us.pk %}" role="button"
                                     ><i class="fas fa-pen fa-sm me-4"></i
                                 ></a>
-                                <a href="#" class="btn btn-outline-primary btn-sm">Abrir</a>
+                                <a href="{% url 'proyecto:user-story-detail-unassigned' proyecto_id us.id %}" class="btn btn-outline-primary btn-sm">Abrir</a>
                             </div>
                         </div>
                     </div>
@@ -82,7 +82,7 @@
                                 {% endif %}
                             </div>
                             <div class="col d-flex justify-content-end align-content-center">
-                                <a href="#" class="btn btn-outline-primary btn-sm">Abrir</a>
+                                <a href="{% url 'proyecto:user-story-detail-unassigned' proyecto_id us.id %}" class="btn btn-outline-primary btn-sm">Abrir</a>
                             </div>
                         </div>
                     </div>

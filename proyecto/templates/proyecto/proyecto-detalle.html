@@ -31,10 +31,19 @@
                                             <div class="col d-flex justify-content-end align-content-center"><a href="{% url 'proyecto:sprint-detail' proyecto.id sprint.id %}" class="btn btn-outline-primary btn-sm">Abrir</a></div>
                                         </div>
                                     </div>
-                                  <h6 class="card-subtitle mb-2 text-muted">Card subtitle</h6>
-                                  <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-                                  <a href="#" class="card-link">Modificar</a>
-                                  <a href="{% url 'proyecto:sprint-team-edit' proyecto.id sprint.id%}" class="nav-link me-3"><i class="fas fa-users"></i></a>
+                                    <h6 class="card-subtitle mb-2">
+                                        {% if sprint.estado_de_sprint == 'I' %}
+                                            <span class="badge bg-warning text-dark">{{sprint.get_estado_de_sprint_display}}</span>
+                                        {% elif sprint.estado_de_sprint == 'F'%}
+                                            <span class="badge bg-success text-right">{{sprint.get_estado_de_sprint_display}}</span>
+                                        {% elif sprint.estado_de_sprint == 'A'%}
+                                            <span class="badge bg-primary text-right">{{sprint.get_estado_de_sprint_display}}</span>
+                                        {% elif sprint.estado_de_sprint == 'C'%}
+                                            <span class="badge bg-danger text-right">{{sprint.get_estado_de_sprint_display}}</span>
+                                        {% endif %}
+                                    </h6>
+                                    <a href="#" class="card-link">Modificar</a>
+                                    <a href="{% url 'proyecto:sprint-team-edit' proyecto.id sprint.id%}" class="nav-link me-3"><i class="fas fa-users"></i></a>
                                 </div>
                               </div>
                         </div>

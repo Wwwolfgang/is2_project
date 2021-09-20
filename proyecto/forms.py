@@ -1,3 +1,4 @@
+from django.contrib.auth import models
 from django.forms import fields, widgets
 from django.contrib.auth.models import Permission
 from django import forms
@@ -39,6 +40,7 @@ class UserAssignRolForm(forms.ModelForm):
 
 
 class CustomUserMCF(forms.ModelMultipleChoiceField):
+    """ Un ModelMultipleChoiceField custom """
     def label_from_instance(self, member):
         return "%s" % member.first_name + " " + member.last_name
 
@@ -109,6 +111,7 @@ class AgregarParticipanteForm(forms.Form):
 
 
 class DesarrolladorCreateForm(forms.ModelForm):
+    """ Form para administrar el equipo de desarrolladores de un sprint. """
 
     def __init__(self, *args, **kwargs):
         proyect_id = kwargs.pop('proyecto',None)
@@ -126,11 +129,13 @@ class DesarrolladorCreateForm(forms.ModelForm):
 
 
 class PermisoSolicitudForm(forms.Form):
+    """ Form para solicitar más permisos al owner del proyecto. """
     asunto = forms.CharField(label='Asunto de la solitud', max_length=100, required=True)
     body = forms.CharField(widget=forms.Textarea,label='Solicitud',help_text='Especifique, que tipo de acceso o permisos necesita. Explique que acciones quiere hacer.',required=True)
 
 
 class SprintCrearForm(forms.ModelForm):
+    """ Form utilizado para la creación de un sprint. Se llenan los campos duración del Sprint y fechafin """
     class Meta:
         model = Sprint
         fields = ['duracionSprint','fechaFin']
@@ -151,3 +156,29 @@ class AgregarUserStoryForm(forms.ModelForm):
     class Meta:
         model = UserStory
         fields = ['nombre','descripcion','prioridad_user_story']
+
+
+class UserStoryAssingForm(forms.ModelForm):
+    """ Form utilizado por el scrum master para asignar un user story a un desarrollador y estimar el tiempo de completar el user story """
+    def __init__(self, *args, **kwargs):
+        sprint_id = kwargs.pop('sprint_id',None)
+        sprint = Sprint.objects.get(pk=sprint_id)
+        super().__init__(*args, **kwargs)
+        self.fields['encargado'] = forms.ModelChoiceField(
+            empty_label="Desarrollador",
+            queryset=sprint.sprint_team.all(),
+        )
+        self.fields['tiempo_estimado_scrum_master'].required = True
+    class Meta:
+        model = UserStory
+        fields = ['tiempo_estimado_scrum_master','encargado','tiempo_estimado_dev']
+
+
+class UserStoryDevForm(forms.ModelForm):
+    """ Form utilizado por el encargado asignado al user story para estimar el tiempo de duración de completar el user story """
+    def __init__(self, *args, **kwargs):
+        sprint_id = kwargs.pop('sprint_id',None)
+        super().__init__(*args, **kwargs)
+    class Meta:
+        model = UserStory
+        fields = ['tiempo_estimado_dev']
