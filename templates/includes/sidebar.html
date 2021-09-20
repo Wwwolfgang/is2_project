@@ -80,6 +80,11 @@
         <div class="collapse" id="proyectos-collapse">
           <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
             <li><a href="{% url 'proyecto:index' %}" class="link-dark rounded">Mis Proyectos</a></li>
+            {% for proyecto in mis_proyectos %}
+            <li class="link-dark rounded">
+                <a href="{% url 'proyecto:detail' proyecto.id %}"> {{ proyecto.nombreProyecto }} </a>
+            </li>
+            {% endfor %}
           </ul>
         </div>
       </li>

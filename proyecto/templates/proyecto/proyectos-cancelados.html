@@ -1,0 +1,25 @@
+{% extends 'proyecto/base.html' %}
+{% block container %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-10 col-xs-10 col-sm-10">
+            <h3 class="round3" style="text-align:center;">Proyectos cancelados</h3>
+        </div>
+    </div>
+    <br />
+    {% for proyecto in proyecto_list_cancelados %}
+    <div class="row">
+        <div class="col-md-1 col-xs-1 col-sm-1"></div>
+        <div class="col-md-7 col-xs-7 col-sm-7">
+            <ul class="list-group">
+
+                <li class="list-group-item ">
+                    <a href="{% url 'proyecto:detail' proyecto.id %}"> {{ proyecto.nombreProyecto }} </a> <span class="badge"></span>
+                </li>
+            </ul>
+            <br>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

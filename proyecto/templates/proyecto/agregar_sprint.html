@@ -1,0 +1,54 @@
+{% extends 'proyecto/proyecto-detalle.html' %}
+{% block proyecto_content %}
+{% load widget_tweaks %}
+    <div class="container-fluid">
+        {% if sprint_count > 0%}
+
+
+        <h2><font color="red"> No se puede crear un sprint mientras se tiene uno por planificar</font></h2>
+        <a href="{% url 'proyecto:detail' proyecto_id %}" role="button" class="btn btn-secondary ">Atrás</a>
+        {% else %}
+        <div class="row">
+            <h2 style="text-align:start;">
+                Sprint {{count}}
+            </h2>
+            <h6 style="text-align:start;">
+                <font color="red"> Todos los campos son requeridos</font>
+            </h6>
+            <div class="col-md-10 col-xs-10 col-sm-10">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    {% for field in form.visible_fields %}
+                    <div class="form-group class pb-2">
+                        {% if field.name != 'equipo_desarrollador' %}
+                            {% if field.name == 'duracionSprint'%}
+                                Duración
+                                {% render_field field class="form-control" %}
+                                {% if field.help_text %}
+                                <small class="form-text text-muted">{{ field.help_text }}</small>
+                                {% endif %}
+                            {% endif %}
+
+                            {% if field.name == 'fechaFin'%}
+                                Fecha de finalización
+                                {% render_field field class="form-control" %}
+                                {% if field.help_text %}
+                                <small class="form-text text-muted">{{ field.help_text }}</small>
+                                {% endif %}
+                            {% endif %}
+
+                        {% else %}
+                            Equipo de desarrolladores:
+                            {{field}}
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    <button type="submit" class="btn btn-primary">Agregar Sprint</button>
+                </form>
+                <br>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+{% endblock %}

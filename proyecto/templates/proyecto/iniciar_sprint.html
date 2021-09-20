@@ -1,0 +1,27 @@
+{% extends 'proyecto/proyecto-detalle.html' %}
+
+{% block proyecto_content %}
+<div class="container">
+    <div class="row"></div>
+    <br />
+    <div class="row">
+        <div class="col-md-2 col-xs-2 col-sm-2"></div>
+        <div class="col-md-10 col-xs-10 col-sm-10">
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-row">
+                    <div class="alert alert-success">
+                        ¿Desea iniciar el Sprint?<br/>
+                    </div>
+                </div>
+                <div>
+                    <a class="btn btn-warning" role="button" href="{% url 'proyecto:sprint-detail' proyecto_id sprint_id %}">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="my-2 btn btn-success">Iniciar Sprint</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
