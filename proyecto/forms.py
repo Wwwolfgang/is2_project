@@ -72,7 +72,8 @@ class ProyectoCreateForm(forms.ModelForm):
         super(ProyectoCreateForm,self).__init__(*args, **kwargs)
         self.fields['equipo'] = forms.MultipleChoiceField(
         widget=forms.CheckboxSelectMultiple,
-        choices=[(p.id, "%s" % p.first_name + " " + p.last_name) for p in User.objects.exclude(first_name__isnull=True).exclude(first_name__exact='').exclude(pk=user.pk) if p.has_perm('sso.pg_is_user')]
+        choices=[(p.id, "%s" % p.first_name + " " + p.last_name) for p in User.objects.exclude(first_name__isnull=True).exclude(first_name__exact='').exclude(pk=user.pk) if p.has_perm('sso.pg_is_user')],
+        required=False
     )
 
 
