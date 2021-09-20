@@ -13,7 +13,7 @@ from django.views.generic import ListView, DetailView
 from django.urls import reverse
 from proyecto import models
 from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoEditForm,ProyectoCreateForm,AgregarParticipanteForm, DesarrolladorCreateForm,PermisoSolicitudForm,SprintCrearForm, AgregarUserStoryForm
-from proyecto.forms import EquipoFormset, UserStoryAssingForm, UserStoryDevForm
+from proyecto.forms import EquipoFormset, UserStoryAssingForm, UserStoryDevForm, SprintModificarForm
 from proyecto.models import RolProyecto, Proyecto, ProyectUser, Sprint, UserStory, ProductBacklog
 from django.views.generic.edit import UpdateView, DeleteView, FormView, CreateView
 from django.urls import reverse_lazy
@@ -227,6 +227,7 @@ class AssignUserRolProyecto(PermissionRequiredMixin, UpdateView):
 
 #Views de proyecto
 class ListaProyectos(PermissionRequiredMixin, ListView):
+    """ Listado de todos los proyectos a los cuales el usuario tiene acceso. Puede hacer algunas acciones como editar, eliminar, etc. o entrar en el proyecto. """
     permission_required = ('sso.pg_puede_acceder_proyecto','sso.pg_is_user')
     raise_exception = True
     model = Proyecto
@@ -238,6 +239,7 @@ class ListaProyectos(PermissionRequiredMixin, ListView):
 
 
 class ListaProyectosCancelados(PermissionRequiredMixin, ListView):
+    """ Vista que muestra todos los proyectos que fueron cancelado. Ya que los proyectos no se eliminan sino son cancelados aqui se ve solo proyectos cancelados. """
     permission_required = ('sso.pg_puede_acceder_proyecto','sso.pg_is_user')
     raise_exception = True
     model = Proyecto
@@ -249,6 +251,9 @@ class ListaProyectosCancelados(PermissionRequiredMixin, ListView):
 
 
 class ProyectoDetailView(PermissionRequiredMixin, DetailView):
+    """ Vista global del proyecto, se ven los sprints, los user storys,etc. También se inicializa un barra global del proyecto para poder acceder rapidamente
+        a controles del proyecto.
+    """
     model = Proyecto
     template_name = 'proyecto/proyecto-detalle.html'
     permission_required = ('sso.pg_is_user','sso.pg_puede_acceder_proyecto')
@@ -271,13 +276,16 @@ class ProyectoDetailView(PermissionRequiredMixin, DetailView):
 
 
 class CreateProyectoView(CreateView):
+    """ Vista para crear proyectos. En esta vista por el momento solo se llenan la duracion del sprint y la fecha de finalización. 
+        Hay que evaluar que más campos se van a tratar aqui.
+    """
     model = Proyecto
     template_name = "proyecto/proyecto_form.html"
     form_class = ProyectoCreateForm
     raise_exception = True
 
     def get_form_kwargs(self):
-        """ Función que inyecta el id del proyecto como argumento. """
+        """ Función que inyecta el usuario al form como argumento. """
         kwargs = super(CreateProyectoView, self).get_form_kwargs()
         kwargs['user_id'] = self.request.user.id
         return kwargs
@@ -288,7 +296,7 @@ class CreateProyectoView(CreateView):
         model.save()
         model.owner = user
         model.save()
-        ProductBacklog.objects.create(proyecto=get_object_or_404(Proyecto, pk=model.pkP))
+        ProductBacklog.objects.create(proyecto=get_object_or_404(Proyecto, pk=model.pk))
         return HttpResponseRedirect(reverse('proyecto:index'))
 
 
@@ -337,6 +345,7 @@ def eliminarParticipanteView(request, pk_proy, pk, template_name='proyecto/delet
 @permission_required('sso.pg_puede_crear_proyecto', return_403=True, accept_global_perms=True)
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
 def edit(request, pk, template_name='proyecto/edit.html'):
+    """ Vista para editar algunos atributos del proyecto como la duracion del sprint y la fecha de finalizacion. """
     proyecto = get_object_or_404(Proyecto, pk=pk)
     form = ProyectoEditForm(request.POST or None, instance=proyecto)
     if form.is_valid():
@@ -347,6 +356,7 @@ def edit(request, pk, template_name='proyecto/edit.html'):
 
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
 def cancelar(request, pk, template_name='proyecto/confirm-cancel.html'):
+    """ Este view está obsoleto. En el futuro se va eliminar. """
     proyecto = get_object_or_404(Proyecto, pk=pk)
     if request.method=='POST':
         proyecto.estado_de_proyecto = 'C'
@@ -359,6 +369,7 @@ def cancelar(request, pk, template_name='proyecto/confirm-cancel.html'):
 @permission_required('sso.pg_puede_crear_proyecto', return_403=True, accept_global_perms=True)
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
 def iniciar_proyecto(request, pk):
+    """ Este view está obsoleto. En el futuro se va eliminar. """
     proyecto = Proyecto.objects.get(pk=pk)
     proyecto.estado_de_proyecto = 'A'
     proyecto.save()
@@ -369,6 +380,7 @@ def iniciar_proyecto(request, pk):
 @permission_required('sso.pg_puede_crear_proyecto', return_403=True, accept_global_perms=True)
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
 def cancelar_proyecto(request, pk):
+    """ Este view está obsoleto. En el futuro se va eliminar. """
     proyecto = Proyecto.objects.get(pk=pk)
     proyecto.estado_de_proyecto = 'C'
     proyecto.save()
@@ -379,6 +391,7 @@ def cancelar_proyecto(request, pk):
 @permission_required('sso.pg_puede_crear_proyecto', return_403=True, accept_global_perms=True)
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
 def finalizar_proyecto(request, pk):
+    """ Este view está obsoleto. En el futuro se va eliminar. """
     proyecto = Proyecto.objects.get(pk=pk)
     proyecto.estado_de_proyecto = 'F'
     proyecto.save()
@@ -386,6 +399,7 @@ def finalizar_proyecto(request, pk):
 
 
 class AgregarDesarrolladorView(CreateView):
+    """ Este view está obsoleto. En el futuro se va eliminar. """
     model = ProyectUser
     template_name = "proyecto/proyecto_agregar_desarrollador.html"
     form_class = DesarrolladorCreateForm
@@ -580,6 +594,29 @@ class EquipoSprintUpdateView(SingleObjectMixin,FormView):
 
     def get_success_url(self):
         return reverse('proyecto:detail', kwargs={'pk': self.kwargs['pk_proy'],})
+
+
+class SprintUpdateView(UpdateView):
+    model = Sprint
+    form_class= SprintModificarForm
+    template_name = 'proyecto/sprint_modificar.html'
+    raise_exception = True
+
+    def get_object(self, queryset=None):
+        id = self.kwargs['sprint_id']
+        return self.model.objects.get(id=id)
+
+    def get_context_data(self, **kwargs):
+        context = super(SprintUpdateView, self).get_context_data(**kwargs)
+        context.update({
+            'proyecto_id': self.kwargs['pk_proy'],
+            'update': True,
+        })
+        return context
+
+    def get_success_url(self):
+        return reverse('proyecto:detail', kwargs={'pk': self.kwargs['pk_proy'],})
+
 
 #Views de user story
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)

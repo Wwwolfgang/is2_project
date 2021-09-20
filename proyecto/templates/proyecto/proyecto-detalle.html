@@ -42,7 +42,7 @@
                                             <span class="badge bg-danger text-right">{{sprint.get_estado_de_sprint_display}}</span>
                                         {% endif %}
                                     </h6>
-                                    <a href="#" class="card-link">Modificar</a>
+                                    <a href="{% url 'proyecto:sprint-edit' proyecto.id sprint.id %}" class="card-link">Modificar</a>
                                     <a href="{% url 'proyecto:sprint-team-edit' proyecto.id sprint.id%}" class="nav-link me-3"><i class="fas fa-users"></i></a>
                                 </div>
                               </div>
