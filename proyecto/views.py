@@ -296,8 +296,8 @@ class AssignUserRolProyecto(PermissionRequiredMixin, UpdateView):
                         remove_perm(per,past_part,proyecto)
 
 
-        else:   
-            messages.error(self.request, 'Rol de proyecto no pudo ser assignado porque el proyecto no está activo')
+        # else:   
+        #     messages.error(self.request, 'Rol de proyecto no pudo ser assignado porque el proyecto no está activo')
 
         return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']}))
 
@@ -407,6 +407,9 @@ class AgregarParticipanteProyecto(PermissionRequiredMixin, UpdateView):
 def eliminarParticipanteView(request, pk_proy, pk, template_name='proyecto/delete_confirm_participante.html'):
     """ View para eliminar participantes de equipo de un proyecto. Es una vista de confirmación
         , si el usuario elige "Eliminar" se elimina el usuario del proyecto.
+        TODO
+
+        Hay que revisar este view y quitar todos los permisos del usuario cuando es eliminado del proyecto
     """
     proyecto = get_object_or_404(Proyecto, pk=pk_proy)
     user = get_object_or_404(User, pk=pk)
