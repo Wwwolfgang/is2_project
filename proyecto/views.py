@@ -1,20 +1,19 @@
+from django.db.models import Sum
+from django.views.generic.base import TemplateView
 from django.views.generic.detail import SingleObjectMixin
-import proyecto
 from django.contrib import messages
-from django.contrib.auth import models
-from django.contrib.auth.models import Permission
-from django.db.models import fields
 from django.shortcuts import redirect, render
 from django.shortcuts import get_object_or_404
-from guardian.shortcuts import assign_perm
+from guardian.shortcuts import assign_perm, remove_perm
 from django.contrib.auth.mixins import PermissionRequiredMixin,LoginRequiredMixin
 from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView
 from django.urls import reverse
+from proyecto import models
 from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoEditForm,ProyectoCreateForm,AgregarParticipanteForm, DesarrolladorCreateForm,PermisoSolicitudForm,SprintCrearForm, AgregarUserStoryForm
-from proyecto.forms import EquipoFormset
-from proyecto.models import RolProyecto, Proyecto, ProyectUser, Sprint, UserStory
+from proyecto.forms import EquipoFormset, UserStoryAssingForm, UserStoryDevForm, SprintModificarForm
+from proyecto.models import RolProyecto, Proyecto, ProyectUser, Sprint, UserStory, ProductBacklog
 from django.views.generic.edit import UpdateView, DeleteView, FormView, CreateView
 from django.urls import reverse_lazy
 from guardian.decorators import permission_required_or_403,permission_required
@@ -22,9 +21,85 @@ from guardian.shortcuts import assign_perm
 from sso.models import User
 from django.views.decorators.csrf import csrf_exempt
 import json
+from statistics import mean
 from django.core.mail import send_mail
-from django.conf import settings
-from django.forms.models import inlineformset_factory
+
+
+# class ListaParticipantes(UpdateView):
+#     """ 
+#     Lista 
+#     """
+#     model = userStory
+#     context_object_name = 'Participantes'
+#     template_name = 'proyecto/participantes.html'
+#     raise_exception = True
+#     queryset = userStory.objects.all()
+
+#     def eliminar(userStory: userStory,codigo, nombreParticipante):
+#         try:
+#             query = userStory.objects.get(codigoUserStory = codigo)
+#             for participante in query.listaParticipantes:
+#                 if( participante.username.__eq__(nombreParticipante) ):
+#                     query.listaParticipantes.remove(participante)
+#                     userStory = query
+#                     userStory.objects.save()
+#                     return HttpResponse("Se ha eliminado el usuario")
+#             print("Participante no encontrado")
+#             return
+#         except:
+#             print("Codigo no encontrado")
+#         return
+
+#     def agregar(userStory: userStory,codigo, nombreParticipante):
+#         try:
+#             query = userStory.objects.get(codigoUserStory = codigo)
+#             query.listaParticipantes.append(nombreParticipante)
+#             userStory = query
+#             userStory.objects.save()
+#             return HttpResponse("Se ha agregado el usuario")
+#         except:
+#             print("Codigo no encontrado")
+#         return
+#     def listar(userStory: userStory,codigo):
+#         try:
+#             query = userStory.objects.get(codigoUserStory = codigo)
+#             for participante in query.ListaParticipantes:
+#                 print(participante)
+#             return
+#         except:
+#             print("Codigo no encontrado")
+#         return
+        
+# class UserStoryView(UpdateView):
+#     model = userStory
+#     context_object_name = 'User Story'
+#     template_name = 'proyecto/userstory/'
+#     raise_exception = True
+#     queryset = userStory.objects.all()
+#     def agregar(self,userStoryNuevo : userStory):
+#         self.template_name += 'agregar.html'
+#         userStoryNuevo.save()
+#         return HttpResponse("Se agrego el user story")
+#     def listar(self, userStories : sprint):
+#         self.template_name += 'listar.html'
+#         return HttpResponse(userStories.listaStories)
+#     def modificar(self,userStoryModificado : userStory):
+#         self.template_name += 'modificar.html'
+#         try:
+#             self.queryset.get(codigoUserStory = userStoryModificado.codigoUserStory).delete()
+#             userStory.save()
+#             return HttpResponse("Se modifico el user story")
+#         except:
+#             Http404("Codigo no encontrado")
+#         return HttpResponse()
+#     def cancelar(self,codigoUserStory : int):
+#         self.template_name += 'cancelar.html'
+#         try:
+#             self.queryset.get(codigoUserStory = codigoUserStory).delete()
+#             return HttpResponse("Se elimino el user story")
+#         except:
+#             Http404("Codigo no encontrado")
+#         return HttpResponse()
 
 #Views de Rol Proyecto
 class EliminarRolProyectoView(PermissionRequiredMixin, DeleteView):
@@ -40,7 +115,7 @@ class EliminarRolProyectoView(PermissionRequiredMixin, DeleteView):
     def get_context_data(self, **kwargs):
         context = super(EliminarRolProyectoView, self).get_context_data(**kwargs)
         context.update({
-            'proyect_id': self.kwargs['pk_proy'],
+            'proyecto_id': self.kwargs['pk_proy'],
         })
         return context
 
@@ -70,7 +145,7 @@ class ListaRolProyectoView(PermissionRequiredMixin, ListView):
         context.update({
             'roles': RolProyecto.objects.filter(proyecto__id= self.kwargs.get('pk_proy')),
             'participantes': proyecto.equipo.all() | user,
-            'proyect': proyecto
+            'proyecto': proyecto
         })
         return context
 
@@ -90,7 +165,7 @@ def agregar_rol_proyecto_view(request, pk_proy):
     """
     contexto = {}
     contexto.update({
-        'proyect_id': pk_proy
+        'proyecto_id': pk_proy
     })
     if request.method == 'POST':
         form = AgregarRolProyectoForm(request.POST or None)
@@ -120,7 +195,7 @@ def editar_rol_proyecto_view(request, pk_proy, id_rol):
     contexto = {}
 
     contexto.update({
-        'proyect_id': pk_proy
+        'proyecto_id': pk_proy
     })
     if request.method == 'POST':
         form = AgregarRolProyectoForm(request.POST, instance=rol)
@@ -149,7 +224,7 @@ class ImportarRolView(PermissionRequiredMixin, FormView):
         context = super(ImportarRolView,self).get_context_data(**kwargs)
         context.update({
             'roles': RolProyecto.objects.exclude(proyecto__id= self.kwargs.get('pk_proy')),
-            'proyect_id': self.kwargs.get('pk_proy')
+            'proyecto_id': self.kwargs.get('pk_proy')
         })
         return context
 
@@ -191,7 +266,7 @@ class AssignUserRolProyecto(PermissionRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super(AssignUserRolProyecto, self).get_context_data(**kwargs)
         context.update({
-            'proyect_id': self.kwargs['pk_proy'],
+            'proyecto_id': self.kwargs['pk_proy'],
         })
         return context
 
@@ -210,21 +285,26 @@ class AssignUserRolProyecto(PermissionRequiredMixin, UpdateView):
         proyecto = Proyecto.objects.get(id=self.kwargs['pk_proy'])
         permisos = RolProyecto.objects.get(id=self.kwargs['id_rol']).permisos.all()
 
-        if proyecto.estado_de_proyecto == 'A':
-            form.save()
-            for per in permisos:
-                for participante in form.cleaned_data['participantes']:
-                    if per.content_type.model == 'proyecto':
-                        user = User.objects.get(id=participante)
-                        assign_perm(per,user,proyecto)
+        form.save()
+        for per in permisos:
+            for participante in form.cleaned_data['participantes']:
+                if per.content_type.model == 'proyecto':
+                    user = participante
+                    assign_perm(per,user,proyecto)
+            for past_part in form.initial['participantes']:
+                if per.content_type.model == 'proyecto':
+                    if past_part not in form.cleaned_data['participantes']:
+                        remove_perm(per,past_part,proyecto)
 
-        else:   
-            messages.error(self.request, 'Rol de proyecto no pudo ser assignado porque el proyecto no está activo')
+
+        # else:   
+        #     messages.error(self.request, 'Rol de proyecto no pudo ser assignado porque el proyecto no está activo')
 
         return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']}))
 
 #Views de proyecto
 class ListaProyectos(PermissionRequiredMixin, ListView):
+    """ Listado de todos los proyectos a los cuales el usuario tiene acceso. Puede hacer algunas acciones como editar, eliminar, etc. o entrar en el proyecto. """
     permission_required = ('sso.pg_puede_acceder_proyecto','sso.pg_is_user')
     raise_exception = True
     model = Proyecto
@@ -235,43 +315,54 @@ class ListaProyectos(PermissionRequiredMixin, ListView):
         return User.objects.get(id=self.request.user.id).proyecto_set.all().exclude(estado_de_proyecto='C') | Proyecto.objects.filter(owner_id=self.request.user.id).exclude(estado_de_proyecto='C')
 
 
+class ListaProyectosCancelados(PermissionRequiredMixin, ListView):
+    """ Vista que muestra todos los proyectos que fueron cancelado. Ya que los proyectos no se eliminan sino son cancelados aqui se ve solo proyectos cancelados. """
+    permission_required = ('sso.pg_puede_acceder_proyecto','sso.pg_is_user')
+    raise_exception = True
+    model = Proyecto
+    template_name = 'proyecto/proyectos-cancelados.html'
+    context_object_name = 'proyecto_list_cancelados'
+
+    def get_queryset(self):
+        return User.objects.get(id=self.request.user.id).proyecto_set.all().filter(estado_de_proyecto='C') | Proyecto.objects.filter(owner_id=self.request.user.id).filter(estado_de_proyecto='C')
+
+
 class ProyectoDetailView(PermissionRequiredMixin, DetailView):
+    """ Vista global del proyecto, se ven los sprints, los user storys,etc. También se inicializa un barra global del proyecto para poder acceder rapidamente
+        a controles del proyecto.
+    """
     model = Proyecto
     template_name = 'proyecto/proyecto-detalle.html'
     permission_required = ('sso.pg_is_user','sso.pg_puede_acceder_proyecto')
 
     def get_object(self, queryset=None):
         id = self.kwargs['pk']
-        return self.model.objects.get(id=id)
 
     def get_context_data(self, **kwargs):
         context = super(ProyectoDetailView,self).get_context_data(**kwargs)
         id = self.kwargs['pk']
         sprints = Sprint.objects.filter(proyecto__pk=id)
         proyecto = self.model.objects.get(id=id)
-        self.request.session['proyect_id'] = id
-        self.request.session['proyect_name'] = proyecto.nombreProyecto
+        self.request.session['proyecto_id'] = id
+        self.request.session['proyecto_nombre'] = proyecto.nombreProyecto
         context.update({
-            'proyect': json.dumps(
-                {
-                    'id': proyecto.id,
-                    'nombre': proyecto.nombreProyecto,
-                    'estado': proyecto.estado_de_proyecto,
-                }
-            ),
+            'proyecto': proyecto,
             'sprints': sprints
         }) 
         return context
 
 
 class CreateProyectoView(CreateView):
+    """ Vista para crear proyectos. En esta vista por el momento solo se llenan la duracion del sprint y la fecha de finalización. 
+        Hay que evaluar que más campos se van a tratar aqui.
+    """
     model = Proyecto
     template_name = "proyecto/proyecto_form.html"
     form_class = ProyectoCreateForm
     raise_exception = True
 
     def get_form_kwargs(self):
-        """ Función que inyecta el id del proyecto como argumento. """
+        """ Función que inyecta el usuario al form como argumento. """
         kwargs = super(CreateProyectoView, self).get_form_kwargs()
         kwargs['user_id'] = self.request.user.id
         return kwargs
@@ -282,6 +373,7 @@ class CreateProyectoView(CreateView):
         model.save()
         model.owner = user
         model.save()
+        ProductBacklog.objects.create(proyecto=get_object_or_404(Proyecto, pk=model.pk))
         return HttpResponseRedirect(reverse('proyecto:index'))
 
 
@@ -316,6 +408,9 @@ class AgregarParticipanteProyecto(PermissionRequiredMixin, UpdateView):
 def eliminarParticipanteView(request, pk_proy, pk, template_name='proyecto/delete_confirm_participante.html'):
     """ View para eliminar participantes de equipo de un proyecto. Es una vista de confirmación
         , si el usuario elige "Eliminar" se elimina el usuario del proyecto.
+        TODO
+
+        Hay que revisar este view y quitar todos los permisos del usuario cuando es eliminado del proyecto
     """
     proyecto = get_object_or_404(Proyecto, pk=pk_proy)
     user = get_object_or_404(User, pk=pk)
@@ -330,6 +425,7 @@ def eliminarParticipanteView(request, pk_proy, pk, template_name='proyecto/delet
 @permission_required('sso.pg_puede_crear_proyecto', return_403=True, accept_global_perms=True)
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
 def edit(request, pk, template_name='proyecto/edit.html'):
+    """ Vista para editar algunos atributos del proyecto como la duracion del sprint y la fecha de finalizacion. """
     proyecto = get_object_or_404(Proyecto, pk=pk)
     form = ProyectoEditForm(request.POST or None, instance=proyecto)
     if form.is_valid():
@@ -339,10 +435,12 @@ def edit(request, pk, template_name='proyecto/edit.html'):
 
 
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
-def delete(request, pk, template_name='proyecto/confirm-delete.html'):
+def cancelar(request, pk, template_name='proyecto/confirm-cancel.html'):
+    """ Este view está obsoleto. En el futuro se va eliminar. """
     proyecto = get_object_or_404(Proyecto, pk=pk)
     if request.method=='POST':
-        proyecto.delete()
+        proyecto.estado_de_proyecto = 'C'
+        proyecto.save()
         return HttpResponseRedirect(reverse('proyecto:index'))
     return render(request, template_name, {'object':proyecto})
 
@@ -351,6 +449,7 @@ def delete(request, pk, template_name='proyecto/confirm-delete.html'):
 @permission_required('sso.pg_puede_crear_proyecto', return_403=True, accept_global_perms=True)
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
 def iniciar_proyecto(request, pk):
+    """ Este view está obsoleto. En el futuro se va eliminar. """
     proyecto = Proyecto.objects.get(pk=pk)
     proyecto.estado_de_proyecto = 'A'
     proyecto.save()
@@ -361,6 +460,7 @@ def iniciar_proyecto(request, pk):
 @permission_required('sso.pg_puede_crear_proyecto', return_403=True, accept_global_perms=True)
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
 def cancelar_proyecto(request, pk):
+    """ Este view está obsoleto. En el futuro se va eliminar. """
     proyecto = Proyecto.objects.get(pk=pk)
     proyecto.estado_de_proyecto = 'C'
     proyecto.save()
@@ -371,6 +471,7 @@ def cancelar_proyecto(request, pk):
 @permission_required('sso.pg_puede_crear_proyecto', return_403=True, accept_global_perms=True)
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
 def finalizar_proyecto(request, pk):
+    """ Este view está obsoleto. En el futuro se va eliminar. """
     proyecto = Proyecto.objects.get(pk=pk)
     proyecto.estado_de_proyecto = 'F'
     proyecto.save()
@@ -378,6 +479,7 @@ def finalizar_proyecto(request, pk):
 
 
 class AgregarDesarrolladorView(CreateView):
+    """ Este view está obsoleto. En el futuro se va eliminar. """
     model = ProyectUser
     template_name = "proyecto/proyecto_agregar_desarrollador.html"
     form_class = DesarrolladorCreateForm
@@ -386,7 +488,7 @@ class AgregarDesarrolladorView(CreateView):
     def get_context_data(self, **kwargs):
         context = super(AgregarDesarrolladorView,self).get_context_data(**kwargs)
         context.update({
-            'proyect_id': self.kwargs['pk_proy'],
+            'proyecto_id': self.kwargs['pk_proy'],
         })
         return context
 
@@ -401,7 +503,7 @@ class AgregarDesarrolladorView(CreateView):
         dev = form.save()
 
         proyecto.equipo_desarrollador.add(dev)
-        
+
         return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']}))
 
 
@@ -423,7 +525,7 @@ class EditDesarrolladorView(PermissionRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super(EditDesarrolladorView,self).get_context_data(**kwargs)
         context.update({
-            'proyect_id': self.kwargs['pk_proy'],
+            'proyecto_id': self.kwargs['pk_proy'],
             'edit': True
         })
         return context
@@ -460,7 +562,7 @@ class EliminarDesarrolladorView(PermissionRequiredMixin, DeleteView):
     def get_context_data(self, **kwargs):
         context = super(EliminarDesarrolladorView, self).get_context_data(**kwargs)
         context.update({
-            'proyect_id': self.kwargs['pk_proy'],
+            'proyecto_id': self.kwargs['pk_proy'],
         })
         return context
 
@@ -485,7 +587,7 @@ class SolicitarPermisosView(FormView):
     def get_context_data(self, **kwargs):
         context = super(SolicitarPermisosView, self).get_context_data(**kwargs)
         context.update({
-            'proyect_id': self.kwargs['pk_proy'],
+            'proyecto_id': self.kwargs['pk_proy'],
         })
         return context
 
@@ -511,8 +613,11 @@ class AgregarSprintView(CreateView):
         context = super(AgregarSprintView,self).get_context_data(**kwargs)
         sprints_count = Sprint.objects.filter(proyecto__id=self.kwargs['pk_proy']).exclude(estado_de_sprint='C').count()
         context.update({
-            'proyect_id': self.kwargs['pk_proy'],
-            'count': sprints_count + 1
+            'proyecto_id': self.kwargs['pk_proy'],
+            'count': sprints_count + 1,
+            'sprint_count': Sprint.objects.filter(proyecto__id=self.kwargs['pk_proy']).filter(
+            estado_de_sprint='I').count()
+
         })
         return context
 
@@ -540,7 +645,8 @@ class EquipoSprintUpdateView(SingleObjectMixin,FormView):
     def get_context_data(self, **kwargs):
         context = super(EquipoSprintUpdateView,self).get_context_data(**kwargs)
         context.update({
-            'proyect_id': self.kwargs['pk_proy'],
+            'proyecto_id': self.kwargs['pk_proy'],
+            'sprint': Sprint.objects.get(pk=self.kwargs['pk']),
         })
         return context
 
@@ -569,6 +675,29 @@ class EquipoSprintUpdateView(SingleObjectMixin,FormView):
     def get_success_url(self):
         return reverse('proyecto:detail', kwargs={'pk': self.kwargs['pk_proy'],})
 
+
+class SprintUpdateView(UpdateView):
+    model = Sprint
+    form_class= SprintModificarForm
+    template_name = 'proyecto/sprint_modificar.html'
+    raise_exception = True
+
+    def get_object(self, queryset=None):
+        id = self.kwargs['sprint_id']
+        return self.model.objects.get(id=id)
+
+    def get_context_data(self, **kwargs):
+        context = super(SprintUpdateView, self).get_context_data(**kwargs)
+        context.update({
+            'proyecto_id': self.kwargs['pk_proy'],
+            'update': True,
+        })
+        return context
+
+    def get_success_url(self):
+        return reverse('proyecto:detail', kwargs={'pk': self.kwargs['pk_proy'],})
+
+
 #Views de user story
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
 def agregar_user_story_view(request, pk_proy):
@@ -578,13 +707,22 @@ def agregar_user_story_view(request, pk_proy):
     """
     contexto = {}
     contexto.update({
-        'proyect_id': pk_proy
+        'proyecto_id': pk_proy
     })
     if request.method == 'POST':      
         form = AgregarUserStoryForm(request.POST or None)
         #Si el form se cargó correctamente, lo guardamos
         if form.is_valid():
-            form.save()
+            backlog = ProductBacklog.objects.filter(proyecto__id=pk_proy).count()
+
+            if backlog == 0:
+                ProductBacklog.objects.create(proyecto=get_object_or_404(Proyecto, pk=pk_proy))
+            
+            backlog = ProductBacklog.objects.get(proyecto__pk=pk_proy)
+            u_story = form.save()
+            u_story.product_backlog = backlog
+            u_story.creador = request.user
+            u_story.save()
             #Redirigimos al product backlog
             return redirect('proyecto:product-backlog', pk_proy)  
         contexto['form'] = form
@@ -594,14 +732,258 @@ def agregar_user_story_view(request, pk_proy):
         contexto['form'] = form
         return render(request, 'proyecto/nuevo_user_story_view.html', context=contexto)
 
+class UserStoryUdateView(UpdateView):
+    """ View para modificar user storys no aprobados. """
+    model = UserStory
+    form_class= AgregarUserStoryForm
+    template_name = 'proyecto/nuevo_user_story_view.html'
+    raise_exception = True
+
+    def get_object(self, queryset=None):
+        """ Función que retorna el user story que vamos a modificar. """
+        id = self.kwargs['us_id']
+        return self.model.objects.get(id=id)
+
+    def get_context_data(self, **kwargs):
+        """ Función para inyectar variables de contexto que serán utilizados en el template."""
+        context = super(UserStoryUdateView, self).get_context_data(**kwargs)
+        context.update({
+            'proyecto_id': self.kwargs['pk_proy'],
+            'update': True,
+        })
+        return context
+
+    def get_success_url(self):
+        return reverse('proyecto:product-backlog', kwargs={'pk_proy': self.kwargs['pk_proy'],})
+
+
 class ProductBacklogView(PermissionRequiredMixin, ListView):
+    """ View de todos los user storys del proyecto. A la izquierda se ven los user storys temporales, a la derecha los aprobados que ya se encuentran el backlog. """
     model = UserStory
     template_name = 'proyecto/product_backlog.html'
     permission_required = ('sso.pg_is_user')
 
     def get_context_data(self, **kwargs):
+        """ Función para inyectar variables de contexto que serán utilizados en el template."""
         context = super(ProductBacklogView, self).get_context_data(**kwargs)
         context.update({
-            'proyect_id': self.kwargs['pk_proy'],
+            'proyecto_id': self.kwargs['pk_proy'],
+            'user_storys_nuevos': ProductBacklog.objects.get(proyecto__pk = self.kwargs['pk_proy']).userstory_set.filter(estado_aprobacion='T'),
+            'product_backlog': ProductBacklog.objects.get(proyecto__pk = self.kwargs['pk_proy']).userstory_set.filter(estado_aprobacion='A'),
+        })
+        return context
+
+
+def aprobar_user_story(request,pk_proy,pk):
+    """ View para aprobar un user story por un htmx post call. """
+    if request.method == 'POST': 
+        user_story = get_object_or_404(UserStory,pk=pk)
+        user_story.estado_aprobacion = 'A'
+        user_story.save()
+    return HttpResponse('<a style="color: green;"  role="button"><i class="fas fa-check-square me-4"></i></i></a>')
+
+
+class SprintView(TemplateView):
+    """ View para ver el Sprint. Dependiendo del estado del sprint, el owner puede ver los user storys del backlog y los puede asignar.
+        Los encargados y participantes del proyecto pueden ver los user storys asignados al sprint.
+    """
+    model = Sprint
+    template_name = 'proyecto/sprint_detail.html'
+
+    def get_context_data(self, **kwargs):
+        """ Función para inyectar variables de contexto que serán utilizados en el template."""
+        context = super(SprintView,self).get_context_data(**kwargs)
+        sprint_backlog = UserStory.objects.filter(sprint__pk = self.kwargs['sprint_id'])
+        total_us = sprint_backlog.count()
+        ready_us = sprint_backlog.exclude(tiempo_promedio_calculado__isnull=True).count()
+        if total_us == ready_us and total_us != 0:
+            context.update({
+                'ready_inicio': True
+            })
+
+        context.update({
+            'proyecto_id': self.kwargs['pk_proy'],
+            'sprint': Sprint.objects.get(pk=self.kwargs['sprint_id']),
+            'user_storys': ProductBacklog.objects.get(proyecto__pk = self.kwargs['pk_proy']).userstory_set.filter(estado_aprobacion='A').filter(sprint__isnull=True),
+            'sprint_backlog': sprint_backlog,
+            'owner': Proyecto.objects.get(pk=self.kwargs['pk_proy']).owner
+        })
+        return context
+
+
+class UserStoryDetailView(UpdateView):
+    """ 
+    Vista para ver en detalle el user story. Es un updateview que será usado por el scrum master del proyecto y por el encargado asignado.
+    Dependiendo de la persona que abre el link, se muestran los campos del form.
+
+    """
+    model = UserStory
+    template_name = 'proyecto/userstory_detail_update.html'
+    raise_exception = True
+
+    def get_object(self, queryset=None):
+        """ Función que retorna el user story"""
+        id = self.kwargs['us_id']
+        return self.model.objects.get(id=id)
+
+    def get_context_data(self, **kwargs):
+        """ Función para inyectar variables de contexto que serán utilizados en el template."""
+        context = super(UserStoryDetailView,self).get_context_data(**kwargs)
+        sprint = get_object_or_404(Sprint,pk=self.kwargs['sprint_id'])
+        if self.object.encargado != None:
+            context.update({
+                'is_assigned': True,
+            })
+
+
+        if sprint.estado_de_sprint == 'A':
+            context.update({
+                'sprint_activo': True,
+            })
+        else:
+            context.update({
+                'sprint_activo': False,
+            })
+
+        context.update({
+            'proyecto_id': self.kwargs['pk_proy'],
+            'assignar': True,
+            'scrum_master' : Proyecto.objects.get(pk=self.kwargs['pk_proy']).owner,
+            'sprint_id': self.kwargs['sprint_id'],
+        })
+        return context
+
+    def get_form_kwargs(self):
+        """ Función que inyecta el id del sprint que se usa en el Form. """
+        kwargs = super(UserStoryDetailView, self).get_form_kwargs()
+        kwargs['sprint_id'] = self.kwargs['sprint_id']
+        return kwargs
+
+    def get_form_class(self):
+        """ Función que devuelve el Form dependiendo si el usuario es el scrum master o no. """
+        owner = Proyecto.objects.get(pk=self.kwargs['pk_proy']).owner
+        if self.request.user == owner:
+            return UserStoryAssingForm
+        else:
+            return UserStoryDevForm
+
+    def form_valid(self, form):
+        """ Función que hace calculos de promedio y envia un email al encargado, después de que se guardan los cambios del user story. """
+        us = form.save()
+        proyecto = get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
+        sprint = get_object_or_404(Sprint,pk=self.kwargs['sprint_id'])
+
+        if us.tiempo_estimado_scrum_master != 0 and us.tiempo_estimado_scrum_master != None and us.tiempo_estimado_dev != 0 and us.tiempo_estimado_dev != None:
+            us.tiempo_promedio_calculado = mean([us.tiempo_estimado_scrum_master,us.tiempo_estimado_dev])
+            
+
+        if self.request.user == proyecto.owner:
+            us.sprint = sprint
+            send_mail(
+                subject='Se le asignó un nuevo user story',
+                message='Se le acaba de asignar un nuevo user story, porfavor entre lo más posible en la plataforma para completar el tiempo estimado de terminación del user story.',
+                from_email=proyecto.owner.email,
+                recipient_list=[us.encargado.usuario.email],
+            )
+        us.save()
+        sprint.carga_horaria = UserStory.objects.filter(sprint__id=self.kwargs['sprint_id']).aggregate(Sum('tiempo_promedio_calculado')).get('tiempo_promedio_calculado__sum',0.00)
+        sprint.save()
+        messages.add_message(
+            self.request,
+            messages.SUCCESS,
+            'El user story fue asignado al sprint'
+        )
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_success_url(self):
+        """ Función que devuelve la dirección de salida. """
+        return reverse('proyecto:sprint-detail', kwargs={'pk_proy': self.kwargs['pk_proy'],'sprint_id':self.kwargs['sprint_id']})
+
+
+class InspectUserStoryView(DetailView):
+    """  
+    View para ver el user story en detalle. Esta vista será usada por personas que no sean el owner del proyecto.
+    Se hizo esa división para manejar mejor los forms. Pero ambas vistas se van al mismo template.
+    """
+    model = UserStory
+    template_name = 'proyecto/userstory_detail_update.html'
+    raise_exception = True
+
+    def get_object(self, queryset=None):
+        """ Función que retorna el proyecto cuyo equipo va ser modificado """
+        id = self.kwargs['us_id']
+        return self.model.objects.get(id=id)
+
+    def get_context_data(self, **kwargs):
+        context = super(InspectUserStoryView,self).get_context_data(**kwargs)
+        context.update({
+            'proyecto_id': self.kwargs['pk_proy'],
+        })
+        return context
+
+
+def quitar_user_story_view(request, pk_proy, sprint_id, us_id, template_name='proyecto/quitar_userstory_sprint.html'):
+    """ 
+    View para desasignar un user story del sprint. 
+    Cuando el usuario realmente lo quiere desasignar, se quitan las horas estimadas, el sprint y el encargado previamentes asignados.
+    """
+    us = get_object_or_404(UserStory, pk=us_id)
+    sprint = get_object_or_404(Sprint, pk=sprint_id)
+
+    if request.method=='POST':
+        us.sprint = None
+        us.encargado = None
+        us.tiempo_estimado_scrum_master = 0
+        us.tiempo_estimado_dev = 0
+        us.tiempo_promedio_calculado = 0
+        sprint.carga_horaria = UserStory.objects.filter(sprint__id=sprint_id).aggregate(Sum('tiempo_promedio_calculado')).get('tiempo_promedio_calculado__sum',0.00)
+        sprint.save()
+        us.save()
+        return HttpResponseRedirect(reverse('proyecto:sprint-detail',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id}))
+    return render(request, template_name, {'proyecto_id':pk_proy, 'sprint_id':sprint_id, 'us_id': us_id})
+
+
+def iniciar_sprint_view(request, pk_proy, sprint_id, template_name='proyecto/iniciar_sprint.html'):
+    """ 
+    View para iniciar un sprint. El botón solo será visible cuando todos los user storys asignados tienen tiempos estimados.
+    """
+    sprint = get_object_or_404(Sprint, pk=sprint_id)
+
+    if request.method=='POST':
+        sprint.estado_de_sprint = 'A'
+        sprint.save()
+        return HttpResponseRedirect(reverse('proyecto:sprint-detail',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id}))
+    return render(request, template_name, {'proyecto_id':pk_proy, 'sprint_id':sprint_id})
+
+
+class SprintKanbanView(TemplateView):
+    """ 
+    Vista del Tablero Kanban de un Sprint.
+    Se muestran por el momento las tres columnas de Todo, Doing y Done.
+    Por el momento todavia no se puede cambiar el estado de los user storys.
+    TODO
+
+    - cambiar estados de user storys
+    - ver burndown chart
+    """
+    model = Sprint
+    template_name = 'proyecto/sprint_kanban.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(SprintKanbanView,self).get_context_data(**kwargs)
+        sprint_backlog = UserStory.objects.filter(sprint__pk = self.kwargs['sprint_id'])
+        us_todo = sprint_backlog.filter(estado_user_story='TD')
+        us_doing = sprint_backlog.filter(estado_user_story='DG')
+        us_done = sprint_backlog.filter(estado_user_story='DN')
+        us_qa = sprint_backlog.filter(estado_user_story='QA')
+
+        context.update({
+            'proyecto_id': self.kwargs['pk_proy'],
+            'sprint': Sprint.objects.get(pk=self.kwargs['sprint_id']),
+            'ready_inicio': True,
+            'us_todo': us_todo,
+            'us_doing':us_doing,
+            'us_done':us_done,
+            'us_qa':us_qa
         })
         return context

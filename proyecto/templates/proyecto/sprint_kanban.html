@@ -1,0 +1,115 @@
+{% extends 'proyecto/sprint_detail.html' %}
+
+{% block sprint_body %}
+<div class="row class py-3">
+    <div class="col-3 class mx-3 border-end">
+        <h3>To-DO</h3>
+        {% for us in us_todo %}
+            <div class="card w-51 mb-2" >
+                <div class="card-header">
+                    <div class="row">
+                        <div class="col">
+                            {{us.nombre}}
+                            {% if us.prioridad_user_story == 'A' %}
+                                <span class="badge  bg-warning text-dark">{{us.get_prioridad_user_story_display}}</span>
+                            {% elif us.prioridad_user_story == 'B'%}
+                                <span class="badge  bg-success text-right">{{us.get_prioridad_user_story_display}}</span>
+                            {% elif us.prioridad_user_story == 'M'%}
+                                <span class="badge  bg-primary text-right">{{us.get_prioridad_user_story_display}}</span>
+                            {% elif us.prioridad_user_story == 'E'%}
+                                <span class="badge  bg-danger text-right">{{us.get_prioridad_user_story_display}}</span>
+                            {% endif %}
+                        </div>
+                        <div class="col d-flex justify-content-end align-content-center">
+                            <a href="{% url 'proyecto:user-story-detail' proyecto_id sprint.id us.id%}" class="btn btn-outline-primary btn-sm stretched-link">Abrir</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                <h5 class="card-title">{{us.nombre}}</h5>
+                <p class="card-text">{{us.descripcion}}</p>
+                </div>
+                <div class="card-footer text-muted">
+                    {% if us.creador %}
+                        Creador: {{us.creador}}
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    <div class="col-3 border-end class mx-2">
+        <h3>DOING</h3>
+        {% for us in us_doing %}
+            <div class="card w-51 mb-2" >
+                <div class="card-header">
+                    <div class="row">
+                        <div class="col">
+                            {{us.nombre}}
+                            {% if us.prioridad_user_story == 'A' %}
+                                <span class="badge bg-warning text-dark">{{us.get_prioridad_user_story_display}}</span>
+                            {% elif us.prioridad_user_story == 'B'%}
+                                <span class="badge bg-success text-right">{{us.get_prioridad_user_story_display}}</span>
+                            {% elif us.prioridad_user_story == 'M'%}
+                                <span class="badge bg-primary text-right">{{us.get_prioridad_user_story_display}}</span>
+                            {% elif us.prioridad_user_story == 'E'%}
+                                <span class="badge bg-danger text-right">{{us.get_prioridad_user_story_display}}</span>
+                            {% endif %}
+                        </div>
+                        <div class="col d-flex justify-content-end align-content-center">
+                            <a href="{% url 'proyecto:user-story-detail' proyecto_id sprint.id us.id%}" class="btn btn-outline-primary btn-sm">Abrir</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{us.nombre}}</h5>
+                    <p class="card-text">{{us.descripcion}}</p>
+                    <p class="card-text"><strong>Dev asignado: </strong>{{us.encargado}}</p>
+                    <p class="card-text"><strong>Duración estimada: </strong>{{us.tiempo_promedio_calculado}} hs.</p>
+                </div>
+                <div class="card-footer text-muted">
+                    {% if us.creador %}
+                        Creador: {{us.creador}}
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    <div class="col-3">
+        <h3>DONE</h3>
+        {% for us in us_done %}
+            <div class="card w-51 mb-2" >
+                <div class="card-header">
+                    <div class="row">
+                        <div class="col">
+                            {{us.nombre}}
+                            {% if us.prioridad_user_story == 'A' %}
+                                <span class="badge bg-warning text-dark">{{us.get_prioridad_user_story_display}}</span>
+                            {% elif us.prioridad_user_story == 'B'%}
+                                <span class="badge bg-success text-right">{{us.get_prioridad_user_story_display}}</span>
+                            {% elif us.prioridad_user_story == 'M'%}
+                                <span class="badge bg-primary text-right">{{us.get_prioridad_user_story_display}}</span>
+                            {% elif us.prioridad_user_story == 'E'%}
+                                <span class="badge bg-danger text-right">{{us.get_prioridad_user_story_display}}</span>
+                            {% endif %}
+                        </div>
+                        <div class="col d-flex justify-content-end align-content-center">
+                            <a href="{% url 'proyecto:user-story-detail' proyecto_id sprint.id us.id%}" class="btn btn-outline-primary btn-sm">Abrir</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{us.nombre}}</h5>
+                    <p class="card-text">{{us.descripcion}}</p>
+                    <p class="card-text"><strong>Dev asignado: </strong>{{us.encargado}}</p>
+                    <p class="card-text"><strong>Duración estimada: </strong>{{us.tiempo_promedio_calculado}} hs.</p>
+                </div>
+                <div class="card-footer text-muted">
+                    {% if us.creador %}
+                        Creador: {{us.creador}}
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

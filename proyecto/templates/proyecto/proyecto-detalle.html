@@ -4,13 +4,15 @@
 
     <div class="container-fluid">
 
-        {% include "includes/proyect_toolbar.html" with proyect=proyecto %}
-        {{proyect|json_script:"proyecto"}}
+        {% include "includes/proyect_toolbar.html" with proyecto=proyecto %}
 
-        {% block proyect_content %}
+        {% block proyecto_content %}
             <div class="class pt-5">
-          
-                
+                <div class="row class pb-5">
+                    <div class="col class pl-0"> 
+                        <a href="{% url 'proyecto:product-backlog' proyecto.id %}"  class="btn btn-outline-success" type="button"><i class="fas fa-clipboard-list me-2"></i></i>User storys</a>
+                    </div>
+                </div>
                 <div class="row align-items-center">
                     <div class="col-2">
                         <h6 class="class mb-0">Sprints del Proyecto</h6>
@@ -23,18 +25,29 @@
                         <div class="col-3">
                             <div class="card" style="width: 16rem;">
                                 <div class="card-body">
-                                  <h5 class="card-title">{{sprint.identificador}}</h5>
-                                  <h6 class="card-subtitle mb-2 text-muted">Card subtitle</h6>
-                                  <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-                                  <a href="#" class="card-link">Modificar</a>
-                                  <a href="{% url 'proyecto:sprint-team-edit' proyecto.id sprint.id%}" class="nav-link me-3"><i class="fas fa-users"></i></a>
+                                    <div class="card-title">
+                                        <div class="row">
+                                            <div class="col"><h5>{{sprint.identificador}}</h5></div>
+                                            <div class="col d-flex justify-content-end align-content-center"><a href="{% url 'proyecto:sprint-detail' proyecto.id sprint.id %}" class="btn btn-outline-primary btn-sm">Abrir</a></div>
+                                        </div>
+                                    </div>
+                                    <h6 class="card-subtitle mb-2">
+                                        {% if sprint.estado_de_sprint == 'I' %}
+                                            <span class="badge bg-warning text-dark">{{sprint.get_estado_de_sprint_display}}</span>
+                                        {% elif sprint.estado_de_sprint == 'F'%}
+                                            <span class="badge bg-success text-right">{{sprint.get_estado_de_sprint_display}}</span>
+                                        {% elif sprint.estado_de_sprint == 'A'%}
+                                            <span class="badge bg-primary text-right">{{sprint.get_estado_de_sprint_display}}</span>
+                                        {% elif sprint.estado_de_sprint == 'C'%}
+                                            <span class="badge bg-danger text-right">{{sprint.get_estado_de_sprint_display}}</span>
+                                        {% endif %}
+                                    </h6>
+                                    <a href="{% url 'proyecto:sprint-edit' proyecto.id sprint.id %}" class="card-link">Modificar</a>
+                                    <a href="{% url 'proyecto:sprint-team-edit' proyecto.id sprint.id%}" class="nav-link me-3"><i class="fas fa-users"></i></a>
                                 </div>
                               </div>
                         </div>
                     {% endfor %}
-                </div>
-                <div class="row">
-                    <a href="{% url 'proyecto:product-backlog' object.id %}"  class="btn btn-info" type="button">Product Backlog</a>
                 </div>
             </div>
         {% endblock %}

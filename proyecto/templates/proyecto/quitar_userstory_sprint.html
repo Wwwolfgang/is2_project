@@ -11,15 +11,14 @@
                 {% csrf_token %}
                 <div class="form-row">
                     <div class="alert alert-warning">
-                        ¿Desea eliminar este Participante del proyecto?<br/>
-                        <h4>{{ usuario.first_name }} {{usuario.last_name}} </h4>
+                        ¿Desea quitar este user story del Sprint?<br/>
                     </div>
                 </div>
                 <div>
-                    <a class="btn btn-warning" role="button" href="{% url 'proyecto:roles' object.id %}">
+                    <a class="btn btn-warning" role="button" href="{% url 'proyecto:sprint-detail' proyecto_id sprint_id %}">
                         Cancelar
                     </a>
-                    <button type="submit" class="my-2 btn btn-danger">Eliminar Participante</button>
+                    <button type="submit" class="my-2 btn btn-danger">Quitar User story</button>
                 </div>
             </form>
         </div>

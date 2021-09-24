@@ -13,6 +13,9 @@
             <a href="{% url 'proyecto:create' %}" class="btn btn-success" type="button" >
                 Crear Proyecto
             </a>
+            <a href="{% url 'proyecto:cancelados' %}" class="btn btn-info" type="button" >
+                Proyectos Cancelados
+            </a>
         </div>
     </div>
     <br />
@@ -38,13 +41,11 @@
                 Editar
             </a>
         </div>
-        {% if user.pk == proyecto.owner.id %}
             <div class="col-md-1">
-                <a href="{% url 'proyecto:delete' proyecto.pk %}" type="button" class="btn btn-danger">
-                    Eliminar
+                <a href="{% url 'proyecto:cancelar' proyecto.pk %}" type="button" class="btn btn-danger">
+                    Cancelar
                 </a>
             </div>
-        {% endif %}
     </div>
     {% endfor %}
 </div>

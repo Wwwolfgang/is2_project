@@ -4,6 +4,7 @@ from datetime import datetime
 from django.db.models.base import Model
 
 from django.db.models.deletion import CASCADE
+from django.db.models.expressions import Case
 from django.db.models.fields.related import ManyToManyField
 from sso.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -80,12 +81,37 @@ class Proyecto(models.Model):
 
 
 class ProyectUser(models.Model):
+    """ 
+        Clase ProyctUser
+        Es un usuario o desarrollador asignado a un sprint
+        Se especifica el usuario y su carga horaria diaria y el sprint al cual fue asignado
+    """
     usuario = models.ForeignKey(User,on_delete=CASCADE)
     horas_diarias = models.DecimalField(blank=False,decimal_places=2,max_digits=4,null=False,help_text='La cantidad de horas que trabaja el desarrollador por día.')
     sprint = models.ForeignKey('sprint', related_name='sprint_team',on_delete=CASCADE)
 
+    def __str__(self):
+       return "%s" % self.usuario.first_name + " " + self.usuario.last_name + "  " + str(self.horas_diarias) + " hs/D"
+
+class ProductBacklog(models.Model):
+    """ Clase de Product Backlog es una llave foranea al proyecto """
+    proyecto = models.ForeignKey(Proyecto,on_delete=CASCADE)
+
 
 class Sprint(models.Model):
+    """ 
+        Clase Sprint
+        El sprint es la unidad que contiene un conjunto de user storys
+        Campos:
+
+        - Identificador o Nombre
+        - Fecha inicio TODO falta asignar
+        - Fecha fin TODO falta asignar
+        - Duración del sprint en dias TODO falta hacer advertencias en la planificación
+        - Estado del sprint
+        - Carga horaria sumando los tiempos de los user storys
+        - Proyecto al cual pertenece
+    """
     identificador = models.CharField(default='Sprint',max_length=50)
     fechaInicio = models.DateField(null=True)
     fechaFin = models.DateField(help_text='Fecha estimada de finalización del Sprint. Dependiendo de esta fecha se mostrarán alertas.')
@@ -101,19 +127,56 @@ class Sprint(models.Model):
         choices=ESTADO_DE_SPRINT_CHOICES,
         default='I',
     )
+    carga_horaria = models.DecimalField(blank=True,null=True,decimal_places=2,max_digits=4,help_text="Total de horas de todos los user storys asignados")
     proyecto = models.ForeignKey(Proyecto,on_delete=CASCADE, null=True)
 
     def __str__(self):
        return self.identificador
+
+       
 class UserStory(models.Model):
     """
     Clase user story
-    TODO: Agregar el campo 'encargado', que relacione el user story con el participante del proyecto encargado de 
-    realizar la tarea
+    El modelo de user story es un modelo muy importante del sistema.
+    Sus campos son:
+
+    - Nombre
+    - Descripción del user story
+    - Tiempo de duración hasta completar estimado por el scrum master
+    - Tiempo de duración hasta completar estimado por el encargado
+    - Tiempo promedio calculado pro los dos tiempos anteriores
+    - Prioridad del user story: baja, alta, media, emergencia
+    - Estado de aprobación: temporal si fue creado pero no aprobado y aprobado si se aprobó y no puede ser modificado
+    - Encargado, desarrollador asignado al user story
+    - Creador, usuario que lo creó
+    - Sprint, el sprint al cual el user story fue asignado
+    - Product Backlog para hacer la relación al proyecto (Un campo un poco innecesario)
     """
     nombre = models.CharField(verbose_name='Nombre del user story', max_length=20, blank=False,null=False)
-    descripcion = models.CharField(verbose_name='Descripción del user story', max_length=60, blank=False,null=False)
-    tiempoEstimado = models.PositiveIntegerField(blank=False)
+    descripcion = models.TextField(verbose_name='Descripción del user story',blank=True)
+    tiempo_estimado_scrum_master = models.PositiveIntegerField(blank=True,null=True,help_text="Tiempo de duración estimado por el scrum master.",default=0)
+    tiempo_estimado_dev = models.PositiveIntegerField(blank=True,null=True,help_text="Tiempo de duración estimado por el desarrollador asignado.",default=0)
+    tiempo_promedio_calculado = models.DecimalField(blank=True,null=True,decimal_places=2,max_digits=4,help_text="Tiempo de duración promedio entre los dos tiempos estimados.")
+    PRIORIDAD_DE_USER_STORY_CHOICES = [
+        ('B', 'Baja'),
+        ('A', 'Alta'),
+        ('M', 'Media'),
+        ('E','Emergencia')
+    ]
+    prioridad_user_story = models.CharField(
+        max_length=1,
+        choices=PRIORIDAD_DE_USER_STORY_CHOICES,
+        default='B',
+    )
+    ESTADO_APROBACION_USER_STORY = [
+        ('T', 'Temporal'),
+        ('A', 'Aprobado'),
+    ]
+    estado_aprobacion = models.CharField(
+        max_length=1,
+        choices= ESTADO_APROBACION_USER_STORY,
+        default='T',
+    )
     #encargado = 
     ESTADO_DE_USER_STORY_CHOICES = [
         ('TD', 'To do'),
@@ -126,3 +189,7 @@ class UserStory(models.Model):
         choices=ESTADO_DE_USER_STORY_CHOICES,
         default='TD',
     )
+    encargado = models.ForeignKey(ProyectUser,blank=True,null=True,on_delete=CASCADE)
+    creador = models.ForeignKey(User,blank=True,null=True,on_delete=CASCADE)
+    sprint = models.ForeignKey('sprint',blank=True,null=True,on_delete=CASCADE)
+    product_backlog = models.ForeignKey('productbacklog',on_delete=CASCADE, blank=True,null=True)
