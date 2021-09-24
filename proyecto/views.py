@@ -7,7 +7,7 @@ from django.views.generic import ListView, UpdateView, DeleteView, DetailView,Cr
 from django.http import HttpResponseRedirect
 from django.contrib.auth.mixins import PermissionRequiredMixin,LoginRequiredMixin
 from django.urls import reverse, reverse_lazy
-from .models import User, userStory, sprint
+from .models import User, UserStory, Sprint
 from django.contrib.auth.models import Group
 from django.views.generic.base import TemplateView
 from django.views.generic.detail import SingleObjectMixin
@@ -22,7 +22,7 @@ from django.views.generic import ListView, DetailView
 from django.urls import reverse
 from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoEditForm,ProyectoCreateForm,AgregarParticipanteForm, DesarrolladorCreateForm,PermisoSolicitudForm,SprintCrearForm, AgregarUserStoryForm
 from proyecto.forms import EquipoFormset
-from proyecto.models import RolProyecto, Proyecto, ProyectUser, Sprint, UserStory, ProductBacklog
+from proyecto.models import RolProyecto, Proyecto, ProyectoUser, Sprint, UserStory, ProductBacklog
 from django.views.generic.edit import UpdateView, DeleteView, FormView, CreateView
 from django.urls import reverse_lazy
 from guardian.decorators import permission_required_or_403,permission_required
@@ -37,20 +37,20 @@ class ListaParticipantes(UpdateView):
     """ 
     Lista 
     """
-    model = userStory
+    model = UserStory
     context_object_name = 'Participantes'
     template_name = 'proyecto/participantes.html'
     raise_exception = True
-    queryset = userStory.objects.all()
+    queryset = UserStory.objects.all()
 
-    def eliminar(userStory: userStory,codigo, nombreParticipante):
+    def eliminar(UserStory: UserStory,codigo, nombreParticipante):
         try:
-            query = userStory.objects.get(codigoUserStory = codigo)
+            query = UserStory.objects.get(codigoUserStory = codigo)
             for participante in query.listaParticipantes:
                 if( participante.username.__eq__(nombreParticipante) ):
                     query.listaParticipantes.remove(participante)
-                    userStory = query
-                    userStory.objects.save()
+                    UserStory = query
+                    UserStory.objects.save()
                     return HttpResponse("Se ha eliminado el usuario")
             print("Participante no encontrado")
             return
@@ -58,19 +58,19 @@ class ListaParticipantes(UpdateView):
             print("Codigo no encontrado")
         return
 
-    def agregar(userStory: userStory,codigo, nombreParticipante):
+    def agregar(UserStory: UserStory,codigo, nombreParticipante):
         try:
-            query = userStory.objects.get(codigoUserStory = codigo)
+            query = UserStory.objects.get(codigoUserStory = codigo)
             query.listaParticipantes.append(nombreParticipante)
-            userStory = query
-            userStory.objects.save()
+            UserStory = query
+            UserStory.objects.save()
             return HttpResponse("Se ha agregado el usuario")
         except:
             print("Codigo no encontrado")
         return
-    def listar(userStory: userStory,codigo):
+    def listar(UserStory: UserStory,codigo):
         try:
-            query = userStory.objects.get(codigoUserStory = codigo)
+            query = UserStory.objects.get(codigoUserStory = codigo)
             for participante in query.ListaParticipantes:
                 print(participante)
             return
@@ -79,23 +79,23 @@ class ListaParticipantes(UpdateView):
         return
         
 class UserStoryView(UpdateView):
-    model = userStory
+    model = UserStory
     context_object_name = 'User Story'
     template_name = 'proyecto/userstory/'
     raise_exception = True
-    queryset = userStory.objects.all()
-    def agregar(self,userStoryNuevo : userStory):
+    queryset = UserStory.objects.all()
+    def agregar(self,UserStoryNuevo : UserStory):
         self.template_name += 'agregar.html'
-        userStoryNuevo.save()
+        UserStoryNuevo.save()
         return HttpResponse("Se agrego el user story")
-    def listar(self, userStories : sprint):
+    def listar(self, userStories : Sprint):
         self.template_name += 'listar.html'
         return HttpResponse(userStories.listaStories)
-    def modificar(self,userStoryModificado : userStory):
+    def modificar(self,UserStoryModificado : UserStory):
         self.template_name += 'modificar.html'
         try:
-            self.queryset.get(codigoUserStory = userStoryModificado.codigoUserStory).delete()
-            userStory.save()
+            self.queryset.get(codigoUserStory = UserStoryModificado.codigoUserStory).delete()
+            UserStory.save()
             return HttpResponse("Se modifico el user story")
         except:
             Http404("Codigo no encontrado")
@@ -343,13 +343,13 @@ class ProyectoDetailView(PermissionRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super(ProyectoDetailView,self).get_context_data(**kwargs)
         id = self.kwargs['pk']
-        sprints = Sprint.objects.filter(proyecto__pk=id)
+        Sprints = Sprint.objects.filter(proyecto__pk=id)
         proyecto = self.model.objects.get(id=id)
         self.request.session['proyecto_id'] = id
         self.request.session['proyecto_nombre'] = proyecto.nombreProyecto
         context.update({
             'proyecto': proyecto,
-            'sprints': sprints
+            'Sprints': Sprints
         }) 
         return context
 
@@ -469,7 +469,7 @@ def finalizar_proyecto(request, pk):
 
 
 class AgregarDesarrolladorView(CreateView):
-    model = ProyectUser
+    model = ProyectoUser
     template_name = "proyecto/proyecto_agregar_desarrollador.html"
     form_class = DesarrolladorCreateForm
     raise_exception = True
@@ -500,7 +500,7 @@ class EditDesarrolladorView(PermissionRequiredMixin, UpdateView):
     """ Vista para agregar o invitar nuevos participantes al proyecto. Solo se muestran usuarios
     con el permiso mínimo, que todavía no fueron agregados y con no son el owner del proyecto.
     """
-    model = ProyectUser
+    model = ProyectoUser
     permission_required = ('sso.pg_is_user')
     template_name = 'proyecto/proyecto_agregar_desarrollador.html'
     form_class= DesarrolladorCreateForm
@@ -540,7 +540,7 @@ class EliminarDesarrolladorView(PermissionRequiredMixin, DeleteView):
     Se selecciona un rol, se confirma la eliminación, y se retorna a la
     página que lista los roles.
     """
-    model = ProyectUser
+    model = ProyectoUser
     template_name = 'proyecto/eliminar_desarrollador.html'
     permission_required = ('sso.pg_is_user')
 
@@ -594,18 +594,18 @@ class SolicitarPermisosView(FormView):
 
 class AgregarSprintView(CreateView):
     model = Sprint
-    template_name = "proyecto/agregar_sprint.html"
+    template_name = "proyecto/agregar_Sprint.html"
     form_class = SprintCrearForm
     raise_exception = True
 
     def get_context_data(self, **kwargs):
         context = super(AgregarSprintView,self).get_context_data(**kwargs)
-        sprints_count = Sprint.objects.filter(proyecto__id=self.kwargs['pk_proy']).exclude(estado_de_sprint='C').count()
+        Sprints_count = Sprint.objects.filter(proyecto__id=self.kwargs['pk_proy']).exclude(estado_de_Sprint='C').count()
         context.update({
             'proyecto_id': self.kwargs['pk_proy'],
-            'count': sprints_count + 1,
-            'sprint_count': Sprint.objects.filter(proyecto__id=self.kwargs['pk_proy']).filter(
-            estado_de_sprint='I').count()
+            'count': Sprints_count + 1,
+            'Sprint_count': Sprint.objects.filter(proyecto__id=self.kwargs['pk_proy']).filter(
+            estado_de_Sprint='I').count()
 
         })
         return context
@@ -618,9 +618,9 @@ class AgregarSprintView(CreateView):
 
     def form_valid(self,form):
         proyecto = Proyecto.objects.get(pk = self.kwargs['pk_proy'])
-        sprints_count = Sprint.objects.filter(proyecto__id=self.kwargs['pk_proy']).exclude(estado_de_sprint='C').count()
+        Sprints_count = Sprint.objects.filter(proyecto__id=self.kwargs['pk_proy']).exclude(estado_de_Sprint='C').count()
         obj = form.save(commit=True)
-        obj.identificador = 'Sprint ' + str(sprints_count+1)
+        obj.identificador = 'Sprint ' + str(Sprints_count+1)
         obj.proyecto = proyecto
         obj.save()
         return HttpResponseRedirect(reverse('proyecto:detail',kwargs={'pk':self.kwargs['pk_proy']}))
@@ -629,13 +629,13 @@ class AgregarSprintView(CreateView):
 class EquipoSprintUpdateView(SingleObjectMixin,FormView):
 
     model = Sprint
-    template_name = 'proyecto/sprint_equipo_edit.html'
+    template_name = 'proyecto/Sprint_equipo_edit.html'
 
     def get_context_data(self, **kwargs):
         context = super(EquipoSprintUpdateView,self).get_context_data(**kwargs)
         context.update({
             'proyecto_id': self.kwargs['pk_proy'],
-            'sprint': Sprint.objects.get(pk=self.kwargs['pk']),
+            'Sprint': Sprint.objects.get(pk=self.kwargs['pk']),
         })
         return context
 
@@ -656,7 +656,7 @@ class EquipoSprintUpdateView(SingleObjectMixin,FormView):
         messages.add_message(
             self.request,
             messages.SUCCESS,
-            'Equipo del sprint actualizado'
+            'Equipo del Sprint actualizado'
         )
 
         return HttpResponseRedirect(self.get_success_url())
@@ -746,13 +746,13 @@ def aprobar_user_story(request,pk_proy,pk):
 
 class SprintView(TemplateView):
     model = Sprint
-    template_name = 'proyecto/sprint_detail.html'
+    template_name = 'proyecto/Sprint_detail.html'
 
     def get_context_data(self, **kwargs):
         context = super(SprintView,self).get_context_data(**kwargs)
         context.update({
             'proyecto_id': self.kwargs['pk_proy'],
-            'sprint': Sprint.objects.get(pk=self.kwargs['sprint_id']),
-            'user_storys': ProductBacklog.objects.get(proyecto__pk = self.kwargs['pk_proy']).userstory_set.filter(estado_aprobacion='A').filter(sprint__isnull=True),
+            'Sprint': Sprint.objects.get(pk=self.kwargs['Sprint_id']),
+            'user_storys': ProductBacklog.objects.get(proyecto__pk = self.kwargs['pk_proy']).userstory_set.filter(estado_aprobacion='A').filter(Sprint__isnull=True),
         })
         return context

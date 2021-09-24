@@ -76,7 +76,7 @@ class Proyecto(models.Model):
     )
     owner = models.ForeignKey(User,blank=True,null=True,on_delete=CASCADE,related_name='creador')
     equipo = models.ManyToManyField(User,blank=True)
-    equipo_desarrollador = models.ManyToManyField('proyectuser',blank=True)
+    equipo_desarrollador = models.ManyToManyField('proyectouser',blank=True)
 
     class Meta:
         permissions = (
@@ -87,7 +87,7 @@ class Proyecto(models.Model):
         )
 
 
-class ProyectUser(models.Model):
+class ProyectoUser(models.Model):
     usuario = models.ForeignKey(User,on_delete=CASCADE)
     horas_diarias = models.DecimalField(blank=False,decimal_places=2,max_digits=4,null=False,help_text='La cantidad de horas que trabaja el desarrollador por día.')
     sprint = models.ForeignKey('sprint', related_name='sprint_team',on_delete=CASCADE)

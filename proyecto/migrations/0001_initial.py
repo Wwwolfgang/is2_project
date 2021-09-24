@@ -79,7 +79,7 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name='ProyectUser',
+            name='ProyectoUser',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('horas_diarias', models.DecimalField(decimal_places=2, help_text='La cantidad de horas que trabaja el desarrollador por día.', max_digits=4)),
@@ -90,7 +90,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='proyecto',
             name='equipo_desarrollador',
-            field=models.ManyToManyField(blank=True, to='proyecto.ProyectUser'),
+            field=models.ManyToManyField(blank=True, to='proyecto.ProyectoUser'),
         ),
         migrations.AddField(
             model_name='proyecto',

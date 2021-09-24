@@ -46,8 +46,8 @@ urlpatterns = [
     path('proyecto/<int:pk_proy>/sprint/<int:pk>/team/',EquipoSprintUpdateView.as_view(),name='sprint-team-edit'),
 
     #URLS de user story
-    path('proyecto/<int:pk_proy>/pbacklog',views.ProductBacklogView.as_view(),name='product-backlog'),
-    path('proyecto/<int:pk_proy>/pbacklog/agregarUS',agregar_user_story_view,name='agregar-us'),
-    path('proyecto/<int:pk_proy>/update-user-story/<int:us_id>',UserStoryUdateView.as_view(),name='user-story update'),
-    path('<int:pk_proy>/aprobar/user-story/<int:pk>/', aprobar_user_story, name='aprobar-user-story'),
+    #path('proyecto/<int:pk_proy>/pbacklog',views.ProductBacklogView.as_view(),name='product-backlog'),
+    #path('proyecto/<int:pk_proy>/pbacklog/agregarUS',agregar_user_story_view,name='agregar-us'),
+    #path('proyecto/<int:pk_proy>/update-user-story/<int:us_id>',UserStoryUdateView.as_view(),name='user-story update'),
+    #path('<int:pk_proy>/aprobar/user-story/<int:pk>/', aprobar_user_story, name='aprobar-user-story'),
 ]
