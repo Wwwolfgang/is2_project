@@ -1,3 +1,4 @@
+from django.contrib.auth import models
 from django.forms import fields, widgets
 from django.contrib.auth.models import Permission
 from django import forms
@@ -33,11 +34,13 @@ class UserAssignRolForm(forms.ModelForm):
         proyecto_id = kwargs.pop('pk_proy',None)
         proyecto = Proyecto.objects.get(id=proyecto_id)
         super(UserAssignRolForm, self).__init__(*args, **kwargs)
-        self.fields['participantes'] = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple,
-                                                            choices=[(p.id, p.first_name) for p in proyecto.equipo.all()])
+        self.fields['participantes'] = CustomUserMCF(queryset= proyecto.equipo.all() | User.objects.filter(pk=proyecto.owner.pk),
+        widget=forms.CheckboxSelectMultiple
+    )
 
 
 class CustomUserMCF(forms.ModelMultipleChoiceField):
+    """ Un ModelMultipleChoiceField custom """
     def label_from_instance(self, member):
         return "%s" % member.first_name + " " + member.last_name
 
@@ -49,14 +52,9 @@ class ProyectoEditForm(forms.ModelForm):
     """
     class Meta:
         model = Proyecto
-        fields = ["nombreProyecto", "fechaInicio", "fechaFin", "equipo"]
+        fields = ["nombreProyecto", "fechaInicio", "fechaFin"]
 
-    def __init__(self, *args, **kwargs):
-        super(ProyectoEditForm,self).__init__(*args, **kwargs)
-        owner = self.instance.owner
-        self.fields['equipo'] = CustomUserMCF(queryset= User.objects.filter(proyecto__id=self.instance.pk).exclude(pk=owner.pk),
-        widget=forms.CheckboxSelectMultiple
-    )
+
 
 
 class ProyectoCreateForm(forms.ModelForm):
@@ -74,7 +72,8 @@ class ProyectoCreateForm(forms.ModelForm):
         super(ProyectoCreateForm,self).__init__(*args, **kwargs)
         self.fields['equipo'] = forms.MultipleChoiceField(
         widget=forms.CheckboxSelectMultiple,
-        choices=[(p.id, "%s" % p.first_name + " " + p.last_name) for p in User.objects.exclude(first_name__isnull=True).exclude(first_name__exact='').exclude(pk=user.pk) if p.has_perm('sso.pg_is_user')]
+        choices=[(p.id, "%s" % p.first_name + " " + p.last_name) for p in User.objects.exclude(first_name__isnull=True).exclude(first_name__exact='').exclude(pk=user.pk) if p.has_perm('sso.pg_is_user')],
+        required=False
     )
 
 
@@ -113,6 +112,7 @@ class AgregarParticipanteForm(forms.Form):
 
 
 class DesarrolladorCreateForm(forms.ModelForm):
+    """ Form para administrar el equipo de desarrolladores de un sprint. """
 
     def __init__(self, *args, **kwargs):
         proyect_id = kwargs.pop('proyecto',None)
@@ -130,14 +130,23 @@ class DesarrolladorCreateForm(forms.ModelForm):
 
 
 class PermisoSolicitudForm(forms.Form):
+    """ Form para solicitar más permisos al owner del proyecto. """
     asunto = forms.CharField(label='Asunto de la solitud', max_length=100, required=True)
     body = forms.CharField(widget=forms.Textarea,label='Solicitud',help_text='Especifique, que tipo de acceso o permisos necesita. Explique que acciones quiere hacer.',required=True)
 
 
 class SprintCrearForm(forms.ModelForm):
+    """ Form utilizado para la creación de un sprint. Se llenan los campos duración del Sprint y fechafin """
     class Meta:
         model = Sprint
         fields = ['duracionSprint','fechaFin']
+
+
+class SprintModificarForm(forms.ModelForm):
+    class Meta:
+        model = Sprint
+        fields = ['duracionSprint','fechaFin']
+
 
 
 EquipoFormset = inlineformset_factory(Sprint, ProyectUser,fields=('usuario','horas_diarias',),form=DesarrolladorCreateForm,can_delete=True)
@@ -147,6 +156,37 @@ class AgregarUserStoryForm(forms.ModelForm):
     """
     def __init__(self, *args, **kwargs):
         super(AgregarUserStoryForm, self).__init__(*args, **kwargs)
+        self.fields['prioridad_user_story'] = forms.ChoiceField(
+            widget= forms.RadioSelect,
+            choices=[('B','Baja'),('A','Alta'),('M','Media'),('E','Emergencia')]
+        )  
+
     class Meta:
         model = UserStory
-        fields = ['nombre','descripcion','tiempoEstimado']
+        fields = ['nombre','descripcion','prioridad_user_story']
+
+
+class UserStoryAssingForm(forms.ModelForm):
+    """ Form utilizado por el scrum master para asignar un user story a un desarrollador y estimar el tiempo de completar el user story """
+    def __init__(self, *args, **kwargs):
+        sprint_id = kwargs.pop('sprint_id',None)
+        sprint = Sprint.objects.get(pk=sprint_id)
+        super().__init__(*args, **kwargs)
+        self.fields['encargado'] = forms.ModelChoiceField(
+            empty_label="Desarrollador",
+            queryset=sprint.sprint_team.all(),
+        )
+        self.fields['tiempo_estimado_scrum_master'].required = True
+    class Meta:
+        model = UserStory
+        fields = ['tiempo_estimado_scrum_master','encargado','tiempo_estimado_dev']
+
+
+class UserStoryDevForm(forms.ModelForm):
+    """ Form utilizado por el encargado asignado al user story para estimar el tiempo de duración de completar el user story """
+    def __init__(self, *args, **kwargs):
+        sprint_id = kwargs.pop('sprint_id',None)
+        super().__init__(*args, **kwargs)
+    class Meta:
+        model = UserStory
+        fields = ['tiempo_estimado_dev']

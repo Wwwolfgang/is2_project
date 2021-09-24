@@ -1,4 +1,4 @@
-from proyecto.models import Proyecto, RolProyecto
+from proyecto.models import Proyecto, RolProyecto, Sprint
 from sso import models
 from django.db.models import fields
 from django.db.models.query_utils import PathInfo
@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.contrib.auth.models import Group,Permission, User
 from django.test.client import Client, RequestFactory
 from allauth.utils import get_user_model
+from datetime import datetime
 import pytest
 from pytest_django.asserts import assertTemplateUsed
 
@@ -111,5 +112,25 @@ class TestViewsProyecto:
         """
         response = cliente_loggeado.get(reverse('proyecto:index'), follow=True)
         self.assertEqual(response.status_code, 200)
-    
- 
+
+@pytest.mark.django_db
+class TestModelSprint:
+    """
+    Pruebas unitarias que comprueban las funciones del model Sprint
+
+    """
+
+
+
+    def test_model_sprint(self):
+        sprint = Sprint.objects.create(fechaInicio=datetime.now, fechaFin=datetime.now, estado_de_sprint='A')
+        estado_sprint = Sprint.objects.get(estado_de_sprint='A')
+        assert estado_sprint in sprint.ESTADO_DE_SPRINT_CHOICES, "Estado de Sprint inválido"
+
+    def test_fechaInicio(self):
+        """
+        Prueba unitaria que comprueba que el campo nombre de un rol tenga que ser
+        distinto de ''
+        """
+        sprint = Sprint.objects.create(fechaInicio=datetime.now, fechaFin=datetime.now, estado_de_sprint='A')
+        assert abs(sprint.fechaFin - sprint.fechaInicio) == sprint.fechaFin - sprint.fechaInicio, "Error: Fecha Final es mas reciente que Fecha Inicial"
