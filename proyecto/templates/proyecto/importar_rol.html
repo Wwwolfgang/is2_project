@@ -1,5 +1,5 @@
-{% extends 'sso/base.html'%}
-{% block container %}
+{% extends 'proyecto/proyecto-detalle.html' %}
+{% block proyecto_content %}
 <form action="" method="post" enctype="multipart/form-data">
     {% csrf_token %}
     <table>
@@ -10,12 +10,12 @@
         {% endif %}
     </table>
     {% if form.roles.field.choices %}
-        <a class="btn btn-warning" role="button" href="{% url 'proyecto:roles' proyect_id %}">
+        <a class="btn btn-warning" role="button" href="{% url 'proyecto:roles' proyecto_id %}">
             Cancelar
         </a>
         <button type="submit" class="my-2 btn btn-success">Importar</button>
     {% else %}
-        <a class="btn btn-warning" role="button" href="{% url 'proyecto:roles' proyect_id %}">
+        <a class="btn btn-warning" role="button" href="{% url 'proyecto:roles' proyecto_id %}">
             <i class="fas fa-chevron-left me-2"></i>Atrás
         </a>
     {% endif %}
