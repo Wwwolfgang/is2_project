@@ -19,8 +19,14 @@
                 </a>
                 
                 <li class="nav-item">
-                    <a href="{% url 'proyecto:sprint-team-edit' proyecto_id sprint.id%}" class="nav-link me-3"><i class="fas fa-users"></i></a>
+                    <a href="{% url 'proyecto:sprint-team-edit' proyecto_id sprint.id%}" class="nav-link"><i class="fas fa-users me-2"></i>Team</a>
                 </li>
+
+                {% if sprint.estado_de_sprint != 'A' %}
+                <li class="nav-item">
+                    <a href="{% url 'proyecto:sprint-edit' proyecto_id sprint.id%}?next={{request.path}}" class="nav-link me-3"><i class="fas fa-pen"></i></a>
+                </li>
+                {% endif %}
                 
                 {% if ready_inicio == True and sprint.estado_de_sprint == 'I' %}
                 <a class="btn btn-outline-success" role="button" href="{% url 'proyecto:sprint-iniciar' proyecto_id sprint_id %}">
@@ -30,13 +36,19 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'proyecto:sprint-kanban' proyecto_id sprint_id %}"><i class="fas fa-map-marked me-2"></i>Kanban</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'proyecto:sprint-finalizar' proyecto_id sprint_id %}"><i class="fas fa-flag-checkered me-2"></i>Finalizar</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'proyecto:sprint-kanban' proyecto_id sprint_id %}"><i class="fas fa-heart-broken me-2"></i>Cancelar</a>
+                </li>
                 {% endif %}
               </ul>
             </div>
             {% block sprint_body %}
                 <div class="card-body">
                     {% if sprint.carga_horaria != None %}
-                        <h6 class="card-title"><strong>Carga horaria del sprint: </strong>{{sprint.carga_horaria}}</h6>
+                        <h6 class="card-title"><strong>Carga horaria del sprint: </strong>{{sprint.carga_horaria}} hs</h6>
                     {% endif %}
                     {% if sprint.estado_de_sprint == 'I' %}
                     <div class="row class py-5">
@@ -60,13 +72,13 @@
                                                 {% endif %}
                                             </div>
                                             <div class="col d-flex justify-content-end align-content-center">
-                                                <a href="{% url 'proyecto:user-story-detail' proyecto_id sprint.id us.id%}" class="btn btn-outline-primary btn-sm stretched-link">Abrir</a>
+                                                <a href="{% url 'proyecto:user-story-detail' proyecto_id sprint.id us.pk%}" class="btn btn-outline-primary btn-sm stretched-link">Abrir</a>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="card-body">
                                     <h5 class="card-title">{{us.nombre}}</h5>
-                                    <p class="card-text">{{us.descripcion}}</p>
+                                    <p class="card-text">{{us.descripcion | truncatechars_html:80}}</p>
                                     </div>
                                     <div class="card-footer text-muted">
                                         {% if us.creador %}
@@ -105,7 +117,7 @@
                                     </div>
                                     <div class="card-body">
                                         <h5 class="card-title">{{us.nombre}}</h5>
-                                        <p class="card-text">{{us.descripcion}}</p>
+                                        <p class="card-text">{{us.descripcion | truncatechars_html:80}}</p>
                                         <p class="card-text"><strong>Dev asignado: </strong>{{us.encargado}}</p>
                                         <p class="card-text"><strong>Duración estimada: </strong>{{us.tiempo_promedio_calculado}} hs.</p>
                                     </div>
@@ -119,10 +131,12 @@
                         </div>
                     </div>
                     {% elif sprint.estado_de_sprint == 'A'%}
+                    <h6 class="card-title"><strong>Fecha de finalización: </strong>{{sprint.fechaFin}}</h6>
+
                     <div class="row class py-5">
                             <h6>Sprint Backlog</h6>
                             {% for us in sprint_backlog %}
-                                <div class="card w-25 mb-2 mx-2" >
+                                <div class="card w-25 px-0 mb-2 mx-2" >
                                     <div class="card-header">
                                         <div class="row">
                                             <div class="col">
@@ -137,11 +151,14 @@
                                                     <span class="badge bg-danger text-right">{{us.get_prioridad_user_story_display}}</span>
                                                 {% endif %}
                                             </div>
+                                            <div class="col d-flex justify-content-end align-content-center">
+                                                <a href="{% url 'proyecto:user-story-detail' proyecto_id sprint.id us.id%}" class="btn btn-outline-primary btn-sm stretched-link">Abrir</a>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="card-body">
                                         <h5 class="card-title">{{us.nombre}}</h5>
-                                        <p class="card-text">{{us.descripcion}}</p>
+                                        <p class="card-text">{{us.descripcion | truncatechars_html:80}}</p>
                                         <p class="card-text"><strong>Dev asignado: </strong>{{us.encargado}}</p>
                                         <p class="card-text"><strong>Duración estimada: </strong>{{us.tiempo_promedio_calculado}} hs.</p>
                                     </div>

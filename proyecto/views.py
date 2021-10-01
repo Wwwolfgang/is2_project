@@ -10,9 +10,8 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView
 from django.urls import reverse
-from proyecto import models
 from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoEditForm,ProyectoCreateForm,AgregarParticipanteForm, DesarrolladorCreateForm,PermisoSolicitudForm,SprintCrearForm, AgregarUserStoryForm
-from proyecto.forms import EquipoFormset, UserStoryAssingForm, UserStoryDevForm, SprintModificarForm
+from proyecto.forms import EquipoFormset, UserStoryAssingForm, UserStoryDevForm, SprintModificarForm, SprintFinalizarForm
 from proyecto.models import RolProyecto, Proyecto, ProyectUser, Sprint, UserStory, ProductBacklog
 from django.views.generic.edit import UpdateView, DeleteView, FormView, CreateView
 from django.urls import reverse_lazy
@@ -23,85 +22,10 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 from statistics import mean
 from django.core.mail import send_mail
+from datetime import datetime, timedelta
+from django.core.serializers import serialize
 
 
-# class ListaParticipantes(UpdateView):
-#     """ 
-#     Lista 
-#     """
-#     model = userStory
-#     context_object_name = 'Participantes'
-#     template_name = 'proyecto/participantes.html'
-#     raise_exception = True
-#     queryset = userStory.objects.all()
-
-#     def eliminar(userStory: userStory,codigo, nombreParticipante):
-#         try:
-#             query = userStory.objects.get(codigoUserStory = codigo)
-#             for participante in query.listaParticipantes:
-#                 if( participante.username.__eq__(nombreParticipante) ):
-#                     query.listaParticipantes.remove(participante)
-#                     userStory = query
-#                     userStory.objects.save()
-#                     return HttpResponse("Se ha eliminado el usuario")
-#             print("Participante no encontrado")
-#             return
-#         except:
-#             print("Codigo no encontrado")
-#         return
-
-#     def agregar(userStory: userStory,codigo, nombreParticipante):
-#         try:
-#             query = userStory.objects.get(codigoUserStory = codigo)
-#             query.listaParticipantes.append(nombreParticipante)
-#             userStory = query
-#             userStory.objects.save()
-#             return HttpResponse("Se ha agregado el usuario")
-#         except:
-#             print("Codigo no encontrado")
-#         return
-#     def listar(userStory: userStory,codigo):
-#         try:
-#             query = userStory.objects.get(codigoUserStory = codigo)
-#             for participante in query.ListaParticipantes:
-#                 print(participante)
-#             return
-#         except:
-#             print("Codigo no encontrado")
-#         return
-        
-# class UserStoryView(UpdateView):
-#     model = userStory
-#     context_object_name = 'User Story'
-#     template_name = 'proyecto/userstory/'
-#     raise_exception = True
-#     queryset = userStory.objects.all()
-#     def agregar(self,userStoryNuevo : userStory):
-#         self.template_name += 'agregar.html'
-#         userStoryNuevo.save()
-#         return HttpResponse("Se agrego el user story")
-#     def listar(self, userStories : sprint):
-#         self.template_name += 'listar.html'
-#         return HttpResponse(userStories.listaStories)
-#     def modificar(self,userStoryModificado : userStory):
-#         self.template_name += 'modificar.html'
-#         try:
-#             self.queryset.get(codigoUserStory = userStoryModificado.codigoUserStory).delete()
-#             userStory.save()
-#             return HttpResponse("Se modifico el user story")
-#         except:
-#             Http404("Codigo no encontrado")
-#         return HttpResponse()
-#     def cancelar(self,codigoUserStory : int):
-#         self.template_name += 'cancelar.html'
-#         try:
-#             self.queryset.get(codigoUserStory = codigoUserStory).delete()
-#             return HttpResponse("Se elimino el user story")
-#         except:
-#             Http404("Codigo no encontrado")
-#         return HttpResponse()
-
-#Views de Rol Proyecto
 class EliminarRolProyectoView(PermissionRequiredMixin, DeleteView):
     """
     Vista para eliminar un rol de proyecto.
@@ -608,6 +532,15 @@ class AgregarSprintView(CreateView):
     form_class = SprintCrearForm
     raise_exception = True
 
+    def dispatch(self, request, *args, **kwargs):
+        sprint_count = Sprint.objects.filter(proyecto__id=self.kwargs['pk_proy']).filter(
+            estado_de_sprint='I').count()
+        next = request.GET.get('next')
+        if sprint_count != 0:
+            messages.warning(request, 'No se puede agregar otro sprint, hay un sprint en planificación')
+            return HttpResponseRedirect(next)
+        return super().dispatch(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super(AgregarSprintView,self).get_context_data(**kwargs)
         sprints_count = Sprint.objects.filter(proyecto__id=self.kwargs['pk_proy']).exclude(estado_de_sprint='C').count()
@@ -680,6 +613,14 @@ class SprintUpdateView(UpdateView):
     form_class= SprintModificarForm
     template_name = 'proyecto/sprint_modificar.html'
     raise_exception = True
+
+    def dispatch(self, request, *args, **kwargs):
+        sprint = get_object_or_404(Sprint,pk=self.kwargs['sprint_id'])
+        next = request.GET.get('next')
+        if sprint.estado_de_sprint == 'A':
+            messages.warning(request, 'No se puede modificar un sprint activo')
+            return HttpResponseRedirect(next)
+        return super().dispatch(request, *args, **kwargs)
 
     def get_object(self, queryset=None):
         id = self.kwargs['sprint_id']
@@ -949,8 +890,14 @@ def iniciar_sprint_view(request, pk_proy, sprint_id, template_name='proyecto/ini
     sprint = get_object_or_404(Sprint, pk=sprint_id)
 
     if request.method=='POST':
-        sprint.estado_de_sprint = 'A'
-        sprint.save()
+        running = Sprint.objects.filter(proyecto__pk=pk_proy).filter(estado_de_sprint='A').count()
+        if running != 0:
+            messages.warning(request, 'Hay un sprint corriendo, no se puede iniciar un nuevo sprint.')
+        else:
+            sprint.estado_de_sprint = 'A'
+            sprint.fechaInicio = datetime.now()
+            sprint.fechaFin = datetime.now()+timedelta(days=30)
+            sprint.save()
         return HttpResponseRedirect(reverse('proyecto:sprint-detail',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id}))
     return render(request, template_name, {'proyecto_id':pk_proy, 'sprint_id':sprint_id})
 
@@ -983,6 +930,64 @@ class SprintKanbanView(TemplateView):
             'us_todo': us_todo,
             'us_doing':us_doing,
             'us_done':us_done,
-            'us_qa':us_qa
+            'us_qa':us_qa,
+            'testing':serialize('json',us_todo)
         })
         return context
+
+
+def mark_us_doing(request, pk_proy, sprint_id,us_id):
+    us = get_object_or_404(UserStory, pk=us_id)
+    us.estado_user_story = 'DG'
+    us.save()
+    return HttpResponseRedirect(reverse('proyecto:sprint-kanban',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id}))
+
+def mark_us_todo(request, pk_proy, sprint_id,us_id):
+    us = get_object_or_404(UserStory, pk=us_id)
+    us.estado_user_story = 'TD'
+    us.save()
+    return HttpResponseRedirect(reverse('proyecto:sprint-kanban',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id}))
+
+def mark_us_done(request, pk_proy, sprint_id,us_id):
+    us = get_object_or_404(UserStory, pk=us_id)
+    us.estado_user_story = 'DN'
+    us.save()
+    return HttpResponseRedirect(reverse('proyecto:sprint-kanban',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id}))
+
+
+class FinalizarSprintView(UpdateView):
+    model = Sprint
+    template_name = 'proyecto/sprint_finalizar_confirm.html'
+    form_class=SprintFinalizarForm
+    raise_exception = True
+
+    def dispatch(self, request, *args, **kwargs):
+        sprint = get_object_or_404(Sprint,pk=self.kwargs['sprint_id'])
+        next = request.GET.get('next')
+        if sprint.estado_de_sprint != 'A':
+            messages.warning(request, 'No se puede finalizar un sprint que no es activo')
+            return HttpResponseRedirect(next)
+        return super().dispatch(request, *args, **kwargs)
+
+
+    def get_object(self, queryset=None):
+        id = self.kwargs['sprint_id']
+        return self.model.objects.get(id=id)
+
+    def get_context_data(self, **kwargs):
+        """ Función para inyectar variables de contexto que serán utilizados en el template."""
+        context = super(FinalizarSprintView, self).get_context_data(**kwargs)
+        context.update({
+            'proyecto_id': self.kwargs['pk_proy'],
+            'sprint_id': self.kwargs['sprint_id'],
+        })
+        return context
+
+    def form_valid(self, form):
+        sprint = form.save()
+        sprint.estado_de_sprint = 'F'
+        sprint.save()
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_success_url(self):
+        return reverse('proyecto:detail', kwargs={'pk': self.kwargs['pk_proy'],})

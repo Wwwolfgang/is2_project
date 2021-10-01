@@ -114,7 +114,7 @@ class Sprint(models.Model):
     """
     identificador = models.CharField(default='Sprint',max_length=50)
     fechaInicio = models.DateField(null=True)
-    fechaFin = models.DateField(help_text='Fecha estimada de finalización del Sprint. Dependiendo de esta fecha se mostrarán alertas.')
+    fechaFin = models.DateField(null=True,help_text='Fecha estimada de finalización del Sprint. Dependiendo de esta fecha se mostrarán alertas.')
     duracionSprint = models.IntegerField(null=False, blank=False, default=14,validators=[MinValueValidator(1),MaxValueValidator(60)], help_text="Duración estimada en días")
     ESTADO_DE_SPRINT_CHOICES = [
         ('A', 'Activo'),
@@ -152,7 +152,7 @@ class UserStory(models.Model):
     - Sprint, el sprint al cual el user story fue asignado
     - Product Backlog para hacer la relación al proyecto (Un campo un poco innecesario)
     """
-    nombre = models.CharField(verbose_name='Nombre del user story', max_length=20, blank=False,null=False)
+    nombre = models.CharField(verbose_name='Nombre del user story', max_length=100, blank=False,null=False)
     descripcion = models.TextField(verbose_name='Descripción del user story',blank=True)
     tiempo_estimado_scrum_master = models.PositiveIntegerField(blank=True,null=True,help_text="Tiempo de duración estimado por el scrum master.",default=0)
     tiempo_estimado_dev = models.PositiveIntegerField(blank=True,null=True,help_text="Tiempo de duración estimado por el desarrollador asignado.",default=0)

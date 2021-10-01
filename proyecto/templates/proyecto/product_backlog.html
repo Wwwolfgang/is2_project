@@ -41,19 +41,19 @@
                                     <span class="badge rounded-pill bg-danger text-right">{{us.get_prioridad_user_story_display}}</span>
                                 {% endif %}
                             </div>
-                            <div class="col d-flex justify-content-end align-content-center">
+                            <div class="col d-flex justify-content-end">
                                 <a style="color: green;" hx-post="{% url 'proyecto:aprobar-user-story' proyecto_id us.pk %}" role="button"
                                     ><i class="fas fa-check me-4"></i></a>
                                 <a style="color: #55acee;" href="{% url 'proyecto:user-story update' proyecto_id us.pk %}" role="button"
                                     ><i class="fas fa-pen fa-sm me-4"></i
                                 ></a>
-                                <a href="{% url 'proyecto:user-story-detail-unassigned' proyecto_id us.id %}" class="btn btn-outline-primary btn-sm">Abrir</a>
+                                <a href="{% url 'proyecto:user-story-detail-unassigned' proyecto_id us.id %}" class="btn btn-outline-primary btn-sm ">Abrir</a>
                             </div>
                         </div>
                     </div>
                     <div class="card-body">
                     <h5 class="card-title">{{us.nombre}}</h5>
-                    <p class="card-text">{{us.descripcion}}</p>
+                    <p class="card-text">{{us.descripcion | truncatechars_html:80}}</p>
                     </div>
                     <div class="card-footer text-muted">
                         {% if us.creador %}
@@ -88,7 +88,7 @@
                     </div>
                     <div class="card-body">
                     <h5 class="card-title">{{us.nombre}}</h5>
-                    <p class="card-text">{{us.descripcion}}</p>
+                    <p class="card-text">{{us.descripcion | truncatechars_html:80}}</p>
                     </div>
                     <div class="card-footer text-muted">
                         {% if us.creador %}

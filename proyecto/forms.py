@@ -139,13 +139,22 @@ class SprintCrearForm(forms.ModelForm):
     """ Form utilizado para la creación de un sprint. Se llenan los campos duración del Sprint y fechafin """
     class Meta:
         model = Sprint
-        fields = ['duracionSprint','fechaFin']
+        fields = ['duracionSprint']
 
 
 class SprintModificarForm(forms.ModelForm):
     class Meta:
         model = Sprint
-        fields = ['duracionSprint','fechaFin']
+        fields = ['duracionSprint']
+
+class SprintFinalizarForm(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super(SprintFinalizarForm, self).__init__(*args, **kwargs)
+        self.fields['estado_de_sprint'].required = False
+    class Meta:
+        model = Sprint
+        fields = ['estado_de_sprint']
 
 
 
