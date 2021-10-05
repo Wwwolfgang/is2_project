@@ -7,7 +7,7 @@ from django.views.generic import ListView, UpdateView, DeleteView, DetailView,Cr
 from django.http import HttpResponseRedirect
 from django.contrib.auth.mixins import PermissionRequiredMixin,LoginRequiredMixin
 from django.urls import reverse, reverse_lazy
-from .models import User, UserStory, Sprint
+from .models import Daily, User, UserStory, Sprint
 from django.contrib.auth.models import Group
 from django.views.generic.base import TemplateView
 from django.views.generic.detail import SingleObjectMixin
@@ -20,7 +20,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView
 from django.urls import reverse
-from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoEditForm,ProyectoCreateForm,AgregarParticipanteForm, DesarrolladorCreateForm,PermisoSolicitudForm,SprintCrearForm, AgregarUserStoryForm
+from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoEditForm,ProyectoCreateForm,AgregarParticipanteForm, DesarrolladorCreateForm,PermisoSolicitudForm,SprintCrearForm, AgregarUserStoryForm, AgregarDailyForm
 from proyecto.forms import EquipoFormset
 from proyecto.models import RolProyecto, Proyecto, ProyectoUser, Sprint, UserStory, ProductBacklog
 from django.views.generic.edit import UpdateView, DeleteView, FormView, CreateView
@@ -756,3 +756,33 @@ class SprintView(TemplateView):
             'user_storys': ProductBacklog.objects.get(proyecto__pk = self.kwargs['pk_proy']).userstory_set.filter(estado_aprobacion='A').filter(Sprint__isnull=True),
         })
         return context
+
+def agregar_daily_view(request, pk_us):
+    """
+    Vista para agregar un daily.
+    Se toman como parámetros el nombre, la descripción y el tiempo estimado por el scrum master.
+    """
+    contexto = {}
+    contexto.update({
+        'proyecto_id': pk_us
+    })
+    if request.method == 'POST':      
+        form = AgregarDailyForm(request.POST or None)
+        #Si el form se cargó correctamente, lo guardamos
+        if form.is_valid():
+            backlog = ProductBacklog.objects.filter(proyecto__id=pk_us).count()
+
+            if backlog == 0:
+                ProductBacklog.objects.create(proyecto=get_object_or_404(Proyecto, pk=pk_us))
+            
+            backlog = ProductBacklog.objects.get(proyecto__pk=pk_us)
+            daily = form.save()
+            daily.save()
+            #Redirigimos al daily
+            return redirect('proyecto:daily', pk_us)  
+        contexto['form'] = form
+        return render(request, 'proyecto/nuevo_daily_view.html', context=contexto)
+    else:
+        form = AgregarDailyForm()
+        contexto['form'] = form
+        return render(request, 'proyecto/nuevo_daily_view.html', context=contexto)
