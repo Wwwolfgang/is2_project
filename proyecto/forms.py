@@ -199,3 +199,7 @@ class UserStoryDevForm(forms.ModelForm):
     class Meta:
         model = UserStory
         fields = ['tiempo_estimado_dev']
+
+
+class QaForm(forms.Form):
+    comentario = forms.CharField(widget=forms.Textarea,label='Comentario',help_text='De un comentario o recomendación.',required=True)

@@ -10,8 +10,9 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView
 from django.urls import reverse
+import proyecto
 from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoEditForm,ProyectoCreateForm,AgregarParticipanteForm, DesarrolladorCreateForm,PermisoSolicitudForm,SprintCrearForm, AgregarUserStoryForm
-from proyecto.forms import EquipoFormset, UserStoryAssingForm, UserStoryDevForm, SprintModificarForm, SprintFinalizarForm
+from proyecto.forms import EquipoFormset, UserStoryAssingForm, UserStoryDevForm, SprintModificarForm, SprintFinalizarForm, QaForm
 from proyecto.models import RolProyecto, Proyecto, ProyectUser, Sprint, UserStory, ProductBacklog
 from django.views.generic.edit import UpdateView, DeleteView, FormView, CreateView
 from django.urls import reverse_lazy
@@ -920,7 +921,7 @@ class SprintKanbanView(TemplateView):
         sprint_backlog = UserStory.objects.filter(sprint__pk = self.kwargs['sprint_id'])
         us_todo = sprint_backlog.filter(estado_user_story='TD')
         us_doing = sprint_backlog.filter(estado_user_story='DG')
-        us_done = sprint_backlog.filter(estado_user_story='DN')
+        us_done = sprint_backlog.exclude(estado_user_story='TD').exclude(estado_user_story='DG')
         us_qa = sprint_backlog.filter(estado_user_story='QA')
 
         context.update({
@@ -937,6 +938,10 @@ class SprintKanbanView(TemplateView):
 
 
 def mark_us_doing(request, pk_proy, sprint_id,us_id):
+    """ 
+    Vista, que marca como en proceso a un user story en el Kanban. Con este view se cambia el estado a Doing.
+    Si el estado anterior fue Done 
+    """
     us = get_object_or_404(UserStory, pk=us_id)
     us.estado_user_story = 'DG'
     us.save()
@@ -950,7 +955,7 @@ def mark_us_todo(request, pk_proy, sprint_id,us_id):
 
 def mark_us_done(request, pk_proy, sprint_id,us_id):
     us = get_object_or_404(UserStory, pk=us_id)
-    us.estado_user_story = 'DN'
+    us.estado_user_story = 'QA'
     us.save()
     return HttpResponseRedirect(reverse('proyecto:sprint-kanban',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id}))
 
@@ -990,4 +995,63 @@ class FinalizarSprintView(UpdateView):
         return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
-        return reverse('proyecto:detail', kwargs={'pk': self.kwargs['pk_proy'],})
+        return reverse('proyecto:sprint-kanban', kwargs={'pk_proy': self.kwargs['pk_proy'],'sprint_id':self.kwargs['sprint_id'],})
+
+
+class QaView(FormView):
+    form_class=QaForm
+    template_name = 'proyecto/qa_form.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        """ 
+        Se revisa si el user story a revisar realmente tiene esta de QA. Si no, vuelve a la url anterior.
+        """
+        us = get_object_or_404(UserStory, pk=self.kwargs['us_id'])
+        next = request.GET.get('next')
+        if us.estado_user_story != 'QA':
+            messages.warning(request, 'No se puede hacer Qa de un user story que no fue enviado para QA.')
+            return HttpResponseRedirect(next)
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        """ Inyecta el user story, proyecto_id, sprint y sprint_id en el contexto del template."""
+        context = super(QaView,self).get_context_data(**kwargs)
+        context.update({
+            'user_story': get_object_or_404(UserStory,pk=self.kwargs['us_id']),
+            'proyecto_id': self.kwargs['pk_proy'],
+            'sprint': get_object_or_404(Sprint,pk=self.kwargs['sprint_id']),
+            'sprint_id': self.kwargs['sprint_id'],
+        })
+        return context
+    
+    def form_valid(self,form):
+        """ 
+        Si el form es válido, se verifica si el usuario eligió aprovar el user story o si no pasó el proceso de qa.
+        Si fue aprovado se cambia el estado de 'QA' a 'DONE' y se le envia un correo al desarrollador.
+        Si no pasa el qa, se cambia el estado de 'QA' a 'DOING' y se le envia un correo al desarrollador.
+        """
+        if 'aprove' in self.request.POST:
+            proyecto = get_object_or_404(Proyecto,pk=self.kwargs['pk_proy'])
+            us = get_object_or_404(UserStory, pk=self.kwargs['us_id'])
+            if self.request.POST['aprove'] == 'aproved':
+                us.estado_user_story = 'DN'
+                us.save()
+                send_mail(
+                    subject='El user story ' + us.nombre + ' fue aprovado',
+                    message=form.cleaned_data['comentario'],
+                    from_email=proyecto.owner.email,
+                    recipient_list=[us.encargado.usuario.email]
+                )
+            elif self.request.POST['aprove'] == 'denied':
+                us.estado_user_story = 'DG'
+                us.save()
+                send_mail(
+                    subject='El user story ' + us.nombre + ' no pasó el QA',
+                    message=form.cleaned_data['comentario'],
+                    from_email=proyecto.owner.email,
+                    recipient_list=[us.encargado.usuario.email]
+                )
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_success_url(self):
+        return reverse('proyecto:sprint-kanban', kwargs={'pk_proy': self.kwargs['pk_proy'],'sprint_id':self.kwargs['sprint_id']})

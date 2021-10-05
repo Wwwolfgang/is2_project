@@ -59,5 +59,6 @@ urlpatterns = [
     path('<int:pk_proy>/sprint/<int:sprint_id>/doing/user-story/<int:us_id>/', mark_us_doing, name='doing-user-story'),
     path('<int:pk_proy>/sprint/<int:sprint_id>/todo/user-story/<int:us_id>/', mark_us_todo, name='todo-user-story'),
     path('<int:pk_proy>/sprint/<int:sprint_id>/done/user-story/<int:us_id>/', mark_us_done, name='done-user-story'),
+    path('proyecto/<int:pk_proy>/sprint/<int:sprint_id>/user-story-qa/<int:us_id>/',views.QaView.as_view(),name='user-story-qa'),
 
 ]

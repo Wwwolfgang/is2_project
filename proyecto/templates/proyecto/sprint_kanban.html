@@ -74,7 +74,7 @@
                         Creador: {{us.creador}}
                     {% endif %}
                     <a href="{% url 'proyecto:todo-user-story' proyecto_id sprint.id us.id%}" class="btn btn-primary btn-sm">TO-DO</a>
-                    <a href="{% url 'proyecto:done-user-story' proyecto_id sprint.id us.id%}" class="btn btn-primary btn-sm">Terminar</a>
+                    <a href="{% url 'proyecto:done-user-story' proyecto_id sprint.id us.id%}" class="btn btn-primary btn-sm">Enviar a revisión</a>
                 </div>
             </div>
         {% endfor %}
@@ -112,7 +112,11 @@
                     {% if us.creador %}
                         Creador: {{us.creador}}
                     {% endif %}
-                    <a href="{% url 'proyecto:doing-user-story' proyecto_id sprint.id us.id%}" class="btn btn-primary btn-sm">Volver a DOING</a>
+                    {% if us.estado_user_story == 'QA' %}
+                        Necesita <a href="{% url 'proyecto:user-story-qa' proyecto_id sprint.id us.id %}?next={{request.path}}" class="btn btn-danger btn-sm">QA</a>
+                    {% elif us.estado_user_story == 'DN' %}
+                        <span class="text-success">Listo para release <i class="far fa-thumbs-up"></i></span>
+                    {% endif %}
                 </div>
             </div>
         {% endfor %}
