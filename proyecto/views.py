@@ -1,10 +1,11 @@
+from logging import raiseExceptions
 from django.db.models import Sum
 from django.views.generic.base import TemplateView
 from django.views.generic.detail import SingleObjectMixin
 from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.shortcuts import get_object_or_404
-from guardian.shortcuts import assign_perm, remove_perm
+from guardian.shortcuts import assign_perm, remove_perm, get_user_perms
 #Mixin de django por defecto
 #from django.contrib.auth.mixins import PermissionRequiredMixin,LoginRequiredMixin
 #Usamos el mixin de Django Guardian
@@ -208,10 +209,8 @@ class AssignUserRolProyecto(PermissionRequiredMixin,UpdateView):
         id = self.kwargs['id_rol']
         return self.model.objects.get(id=id)
 
-    def get_object(self):
-        """Función que retorna el proyecto con el cual vamos a comprobar el permiso"""
-        self.obj = get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
-        return self.obj
+    def get_permission_object(self):
+        return get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
 
     def get_context_data(self, **kwargs):
         context = super(AssignUserRolProyecto, self).get_context_data(**kwargs)
@@ -353,7 +352,7 @@ class AgregarParticipanteProyecto(PermissionRequiredMixin, UpdateView):
             proyecto.equipo.add(user)
         return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']}))
 
-@permission_required('proyecto.p_administrar_participantes',(Proyecto,'pk','pk_proy'), return_403=True)
+@permission_required_or_403('proyecto.p_administrar_participantes',(Proyecto,'pk','pk_proy'))
 def eliminarParticipanteView(request, pk_proy, pk, template_name='proyecto/delete_confirm_participante.html'):
     """ View para eliminar participantes de equipo de un proyecto. Es una vista de confirmación
         , si el usuario elige "Eliminar" se elimina el usuario del proyecto.
@@ -363,8 +362,12 @@ def eliminarParticipanteView(request, pk_proy, pk, template_name='proyecto/delet
     """
     proyecto = get_object_or_404(Proyecto, pk=pk_proy)
     user = get_object_or_404(User, pk=pk)
+    roles = proyecto.rolproyecto_set
 
     if request.method=='POST':
+        permisos = get_user_perms(user,proyecto)
+        for per in permisos:
+            remove_perm(per,user,proyecto)
         proyecto.equipo.remove(user)
         return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':pk_proy}))
     return render(request, template_name, {'object':proyecto, 'usuario':user})
@@ -602,16 +605,13 @@ class AgregarSprintView(PermissionRequiredMixin, CreateView):
 
 #TODO: No funciona, creo que tiene que ver con la función get_object para el sprint
 class EquipoSprintUpdateView(PermissionRequiredMixin,SingleObjectMixin,FormView):
-
     model = Sprint
     template_name = 'proyecto/sprint_equipo_edit.html'
     raise_exception = True
     permission_required = ('proyecto.p_administrar_sprint')
 
-    def get_object(self):
-        """Función que retorna el proyecto con el cual vamos a comprobar el permiso"""
-        self.obj = get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
-        return self.obj
+    def get_permission_object(self):
+        return get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
     
     def get_object(self, queryset=None):
         id = self.kwargs['pk']
@@ -665,10 +665,9 @@ class SprintUpdateView(PermissionRequiredMixin,UpdateView):
             messages.warning(request, 'No se puede modificar un sprint activo')
             return HttpResponseRedirect(next)
         return super().dispatch(request, *args, **kwargs)
-    def get_object(self):
-        """Función que retorna el proyecto con el cual vamos a comprobar el permiso"""
-        self.obj = get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
-        return self.obj
+
+    def get_permission_object(self):
+        return get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
 
     def get_object(self, queryset=None):
         id = self.kwargs['sprint_id']
