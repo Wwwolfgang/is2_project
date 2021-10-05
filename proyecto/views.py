@@ -406,7 +406,7 @@ class AgregarParticipanteProyecto(PermissionRequiredMixin, UpdateView):
     con el permiso mínimo, que todavía no fueron agregados y con no son el owner del proyecto.
     """
     model = Proyecto
-    permission_required = ('sso.pg_is_user')
+    permission_required = ('proyecto.p_administrar_participantes')
     template_name = 'proyecto/agregar_participantes.html'
     form_class= AgregarParticipanteForm
     raise_exception = True
@@ -428,7 +428,7 @@ class AgregarParticipanteProyecto(PermissionRequiredMixin, UpdateView):
             proyecto.equipo.add(user)
         return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']}))
 
-
+@permission_required('proyecto.p_administrar_participantes',(Proyecto,'pk','pk_proy'), return_403=True)
 def eliminarParticipanteView(request, pk_proy, pk, template_name='proyecto/delete_confirm_participante.html'):
     """ View para eliminar participantes de equipo de un proyecto. Es una vista de confirmación
         , si el usuario elige "Eliminar" se elimina el usuario del proyecto.
@@ -627,11 +627,17 @@ class SolicitarPermisosView(FormView):
         return HttpResponseRedirect(reverse('proyecto:detail',kwargs={'pk':self.kwargs['pk_proy']}))
 
 
-class AgregarSprintView(CreateView):
+class AgregarSprintView(PermissionRequiredMixin, CreateView):
     model = Sprint
     template_name = "proyecto/agregar_sprint.html"
     form_class = SprintCrearForm
     raise_exception = True
+    permission_required = ('proyecto.p_administrar_sprint')
+
+    def get_object(self):
+        """Función que retorna el proyecto con el cual vamos a comprobar el permiso"""
+        self.obj = get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
+        return self.obj
 
     def get_context_data(self, **kwargs):
         context = super(AgregarSprintView,self).get_context_data(**kwargs)
@@ -660,11 +666,22 @@ class AgregarSprintView(CreateView):
         obj.save()
         return HttpResponseRedirect(reverse('proyecto:detail',kwargs={'pk':self.kwargs['pk_proy']}))
 
-
-class EquipoSprintUpdateView(SingleObjectMixin,FormView):
+#TODO: No funciona, creo que tiene que ver con la función get_object para el sprint
+class EquipoSprintUpdateView(PermissionRequiredMixin,SingleObjectMixin,FormView):
 
     model = Sprint
     template_name = 'proyecto/sprint_equipo_edit.html'
+    raise_exception = True
+    permission_required = ('proyecto.p_administrar_sprint')
+
+    def get_object(self):
+        """Función que retorna el proyecto con el cual vamos a comprobar el permiso"""
+        self.obj = get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
+        return self.obj
+    
+    def get_object(self, queryset=None):
+        id = self.kwargs['pk']
+        return self.model.objects.get(id=id)
 
     def get_context_data(self, **kwargs):
         context = super(EquipoSprintUpdateView,self).get_context_data(**kwargs)
@@ -700,11 +717,17 @@ class EquipoSprintUpdateView(SingleObjectMixin,FormView):
         return reverse('proyecto:detail', kwargs={'pk': self.kwargs['pk_proy'],})
 
 
-class SprintUpdateView(UpdateView):
+class SprintUpdateView(PermissionRequiredMixin,UpdateView):
     model = Sprint
     form_class= SprintModificarForm
     template_name = 'proyecto/sprint_modificar.html'
+    permission_required = ('proyecto.p_administrar_sprint')
     raise_exception = True
+
+    def get_object(self):
+        """Función que retorna el proyecto con el cual vamos a comprobar el permiso"""
+        self.obj = get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
+        return self.obj
 
     def get_object(self, queryset=None):
         id = self.kwargs['sprint_id']
@@ -724,6 +747,7 @@ class SprintUpdateView(UpdateView):
 
 #Views de user story
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
+@permission_required_or_403('proyecto.p_administrar_roles',(Proyecto,'pk','pk_proy'))
 def agregar_user_story_view(request, pk_proy):
     """
     Vista para agregar un user story al product backlog.
@@ -756,17 +780,23 @@ def agregar_user_story_view(request, pk_proy):
         contexto['form'] = form
         return render(request, 'proyecto/nuevo_user_story_view.html', context=contexto)
 
-class UserStoryUdateView(UpdateView):
+class UserStoryUdateView(PermissionRequiredMixin,UpdateView):
     """ View para modificar user storys no aprobados. """
     model = UserStory
     form_class= AgregarUserStoryForm
     template_name = 'proyecto/nuevo_user_story_view.html'
     raise_exception = True
+    permission_required = ('proyecto.p_administrar_us')
 
     def get_object(self, queryset=None):
         """ Función que retorna el user story que vamos a modificar. """
         id = self.kwargs['us_id']
         return self.model.objects.get(id=id)
+
+    def get_object(self):
+        """Función que retorna el proyecto con el cual vamos a comprobar el permiso"""
+        self.obj = get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
+        return self.obj
 
     def get_context_data(self, **kwargs):
         """ Función para inyectar variables de contexto que serán utilizados en el template."""
