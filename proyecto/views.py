@@ -767,7 +767,7 @@ class ProductBacklogView(PermissionRequiredMixin, ListView):
         context = super(ProductBacklogView, self).get_context_data(**kwargs)
         context.update({
             'proyecto_id': self.kwargs['pk_proy'],
-            'user_storys_nuevos': ProductBacklog.objects.get(proyecto__pk = self.kwargs['pk_proy']).userstory_set.filter(estado_aprobacion='T'),
+            'user_storys_nuevos': ProductBacklog.objects.get(proyecto__pk = self.kwargs['pk_proy']).userstory_set.filter(estado_aprobacion='T').exclude(estado_aprobacion='C'),
             'product_backlog': ProductBacklog.objects.get(proyecto__pk = self.kwargs['pk_proy']).userstory_set.filter(estado_aprobacion='A'),
         })
         return context
@@ -986,3 +986,13 @@ class SprintKanbanView(TemplateView):
             'us_qa':us_qa
         })
         return context
+
+@permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
+def userstory_cancelar(request, pk_proy, us_id, template_name='proyecto/userstory_cancelar.html'):
+    """ Este view está obsoleto. En el futuro se va eliminar. """
+    userstory = get_object_or_404(UserStory, pk=us_id)
+    if request.method == 'POST':
+        userstory.estado_aprobacion = 'C'
+        userstory.save()
+        return HttpResponseRedirect(reverse('proyecto:product-backlog', kwargs={'pk_proy': pk_proy}))
+    return render(request, template_name, {'object': userstory, 'proyecto_id':pk_proy})
