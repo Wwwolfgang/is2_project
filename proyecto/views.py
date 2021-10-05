@@ -5,7 +5,10 @@ from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.shortcuts import get_object_or_404
 from guardian.shortcuts import assign_perm, remove_perm
-from django.contrib.auth.mixins import PermissionRequiredMixin,LoginRequiredMixin
+#Mixin de django por defecto
+#from django.contrib.auth.mixins import PermissionRequiredMixin,LoginRequiredMixin
+#Usamos el mixin de Django Guardian
+from guardian.mixins import PermissionRequiredMixin 
 from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView
@@ -35,7 +38,18 @@ class EliminarRolProyectoView(PermissionRequiredMixin, DeleteView):
     """
     model = RolProyecto
     template_name = 'proyecto/eliminar_rol_proyecto.html'
-    permission_required = ('sso.pg_is_user')
+    permission_required = ('proyecto.p_administrar_roles')
+    raise_exception = True
+
+    def get_object(self, queryset=None):
+        """ Función que retorna el rol que vamos asignar a los usuarios. """
+        id = self.kwargs['id_rol']
+        return self.model.objects.get(id=id)
+
+    def get_object(self):
+        """Función que retorna el proyecto con el cual vamos a comprobar el permiso"""
+        self.obj = get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
+        return self.obj
 
     def get_context_data(self, **kwargs):
         context = super(EliminarRolProyectoView, self).get_context_data(**kwargs)
@@ -82,7 +96,8 @@ class DetallesRolProyectoView(PermissionRequiredMixin, DetailView):
 
 
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
-def agregar_rol_proyecto_view(request,pk_proy):
+@permission_required_or_403('proyecto.p_administrar_roles',(Proyecto,'pk','pk_proy'))
+def agregar_rol_proyecto_view(request, pk_proy):
     """
     Vista para agregar un rol de proyecto al proyecto.
     Se toman como parámetros el nombre del nuevo rol y sus permisos asociados para crear el rol.
@@ -107,8 +122,8 @@ def agregar_rol_proyecto_view(request,pk_proy):
         contexto['form'] = form
         return render(request, 'proyecto/nuevo_rol_proyecto_view.html', context=contexto)
 
-
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
+@permission_required_or_403('proyecto.p_administrar_roles',(Proyecto,'pk','pk_proy'))
 def editar_rol_proyecto_view(request, pk_proy, id_rol):
     """
     Vista para editar el rol de un proyecto.
@@ -140,8 +155,13 @@ class ImportarRolView(PermissionRequiredMixin, FormView):
     """ Vista para la importación de roles de otros proyectos. Da la lista de todos los roles que no están
     asociados al proyecto, de los cuales se puede importar los roles al proyecto. """
     template_name = 'proyecto/importar_rol.html'
-    permission_required = ('sso.pg_is_user')
+    permission_required = ('proyecto.p_administrar_roles','proyecto.p_acceder_proyectos')
     form_class= ImportarRolProyectoForm
+    raise_exception = True
+
+    def get_object(self):
+      self.obj = get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
+      return self.obj
 
     def get_context_data(self, **kwargs):
         """ Inyecta los roles y el proyect_id al contexto. """
@@ -174,10 +194,11 @@ class ImportarRolView(PermissionRequiredMixin, FormView):
         return kwargs
 
 
-class AssignUserRolProyecto(PermissionRequiredMixin, UpdateView):
+class AssignUserRolProyecto(PermissionRequiredMixin,UpdateView):
     """ Vista para assignarle a los usuarios el rol de proyecto """
     model = RolProyecto
-    permission_required = ('sso.pg_is_user')
+    #permission_required = ('proyecto.p_administrar_roles')
+    permission_required = ('proyecto.p_administrar_roles','proyecto.p_acceder_proyectos')
     template_name = 'proyecto/user_assign_rol.html'
     form_class= UserAssignRolForm
     raise_exception = True
@@ -186,6 +207,11 @@ class AssignUserRolProyecto(PermissionRequiredMixin, UpdateView):
         """ Función que retorna el rol que vamos asignar a los usuarios. """
         id = self.kwargs['id_rol']
         return self.model.objects.get(id=id)
+
+    def get_object(self):
+        """Función que retorna el proyecto con el cual vamos a comprobar el permiso"""
+        self.obj = get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
+        return self.obj
 
     def get_context_data(self, **kwargs):
         context = super(AssignUserRolProyecto, self).get_context_data(**kwargs)
@@ -225,7 +251,6 @@ class AssignUserRolProyecto(PermissionRequiredMixin, UpdateView):
         #     messages.error(self.request, 'Rol de proyecto no pudo ser assignado porque el proyecto no está activo')
 
         return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']}))
-
 #Views de proyecto
 class ListaProyectos(PermissionRequiredMixin, ListView):
     """ Listado de todos los proyectos a los cuales el usuario tiene acceso. Puede hacer algunas acciones como editar, eliminar, etc. o entrar en el proyecto. """
@@ -306,7 +331,7 @@ class AgregarParticipanteProyecto(PermissionRequiredMixin, UpdateView):
     con el permiso mínimo, que todavía no fueron agregados y con no son el owner del proyecto.
     """
     model = Proyecto
-    permission_required = ('sso.pg_is_user')
+    permission_required = ('proyecto.p_administrar_participantes')
     template_name = 'proyecto/agregar_participantes.html'
     form_class= AgregarParticipanteForm
     raise_exception = True
@@ -328,7 +353,7 @@ class AgregarParticipanteProyecto(PermissionRequiredMixin, UpdateView):
             proyecto.equipo.add(user)
         return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']}))
 
-
+@permission_required('proyecto.p_administrar_participantes',(Proyecto,'pk','pk_proy'), return_403=True)
 def eliminarParticipanteView(request, pk_proy, pk, template_name='proyecto/delete_confirm_participante.html'):
     """ View para eliminar participantes de equipo de un proyecto. Es una vista de confirmación
         , si el usuario elige "Eliminar" se elimina el usuario del proyecto.
@@ -527,11 +552,17 @@ class SolicitarPermisosView(FormView):
         return HttpResponseRedirect(reverse('proyecto:detail',kwargs={'pk':self.kwargs['pk_proy']}))
 
 
-class AgregarSprintView(CreateView):
+class AgregarSprintView(PermissionRequiredMixin, CreateView):
     model = Sprint
     template_name = "proyecto/agregar_sprint.html"
     form_class = SprintCrearForm
     raise_exception = True
+    permission_required = ('proyecto.p_administrar_sprint')
+
+    def get_object(self):
+        """Función que retorna el proyecto con el cual vamos a comprobar el permiso"""
+        self.obj = get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
+        return self.obj
 
     def dispatch(self, request, *args, **kwargs):
         sprint_count = Sprint.objects.filter(proyecto__id=self.kwargs['pk_proy']).filter(
@@ -569,11 +600,22 @@ class AgregarSprintView(CreateView):
         obj.save()
         return HttpResponseRedirect(reverse('proyecto:detail',kwargs={'pk':self.kwargs['pk_proy']}))
 
-
-class EquipoSprintUpdateView(SingleObjectMixin,FormView):
+#TODO: No funciona, creo que tiene que ver con la función get_object para el sprint
+class EquipoSprintUpdateView(PermissionRequiredMixin,SingleObjectMixin,FormView):
 
     model = Sprint
     template_name = 'proyecto/sprint_equipo_edit.html'
+    raise_exception = True
+    permission_required = ('proyecto.p_administrar_sprint')
+
+    def get_object(self):
+        """Función que retorna el proyecto con el cual vamos a comprobar el permiso"""
+        self.obj = get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
+        return self.obj
+    
+    def get_object(self, queryset=None):
+        id = self.kwargs['pk']
+        return self.model.objects.get(id=id)
 
     def get_context_data(self, **kwargs):
         context = super(EquipoSprintUpdateView,self).get_context_data(**kwargs)
@@ -609,10 +651,11 @@ class EquipoSprintUpdateView(SingleObjectMixin,FormView):
         return reverse('proyecto:detail', kwargs={'pk': self.kwargs['pk_proy'],})
 
 
-class SprintUpdateView(UpdateView):
+class SprintUpdateView(PermissionRequiredMixin,UpdateView):
     model = Sprint
     form_class= SprintModificarForm
     template_name = 'proyecto/sprint_modificar.html'
+    permission_required = ('proyecto.p_administrar_sprint')
     raise_exception = True
 
     def dispatch(self, request, *args, **kwargs):
@@ -622,6 +665,10 @@ class SprintUpdateView(UpdateView):
             messages.warning(request, 'No se puede modificar un sprint activo')
             return HttpResponseRedirect(next)
         return super().dispatch(request, *args, **kwargs)
+    def get_object(self):
+        """Función que retorna el proyecto con el cual vamos a comprobar el permiso"""
+        self.obj = get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
+        return self.obj
 
     def get_object(self, queryset=None):
         id = self.kwargs['sprint_id']
@@ -641,6 +688,7 @@ class SprintUpdateView(UpdateView):
 
 #Views de user story
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
+@permission_required_or_403('proyecto.p_administrar_roles',(Proyecto,'pk','pk_proy'))
 def agregar_user_story_view(request, pk_proy):
     """
     Vista para agregar un user story al product backlog.
@@ -673,17 +721,23 @@ def agregar_user_story_view(request, pk_proy):
         contexto['form'] = form
         return render(request, 'proyecto/nuevo_user_story_view.html', context=contexto)
 
-class UserStoryUdateView(UpdateView):
+class UserStoryUdateView(PermissionRequiredMixin,UpdateView):
     """ View para modificar user storys no aprobados. """
     model = UserStory
     form_class= AgregarUserStoryForm
     template_name = 'proyecto/nuevo_user_story_view.html'
     raise_exception = True
+    permission_required = ('proyecto.p_administrar_us')
 
     def get_object(self, queryset=None):
         """ Función que retorna el user story que vamos a modificar. """
         id = self.kwargs['us_id']
         return self.model.objects.get(id=id)
+
+    def get_object(self):
+        """Función que retorna el proyecto con el cual vamos a comprobar el permiso"""
+        self.obj = get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
+        return self.obj
 
     def get_context_data(self, **kwargs):
         """ Función para inyectar variables de contexto que serán utilizados en el template."""
