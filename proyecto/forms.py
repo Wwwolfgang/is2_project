@@ -1,7 +1,7 @@
 from django.forms import fields, widgets
 from django.contrib.auth.models import Permission
 from django import forms
-from .models import Proyecto, ProyectoUser, RolProyecto, Sprint, UserStory
+from .models import Proyecto, ProyectoUser, RolProyecto, Sprint, UserStory, Daily
 from sso.models import User
 from django import forms
 from django.forms.models import inlineformset_factory
@@ -151,3 +151,14 @@ class AgregarUserStoryForm(forms.ModelForm):
     class Meta:
         model = UserStory
         fields = ['nombre','descripcion','prioridad_user_story']
+
+class AgregarDailyForm(forms.ModelForm):
+    """
+    Form para crear un Daily
+    """
+    def __init__(self, *args, **kwargs):
+        super(AgregarDailyForm, self).__init__(*args, **kwargs)
+
+    class Meta:
+        model = Daily
+        fields = ['duracion','lista_impedimiento','lista_progreso']
