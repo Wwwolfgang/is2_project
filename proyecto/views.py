@@ -786,3 +786,35 @@ def agregar_daily_view(request, pk_us):
         form = AgregarDailyForm()
         contexto['form'] = form
         return render(request, 'proyecto/nuevo_daily_view.html', context=contexto)
+
+class ListaDailyView(PermissionRequiredMixin, ListView):
+    permission_required = ('sso.pg_puede_acceder_proyecto','sso.pg_is_user')
+    raise_exception = True
+    model = Daily
+    template_name = 'proyecto/index.html'
+    context_object_name = 'daily_list'
+
+    def get_queryset(self):
+        return Daily.objects.all()
+
+class DailyUdateView(UpdateView):
+    model = UserStory
+    form_class= AgregarUserStoryForm
+    template_name = 'proyecto/nuevo_user_story_view.html'
+    raise_exception = True
+
+    def get_object(self, queryset=None):
+        """ Función que retorna el rol que vamos asignar a los usuarios. """
+        id = self.kwargs['us_id']
+        return self.model.objects.get(id=id)
+
+    def get_context_data(self, **kwargs):
+        context = super(UserStoryUdateView, self).get_context_data(**kwargs)
+        context.update({
+            'proyecto_id': self.kwargs['pk_proy'],
+            'update': True,
+        })
+        return context
+
+    def get_success_url(self):
+        return reverse('proyecto:product-backlog', kwargs={'pk_proy': self.kwargs['pk_proy'],})
