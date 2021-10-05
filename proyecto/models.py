@@ -19,11 +19,7 @@ class RolProyecto(models.Model):
     permisos = models.ManyToManyField(Permission)
     participantes = models.ManyToManyField(User,blank=True)
     proyecto = models.ForeignKey('proyecto', on_delete=models.CASCADE, blank=True, null=True)
-    class Meta:
-        permissions = (
-                    ('p_administrar_roles','Permite que el usuario pueda configurar, crear, importar y eliminar roles del proyecto. Solo los permisos del scrum master no se podrán modificar.'),
-        )
-
+    
     def get_permisos(self):
         """
         Función que retorna la lista de permisos asociados al rol
@@ -73,10 +69,18 @@ class Proyecto(models.Model):
 
     class Meta:
         permissions = (
+            #Permisos de proyecto
             ("p_acceder_proyectos","Permiso de acceder proyecto."),
             ("p_cancelar_proyectos","Permiso de cancelar proyecto."),
             ("p_editar_proyectos","Permiso de editar proyecto."),
-            ("p_finalizar_proyectos","Permiso de finalizar proyecto."),      
+            ("p_finalizar_proyectos","Permiso de finalizar proyecto."),
+            ("p_administrar_participantes","Permiso para agregar y eliminar participantes del proyecto."),
+            #Permiso de roles
+            ("p_administrar_roles","Permite que el usuario pueda agregar, editar, importar y eliminar roles del proyecto. Solo los permisos del scrum master no se podrán modificar."),
+            #Permisos de sprint
+            ("p_administrar_sprint","Permite que el usuario pueda gestionar los parámetros de los sprints, así como planificarlos, iniciarlos y finalizarlos."),
+            #Permisos de user story
+            ("p_administrar_us","Permite que el usuario pueda agregar, editar y eliminar los user stories del proyecto."),     
         )
 
 

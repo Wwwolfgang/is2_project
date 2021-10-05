@@ -5,7 +5,10 @@ from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.shortcuts import get_object_or_404
 from guardian.shortcuts import assign_perm, remove_perm
-from django.contrib.auth.mixins import PermissionRequiredMixin,LoginRequiredMixin
+#Mixin de django por defecto
+#from django.contrib.auth.mixins import PermissionRequiredMixin,LoginRequiredMixin
+#Usamos el mixin de Django Guardian
+from guardian.mixins import PermissionRequiredMixin 
 from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView
@@ -183,8 +186,8 @@ def agregar_rol_proyecto_view(request, pk_proy):
         contexto['form'] = form
         return render(request, 'proyecto/nuevo_rol_proyecto_view.html', context=contexto)
 
-
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
+@permission_required_or_403('proyecto.p_administrar_roles',(Proyecto,'pk','pk_proy'))
 def editar_rol_proyecto_view(request, pk_proy, id_rol):
     """
     Vista para editar el rol de un proyecto.
@@ -216,8 +219,13 @@ class ImportarRolView(PermissionRequiredMixin, FormView):
     """ Vista para la importación de roles de otros proyectos. Da la lista de todos los roles que no están
     asociados al proyecto, de los cuales se puede importar los roles al proyecto. """
     template_name = 'proyecto/importar_rol.html'
-    permission_required = ('sso.pg_is_user')
+    permission_required = ('proyecto.p_administrar_roles','proyecto.p_acceder_proyectos')
     form_class= ImportarRolProyectoForm
+    raise_exception = True
+
+    def get_object(self):
+      self.obj = get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
+      return self.obj
 
     def get_context_data(self, **kwargs):
         """ Inyecta los roles y el proyect_id al contexto. """
@@ -250,10 +258,11 @@ class ImportarRolView(PermissionRequiredMixin, FormView):
         return kwargs
 
 
-class AssignUserRolProyecto(PermissionRequiredMixin, UpdateView):
+class AssignUserRolProyecto(PermissionRequiredMixin,UpdateView):
     """ Vista para assignarle a los usuarios el rol de proyecto """
     model = RolProyecto
-    permission_required = ('sso.pg_is_user')
+    #permission_required = ('proyecto.p_administrar_roles')
+    permission_required = ('proyecto.p_administrar_roles','proyecto.p_acceder_proyectos')
     template_name = 'proyecto/user_assign_rol.html'
     form_class= UserAssignRolForm
     raise_exception = True
@@ -262,6 +271,11 @@ class AssignUserRolProyecto(PermissionRequiredMixin, UpdateView):
         """ Función que retorna el rol que vamos asignar a los usuarios. """
         id = self.kwargs['id_rol']
         return self.model.objects.get(id=id)
+
+    def get_object(self):
+        """Función que retorna el proyecto con el cual vamos a comprobar el permiso"""
+        self.obj = get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
+        return self.obj
 
     def get_context_data(self, **kwargs):
         context = super(AssignUserRolProyecto, self).get_context_data(**kwargs)
@@ -301,7 +315,6 @@ class AssignUserRolProyecto(PermissionRequiredMixin, UpdateView):
         #     messages.error(self.request, 'Rol de proyecto no pudo ser assignado porque el proyecto no está activo')
 
         return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']}))
-
 #Views de proyecto
 class ListaProyectos(PermissionRequiredMixin, ListView):
     """ Listado de todos los proyectos a los cuales el usuario tiene acceso. Puede hacer algunas acciones como editar, eliminar, etc. o entrar en el proyecto. """
