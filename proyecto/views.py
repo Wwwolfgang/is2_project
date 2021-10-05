@@ -113,7 +113,18 @@ class EliminarRolProyectoView(PermissionRequiredMixin, DeleteView):
     """
     model = RolProyecto
     template_name = 'proyecto/eliminar_rol_proyecto.html'
-    permission_required = ('sso.pg_is_user')
+    permission_required = ('proyecto.p_administrar_roles')
+    raise_exception = True
+
+    def get_object(self, queryset=None):
+        """ Función que retorna el rol que vamos asignar a los usuarios. """
+        id = self.kwargs['id_rol']
+        return self.model.objects.get(id=id)
+
+    def get_object(self):
+        """Función que retorna el proyecto con el cual vamos a comprobar el permiso"""
+        self.obj = get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
+        return self.obj
 
     def get_context_data(self, **kwargs):
         context = super(EliminarRolProyectoView, self).get_context_data(**kwargs)
