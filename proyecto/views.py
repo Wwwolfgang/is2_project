@@ -797,24 +797,40 @@ class ListaDailyView(PermissionRequiredMixin, ListView):
     def get_queryset(self):
         return Daily.objects.all()
 
-class DailyUdateView(UpdateView):
-    model = UserStory
-    form_class= AgregarUserStoryForm
-    template_name = 'proyecto/nuevo_user_story_view.html'
+class EditDailyView(PermissionRequiredMixin, UpdateView):
+    """
+    Vista para editar un Daily
+    TODO:funcionalidad del View
+    """
+    model = Daily
+    permission_required = ('sso.pg_is_user')
+    template_name = 'proyecto/edit_daily_view.html'
+    form_class= AgregarDailyForm
     raise_exception = True
 
     def get_object(self, queryset=None):
-        """ Función que retorna el rol que vamos asignar a los usuarios. """
-        id = self.kwargs['us_id']
-        return self.model.objects.get(id=id)
+        """ Función que retorna el proyecto cuyo equipo va ser modificado """
+        us = self.kwargs['us_pk']
+        return self.model.objects.get(user_story = us)
 
     def get_context_data(self, **kwargs):
-        context = super(UserStoryUdateView, self).get_context_data(**kwargs)
+        context = super(EditDailyView,self).get_context_data(**kwargs)
         context.update({
-            'proyecto_id': self.kwargs['pk_proy'],
-            'update': True,
+            'user_story': self.kwargs['pk_us'],
+            'edit': True
         })
         return context
 
-    def get_success_url(self):
-        return reverse('proyecto:product-backlog', kwargs={'pk_proy': self.kwargs['pk_proy'],})
+    def get_form_kwargs(self):
+        """ Función que inyecta el id del proyecto como argumento. """
+        kwargs = super(EditDailyView, self).get_form_kwargs()
+        kwargs['pk_us'] = self.kwargs['pk_us']
+        return kwargs
+
+
+    def form_valid(self, form):
+        """
+        En esta función se agrega los usuarios marcados por el usuario al campo equipo del proyecto
+        """
+        form.save()
+        return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_us':self.kwargs['pk_us']}))
