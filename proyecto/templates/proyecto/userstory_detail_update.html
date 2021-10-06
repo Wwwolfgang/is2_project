@@ -25,6 +25,9 @@
 
         {% if sprint_activo == False %}
         <div class="card-body">
+            {% if object.last_estimated != None %}
+                <strong>Duración estimada anteriormente: </strong>{{object.last_estimated}} hs.
+            {% endif %}
             <form action="" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 {% for field in form.visible_fields %}

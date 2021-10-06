@@ -16,7 +16,7 @@ from django.views.generic import ListView, DetailView
 from django.urls import reverse
 import proyecto
 from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoEditForm,ProyectoCreateForm,AgregarParticipanteForm, DesarrolladorCreateForm,PermisoSolicitudForm,SprintCrearForm, AgregarUserStoryForm
-from proyecto.forms import EquipoFormset, UserStoryAssingForm, UserStoryDevForm, SprintModificarForm, SprintFinalizarForm, QaForm, UserstoryAprobarForm
+from proyecto.forms import EquipoFormset, UserStoryAssingForm, UserStoryDevForm, SprintModificarForm, SprintFinalizarForm, QaForm, UserstoryAprobarForm, ProyectoFinalizarForm
 from proyecto.models import RolProyecto, Proyecto, ProyectUser, Sprint, UserStory, ProductBacklog
 from django.views.generic.edit import UpdateView, DeleteView, FormView, CreateView
 from django.urls import reverse_lazy
@@ -149,9 +149,10 @@ def editar_rol_proyecto_view(request, pk_proy, id_rol):
                         user = participante
                         assign_perm(per,user,proyecto)
             for past_part in form.initial['permisos']:
+                for participante in rol.participantes.all():
                     if past_part not in form.cleaned_data['permisos']:
                         if per.content_type.model == 'proyecto':
-                            remove_perm(per,past_part,proyecto)
+                            remove_perm(per,participante,proyecto)
             messages.success(request, 'Rol de proyecto actualizado exitosamente')
             return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':pk_proy}))
         contexto['form'] = form
@@ -208,7 +209,6 @@ class ImportarRolView(PermissionRequiredMixin, FormView):
 class AssignUserRolProyecto(PermissionRequiredMixin,UpdateView):
     """ Vista para assignarle a los usuarios el rol de proyecto """
     model = RolProyecto
-    #permission_required = ('proyecto.p_administrar_roles')
     permission_required = ('proyecto.p_administrar_roles','proyecto.p_acceder_proyectos')
     template_name = 'proyecto/user_assign_rol.html'
     form_class= UserAssignRolForm
@@ -330,6 +330,7 @@ class CreateProyectoView(CreateView):
         model = form.save()
         model.save()
         model.owner = user
+        model.estado_de_proyecto = 'A'
         model.save()
         ProductBacklog.objects.create(proyecto=get_object_or_404(Proyecto, pk=model.pk))
         return HttpResponseRedirect(reverse('proyecto:index'))
@@ -400,6 +401,15 @@ def edit(request, pk, template_name='proyecto/edit.html'):
     return render(request, template_name, {'form':form})
 
 
+@permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
+def cancelar(request, pk, template_name='proyecto/confirm-cancel.html'):
+    """ Este view está obsoleto. En el futuro se va eliminar. """
+    proyecto = get_object_or_404(Proyecto, pk=pk)
+    if request.method=='POST':
+        proyecto.estado_de_proyecto = 'C'
+        proyecto.save()
+        return HttpResponseRedirect(reverse('proyecto:index'))
+    return render(request, template_name, {'object':proyecto})
 
 class AgregarDesarrolladorView(CreateView):
     """ Este view está obsoleto. En el futuro se va eliminar. """
@@ -507,6 +517,14 @@ class SolicitarPermisosView(FormView):
     form_class = PermisoSolicitudForm
     raise_exception = True
 
+    def dispatch(self, request, *args, **kwargs):
+        proyecto = get_object_or_404(Proyecto,pk=self.kwargs['pk_proy'])
+        next = request.GET.get('next')
+        if proyecto.estado_de_proyecto != 'A':
+            messages.warning(request, '¡El proyecto fue finalizado, no se puede hacer cambios!')
+            return HttpResponseRedirect(next)
+        return super().dispatch(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super(SolicitarPermisosView, self).get_context_data(**kwargs)
         context.update({
@@ -541,7 +559,11 @@ class AgregarSprintView(PermissionRequiredMixin, CreateView):
     def dispatch(self, request, *args, **kwargs):
         sprint_count = Sprint.objects.filter(proyecto__id=self.kwargs['pk_proy']).filter(
             estado_de_sprint='I').count()
+        proyecto = get_object_or_404(Proyecto,pk=self.kwargs['pk_proy'])
         next = request.GET.get('next')
+        if proyecto.estado_de_proyecto != 'A':
+            messages.warning(request, '¡El proyecto fue finalizado, no se puede hacer cambios!')
+            return HttpResponseRedirect(next)
         if sprint_count != 0:
             messages.warning(request, 'No se puede agregar otro sprint, hay un sprint en planificación')
             return HttpResponseRedirect(next)
@@ -574,7 +596,7 @@ class AgregarSprintView(PermissionRequiredMixin, CreateView):
         obj.save()
         return HttpResponseRedirect(reverse('proyecto:detail',kwargs={'pk':self.kwargs['pk_proy']}))
 
-#TODO: No funciona, creo que tiene que ver con la función get_object para el sprint
+
 class EquipoSprintUpdateView(PermissionRequiredMixin,SingleObjectMixin,FormView):
     model = Sprint
     template_name = 'proyecto/sprint_equipo_edit.html'
@@ -631,9 +653,13 @@ class SprintUpdateView(PermissionRequiredMixin,UpdateView):
 
     def dispatch(self, request, *args, **kwargs):
         sprint = get_object_or_404(Sprint,pk=self.kwargs['sprint_id'])
+        proyecto = get_object_or_404(Proyecto,pk=self.kwargs['pk_proy'])
         next = request.GET.get('next')
-        if sprint.estado_de_sprint == 'A':
-            messages.warning(request, 'No se puede modificar un sprint activo')
+        if proyecto.estado_de_proyecto != 'A':
+            messages.warning(request, '¡No se puede finalizar un proyecto que no es activo!')
+            return HttpResponseRedirect(next)
+        if sprint.estado_de_sprint != 'I':
+            messages.warning(request, 'No se puede modificar un sprint que no está en estado de Inicializado')
             return HttpResponseRedirect(next)
         return super().dispatch(request, *args, **kwargs)
 
@@ -668,6 +694,11 @@ def agregar_user_story_view(request, pk_proy):
     contexto.update({
         'proyecto_id': pk_proy
     })
+    proyecto = get_object_or_404(Proyecto,pk=pk_proy)
+    if proyecto.estado_de_proyecto != 'A':
+        messages.warning(request, 'El proyecto fue finalizado, no se puede hacer cambios')
+        return redirect('proyecto:product-backlog', pk_proy) 
+
     if request.method == 'POST':      
         form = AgregarUserStoryForm(request.POST or None)
         #Si el form se cargó correctamente, lo guardamos
@@ -1016,7 +1047,11 @@ class FinalizarSprintView(UpdateView):
 
     def dispatch(self, request, *args, **kwargs):
         sprint = get_object_or_404(Sprint,pk=self.kwargs['sprint_id'])
+        proyecto = get_object_or_404(Proyecto,pk=self.kwargs['pk_proy'])
         next = request.GET.get('next')
+        if proyecto.estado_de_proyecto != 'A':
+            messages.warning(request, 'El proyecto fue finalizado, no se puede hacer cambios')
+            return HttpResponseRedirect(next)
         if sprint.estado_de_sprint != 'A':
             messages.warning(request, 'No se puede finalizar un sprint que no es activo')
             return HttpResponseRedirect(next)
@@ -1040,6 +1075,21 @@ class FinalizarSprintView(UpdateView):
         sprint = form.save()
         sprint.estado_de_sprint = 'F'
         sprint.save()
+
+        us = UserStory.objects.filter(sprint__pk=sprint.pk)
+        for story in us:
+            if story.estado_user_story != 'DN':
+                story.estado_user_story = 'TD'
+                story.prioridad_user_story = 'E'
+                story.tiempo_estimado_scrum_master = None
+                story.tiempo_estimado_dev = None
+                story.encargado = None
+                story.sprint = None
+                story.last_estimated = story.tiempo_promedio_calculado
+                story.tiempo_promedio_calculado = None
+                story.save()
+
+
         return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
@@ -1055,7 +1105,11 @@ class QaView(FormView):
         Se revisa si el user story a revisar realmente tiene esta de QA. Si no, vuelve a la url anterior.
         """
         us = get_object_or_404(UserStory, pk=self.kwargs['us_id'])
+        proyecto = get_object_or_404(Proyecto,pk=self.kwargs['pk_proy'])
         next = request.GET.get('next')
+        if proyecto.estado_de_proyecto != 'A':
+            messages.warning(request, 'El proyecto fue finalizado, no se puede hacer cambios')
+            return HttpResponseRedirect(next)
         if us.estado_user_story != 'QA':
             messages.warning(request, 'No se puede hacer Qa de un user story que no fue enviado para QA.')
             return HttpResponseRedirect(next)
@@ -1103,3 +1157,47 @@ class QaView(FormView):
 
     def get_success_url(self):
         return reverse('proyecto:sprint-kanban', kwargs={'pk_proy': self.kwargs['pk_proy'],'sprint_id':self.kwargs['sprint_id']})
+
+
+class FinalizarProyectoView(UpdateView):
+    model = Proyecto
+    template_name = 'proyecto/proyecto_finalizar_confirm.html'
+    form_class=ProyectoFinalizarForm
+    raise_exception = True
+
+    def dispatch(self, request, *args, **kwargs):
+        proyecto = get_object_or_404(Proyecto,pk=self.kwargs['pk_proy'])
+        next = request.GET.get('next')
+        if proyecto.estado_de_proyecto != 'A':
+            messages.warning(request, '¡No se puede finalizar un proyecto que no es activo!')
+            return HttpResponseRedirect(next)
+        elif Sprint.objects.filter(proyecto__pk=self.kwargs['pk_proy']).count() != Sprint.objects.filter(proyecto__pk=self.kwargs['pk_proy']).filter(estado_de_sprint='F').count():
+            messages.error(request, '¡No se puede finalizar un proyecto que tiene sprints que no fueron finalizados!')
+            return HttpResponseRedirect(next)
+        elif ProductBacklog.objects.get(proyecto__pk=self.kwargs['pk_proy']).userstory_set.exclude(estado_user_story='DN').count() != 0:
+            messages.error(request, '¡No se puede finalizar un proyecto que tiene user storys en el product backlog que no fueron completados!')
+            return HttpResponseRedirect(next)
+
+        return super().dispatch(request, *args, **kwargs)
+
+
+    def get_object(self, queryset=None):
+        id = self.kwargs['pk_proy']
+        return self.model.objects.get(id=id)
+
+    def get_context_data(self, **kwargs):
+        """ Función para inyectar variables de contexto que serán utilizados en el template."""
+        context = super(FinalizarProyectoView, self).get_context_data(**kwargs)
+        context.update({
+            'proyecto_id': self.kwargs['pk_proy'],
+        })
+        return context
+
+    def form_valid(self, form):
+        proyecto = form.save()
+        proyecto.estado_de_proyecto = 'F'
+        proyecto.save()
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_success_url(self):
+        return reverse('proyecto:detail', kwargs={'pk': self.kwargs['pk_proy']})

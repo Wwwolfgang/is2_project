@@ -76,6 +76,14 @@ class ProyectoCreateForm(forms.ModelForm):
         required=False
     )
 
+class ProyectoFinalizarForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(ProyectoFinalizarForm, self).__init__(*args, **kwargs)
+        self.fields['estado_de_proyecto'].required = False
+    class Meta:
+        model = Proyecto
+        fields = ["estado_de_proyecto",]
+
 
 class ImportarRolProyectoForm(forms.Form):
     """

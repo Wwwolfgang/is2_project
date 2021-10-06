@@ -181,7 +181,6 @@ class UserStory(models.Model):
         choices= ESTADO_APROBACION_USER_STORY,
         default='T',
     )
-    #encargado = 
     ESTADO_DE_USER_STORY_CHOICES = [
         ('TD', 'To do'),
         ('DG', 'Doing'),
@@ -193,6 +192,7 @@ class UserStory(models.Model):
         choices=ESTADO_DE_USER_STORY_CHOICES,
         default='TD',
     )
+    last_estimated = models.DecimalField(blank=True,null=True,decimal_places=2,max_digits=4)
     encargado = models.ForeignKey(ProyectUser,blank=True,null=True,on_delete=CASCADE)
     creador = models.ForeignKey(User,blank=True,null=True,on_delete=CASCADE)
     sprint = models.ForeignKey('sprint',blank=True,null=True,on_delete=CASCADE)

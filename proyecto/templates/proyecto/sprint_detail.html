@@ -27,21 +27,20 @@
                     <a href="{% url 'proyecto:sprint-edit' proyecto_id sprint.id%}?next={{request.path}}" class="nav-link me-3"><i class="fas fa-pen"></i></a>
                 </li>
                 {% endif %}
-                
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'proyecto:sprint-kanban' proyecto_id sprint_id %}"><i class="fas fa-map-marked me-2"></i>Kanban</a>
+                </li>
                 {% if ready_inicio == True and sprint.estado_de_sprint == 'I' %}
                 <a class="btn btn-outline-success" role="button" href="{% url 'proyecto:sprint-iniciar' proyecto_id sprint_id %}">
                     Iniciar Sprint
                 </a>
                 {% elif sprint.estado_de_sprint == 'A'%}
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'proyecto:sprint-kanban' proyecto_id sprint_id %}"><i class="fas fa-map-marked me-2"></i>Kanban</a>
-                </li>
-                <li class="nav-item">
                     <a class="nav-link" href="{% url 'proyecto:sprint-finalizar' proyecto_id sprint_id %}"><i class="fas fa-flag-checkered me-2"></i>Finalizar</a>
                 </li>
-                <li class="nav-item">
+                <!-- <li class="nav-item">
                     <a class="nav-link" href="{% url 'proyecto:sprint-kanban' proyecto_id sprint_id %}"><i class="fas fa-heart-broken me-2"></i>Cancelar</a>
-                </li>
+                </li> -->
                 {% endif %}
               </ul>
             </div>
@@ -88,6 +87,8 @@
                                 </div>
                             {% endfor %}
                         </div>
+                        {% else %}
+                            <p><strong>Sprint en planificación </strong><i class="fas fa-hourglass-start me-3"></i></p>
                         {% endif %}
                         <div class="col-6">
                             <h6>Sprint Backlog</h6>
@@ -130,7 +131,7 @@
                             {% endfor %}
                         </div>
                     </div>
-                    {% elif sprint.estado_de_sprint == 'A'%}
+                    {% else %}
                     <h6 class="card-title"><strong>Fecha de finalización: </strong>{{sprint.fechaFin}}</h6>
 
                     <div class="row class py-5">
