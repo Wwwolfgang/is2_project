@@ -230,7 +230,7 @@ class ImportarRolView(PermissionRequiredMixin, FormView):
     """ Vista para la importación de roles de otros proyectos. Da la lista de todos los roles que no están
     asociados al proyecto, de los cuales se puede importar los roles al proyecto. """
     template_name = 'proyecto/importar_rol.html'
-    permission_required = ('proyecto.p_administrar_roles','proyecto.p_acceder_proyectos')
+    permission_required = ('proyecto.p_administrar_roles')
     form_class= ImportarRolProyectoForm
     raise_exception = True
 
@@ -273,7 +273,7 @@ class AssignUserRolProyecto(PermissionRequiredMixin,UpdateView):
     """ Vista para assignarle a los usuarios el rol de proyecto """
     model = RolProyecto
     #permission_required = ('proyecto.p_administrar_roles')
-    permission_required = ('proyecto.p_administrar_roles','proyecto.p_acceder_proyectos')
+    permission_required = ('proyecto.p_administrar_roles')
     template_name = 'proyecto/user_assign_rol.html'
     form_class= UserAssignRolForm
     raise_exception = True
@@ -428,7 +428,7 @@ class AgregarParticipanteProyecto(PermissionRequiredMixin, UpdateView):
             proyecto.equipo.add(user)
         return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']}))
 
-@permission_required('proyecto.p_administrar_participantes',(Proyecto,'pk','pk_proy'), return_403=True)
+@permission_required_or_403('proyecto.p_administrar_participantes',(Proyecto,'pk','pk_proy'))
 def eliminarParticipanteView(request, pk_proy, pk, template_name='proyecto/delete_confirm_participante.html'):
     """ View para eliminar participantes de equipo de un proyecto. Es una vista de confirmación
         , si el usuario elige "Eliminar" se elimina el usuario del proyecto.
@@ -666,22 +666,15 @@ class AgregarSprintView(PermissionRequiredMixin, CreateView):
         obj.save()
         return HttpResponseRedirect(reverse('proyecto:detail',kwargs={'pk':self.kwargs['pk_proy']}))
 
-#TODO: No funciona, creo que tiene que ver con la función get_object para el sprint
 class EquipoSprintUpdateView(PermissionRequiredMixin,SingleObjectMixin,FormView):
 
     model = Sprint
     template_name = 'proyecto/sprint_equipo_edit.html'
     raise_exception = True
     permission_required = ('proyecto.p_administrar_sprint')
-
-    def get_object(self):
-        """Función que retorna el proyecto con el cual vamos a comprobar el permiso"""
-        self.obj = get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
-        return self.obj
     
-    def get_object(self, queryset=None):
-        id = self.kwargs['pk']
-        return self.model.objects.get(id=id)
+    def get_permission_object(self):
+        return get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
 
     def get_context_data(self, **kwargs):
         context = super(EquipoSprintUpdateView,self).get_context_data(**kwargs)
@@ -724,10 +717,8 @@ class SprintUpdateView(PermissionRequiredMixin,UpdateView):
     permission_required = ('proyecto.p_administrar_sprint')
     raise_exception = True
 
-    def get_object(self):
-        """Función que retorna el proyecto con el cual vamos a comprobar el permiso"""
-        self.obj = get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
-        return self.obj
+    def get_permission_object(self):
+        return get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
 
     def get_object(self, queryset=None):
         id = self.kwargs['sprint_id']
@@ -827,7 +818,7 @@ class ProductBacklogView(PermissionRequiredMixin, ListView):
         })
         return context
 
-
+@permission_required_or_403('proyecto.p_administrar_roles',(Proyecto,'pk','pk_proy'))
 def aprobar_user_story(request,pk_proy,pk):
     """ View para aprobar un user story por un htmx post call. """
     if request.method == 'POST': 
@@ -869,7 +860,8 @@ class UserStoryDetailView(UpdateView):
     """ 
     Vista para ver en detalle el user story. Es un updateview que será usado por el scrum master del proyecto y por el encargado asignado.
     Dependiendo de la persona que abre el link, se muestran los campos del form.
-
+    TODO: Debería crearse una especie de permiso especial para acceder a esta view, que sólo pueda asignarse
+    al scrum master y al encargado. Aunque no sé si haya otra forma sin utilizar permisos.
     """
     model = UserStory
     template_name = 'proyecto/userstory_detail_update.html'
@@ -975,7 +967,7 @@ class InspectUserStoryView(DetailView):
         })
         return context
 
-
+@permission_required_or_403('proyecto.p_administrar_roles',(Proyecto,'pk','pk_proy'))
 def quitar_user_story_view(request, pk_proy, sprint_id, us_id, template_name='proyecto/quitar_userstory_sprint.html'):
     """ 
     View para desasignar un user story del sprint. 
@@ -996,7 +988,7 @@ def quitar_user_story_view(request, pk_proy, sprint_id, us_id, template_name='pr
         return HttpResponseRedirect(reverse('proyecto:sprint-detail',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id}))
     return render(request, template_name, {'proyecto_id':pk_proy, 'sprint_id':sprint_id, 'us_id': us_id})
 
-
+@permission_required_or_403('proyecto.p_administrar_sprint',(Proyecto,'pk','pk_proy'))
 def iniciar_sprint_view(request, pk_proy, sprint_id, template_name='proyecto/iniciar_sprint.html'):
     """ 
     View para iniciar un sprint. El botón solo será visible cuando todos los user storys asignados tienen tiempos estimados.
