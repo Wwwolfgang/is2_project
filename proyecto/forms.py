@@ -139,14 +139,31 @@ class SprintCrearForm(forms.ModelForm):
     """ Form utilizado para la creación de un sprint. Se llenan los campos duración del Sprint y fechafin """
     class Meta:
         model = Sprint
-        fields = ['duracionSprint','fechaFin']
+        fields = ['duracionSprint']
 
 
 class SprintModificarForm(forms.ModelForm):
     class Meta:
         model = Sprint
-        fields = ['duracionSprint','fechaFin']
+        fields = ['duracionSprint']
 
+class SprintFinalizarForm(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super(SprintFinalizarForm, self).__init__(*args, **kwargs)
+        self.fields['estado_de_sprint'].required = False
+    class Meta:
+        model = Sprint
+        fields = ['estado_de_sprint']
+
+
+class UserstoryAprobarForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(UserstoryAprobarForm, self).__init__(*args, **kwargs)
+        self.fields['estado_aprobacion'].required = False
+    class Meta:
+        model = UserStory
+        fields = ['estado_aprobacion']
 
 
 EquipoFormset = inlineformset_factory(Sprint, ProyectUser,fields=('usuario','horas_diarias',),form=DesarrolladorCreateForm,can_delete=True)
@@ -190,3 +207,7 @@ class UserStoryDevForm(forms.ModelForm):
     class Meta:
         model = UserStory
         fields = ['tiempo_estimado_dev']
+
+
+class QaForm(forms.Form):
+    comentario = forms.CharField(widget=forms.Textarea,label='Comentario',help_text='De un comentario o recomendación.',required=True)

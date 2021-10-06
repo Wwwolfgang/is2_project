@@ -88,8 +88,18 @@
         </div>
         {% else %}
             <div class="card-body">
-                <p><strong>Desarrollador asignado: </strong>{{object.encargado}} hs. </p>
-                <p><strong>Duración estimada: </strong>{{object.tiempo_promedio_calculado}} hs. </p>
+                <p><strong>Desarrollador asignado: </strong>
+                    {% if object.encargado %}
+                        {{object.encargado}}</p>
+                    {% else %}
+                        No asignado
+                    {% endif %}
+                <p><strong>Duración estimada: </strong>
+                    {% if object.tiempo_promedio_calculado %}
+                        {{object.tiempo_promedio_calculado}} hs. </p>
+                    {% else %}
+                        No asignado
+                    {% endif %}
             </div>
         {% endif %}
     </div>

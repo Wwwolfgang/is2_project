@@ -18,7 +18,7 @@
                         <h6 class="class mb-0">Sprints del Proyecto</h6>
 
                     </div>
-                    <div class="col class pl-0"> <a href="{% url 'proyecto:agregar-sprint' proyecto.id%}" class="nav-link me-3" ><i class="fas fa-plus" ></i></a></div>
+                    <div class="col class pl-0"> <a href="{% url 'proyecto:agregar-sprint' proyecto.id%}?next={{request.path}}" class="nav-link me-3" ><i class="fas fa-plus" ></i></a></div>
                 </div>
                 <div class="row align-items-center">
                     {% for sprint in sprints %}
@@ -42,8 +42,8 @@
                                             <span class="badge bg-danger text-right">{{sprint.get_estado_de_sprint_display}}</span>
                                         {% endif %}
                                     </h6>
-                                    <a href="{% url 'proyecto:sprint-edit' proyecto.id sprint.id %}" class="card-link">Modificar</a>
-                                    <a href="{% url 'proyecto:sprint-team-edit' proyecto.id sprint.id%}" class="nav-link me-3"><i class="fas fa-users"></i></a>
+                                    <a href="{% url 'proyecto:sprint-edit' proyecto.id sprint.id %}?next={{request.path}}" class="card-link">Modificar</a>
+                                    <a href="{% url 'proyecto:sprint-team-edit' proyecto.id sprint.id%}" class="card-link me-4"><i class="fas fa-users"></i></a>
                                 </div>
                               </div>
                         </div>
