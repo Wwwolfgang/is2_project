@@ -13,7 +13,7 @@ from django.urls import reverse
 from proyecto import models
 from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoEditForm,ProyectoCreateForm,AgregarParticipanteForm, DesarrolladorCreateForm,PermisoSolicitudForm,SprintCrearForm, AgregarUserStoryForm
 from proyecto.forms import EquipoFormset, UserStoryAssingForm, UserStoryDevForm, SprintModificarForm
-from proyecto.models import RolProyecto, Proyecto, ProyectUser, Sprint, UserStory, ProductBacklog
+from proyecto.models import RolProyecto, Proyecto, ProyectUser, Sprint, UserStory, ProductBacklog, HistorialUS
 from django.views.generic.edit import UpdateView, DeleteView, FormView, CreateView
 from django.urls import reverse_lazy
 from guardian.decorators import permission_required_or_403,permission_required
@@ -722,6 +722,7 @@ def agregar_user_story_view(request, pk_proy):
             u_story.product_backlog = backlog
             u_story.creador = request.user
             u_story.save()
+            HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=u_story.pk), version=0, nombre=u_story.nombre, descripcion=u_story.descripcion)
             #Redirigimos al product backlog
             return redirect('proyecto:product-backlog', pk_proy)  
         contexto['form'] = form
@@ -755,6 +756,12 @@ class UserStoryUdateView(UpdateView):
     def get_success_url(self):
         return reverse('proyecto:product-backlog', kwargs={'pk_proy': self.kwargs['pk_proy'],})
 
+    def form_valid(self, form):
+        us = form.save()
+        ver = HistorialUS.objects.filter(us_fk__id=us.pk).count()
+        ver += 1
+        HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=us.pk), version=ver, nombre=us.nombre, descripcion=us.descripcion)
+        return HttpResponseRedirect(self.get_success_url())
 
 class ProductBacklogView(PermissionRequiredMixin, ListView):
     """ View de todos los user storys del proyecto. A la izquierda se ven los user storys temporales, a la derecha los aprobados que ya se encuentran el backlog. """
