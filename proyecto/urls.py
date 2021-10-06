@@ -6,8 +6,8 @@ from django.contrib.auth.views import LogoutView
 from proyecto.views import agregar_rol_proyecto_view
 from django.urls import path
 from django.views.generic import TemplateView
-from .views import EliminarRolProyectoView, ProyectoDetailView,agregar_user_story_view, edit, cancelar, editar_rol_proyecto_view, ListaProyectos, AssignUserRolProyecto,ImportarRolView,iniciar_proyecto,cancelar_proyecto, CreateProyectoView
-from .views import finalizar_proyecto, AgregarParticipanteProyecto, eliminarParticipanteView, AgregarDesarrolladorView,EditDesarrolladorView,EliminarDesarrolladorView,SolicitarPermisosView,AgregarSprintView,EquipoSprintUpdateView
+from .views import EliminarRolProyectoView, ProyectoDetailView,agregar_user_story_view, edit,editar_rol_proyecto_view, ListaProyectos, AssignUserRolProyecto,ImportarRolView, CreateProyectoView
+from .views import  AgregarParticipanteProyecto, eliminarParticipanteView, AgregarDesarrolladorView,EditDesarrolladorView,EliminarDesarrolladorView,SolicitarPermisosView,AgregarSprintView,EquipoSprintUpdateView
 from .views import UserStoryUdateView,SprintView,ListaProyectosCancelados, UserStoryDetailView, InspectUserStoryView, quitar_user_story_view, iniciar_sprint_view, SprintKanbanView,SprintUpdateView, mark_us_doing, mark_us_todo, mark_us_done,FinalizarSprintView
 app_name = 'proyecto'
 
@@ -18,16 +18,12 @@ urlpatterns = [
     path('proyecto/<int:pk>/', ProyectoDetailView.as_view(), name='detail'),
     path('proyecto/edit/<int:pk>/', edit, name='edit'),
     path('proyecto/create/', CreateProyectoView.as_view(), name='create'),
-    path('proyecto/cancelar/<int:pk>/', cancelar, name='cancelar'),
     path('proyecto/proyectos-cancelados/', ListaProyectosCancelados.as_view(), name='cancelados'),
     path('proyecto/<int:pk_proy>/agregar-participantes/',AgregarParticipanteProyecto.as_view(), name='agregar-participantes-proyecto'),
     path('proyecto/<int:pk_proy>/debaja-participante/<int:pk>/',eliminarParticipanteView, name='debaja-participante-proyecto'),
     path('proyecto/<int:pk_proy>/agregar-desarrollador/',AgregarDesarrolladorView.as_view(), name='agregar-desarrollador-proyecto'),
     path('proyecto/<int:pk_proy>/editar-desarrollador/<int:dev_pk>/',EditDesarrolladorView.as_view(), name='editar-desarrollador-proyecto'),
     path('proyecto/<int:pk_proy>/sacar-desarrollador/<int:dev_pk>/',EliminarDesarrolladorView.as_view(), name='debaja-desarrollador-proyecto'),
-    path('iniciar/proyecto/<int:pk>/', iniciar_proyecto, name='iniciar-proyecto'),
-    path('cancelar/proyecto/<int:pk>/', cancelar_proyecto, name='cancelar-proyecto'),
-    path('finalizar/proyecto/<int:pk>/', finalizar_proyecto, name='finalizar-proyecto'),
 
     #URLS de roles de proyecto
     path('proyecto/<int:pk_proy>/rol/agregar',agregar_rol_proyecto_view,name='agregar-rol'),

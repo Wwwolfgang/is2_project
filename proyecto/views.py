@@ -142,6 +142,16 @@ def editar_rol_proyecto_view(request, pk_proy, id_rol):
 
         if form.is_valid(): 
             rol = form.save()
+            proyecto = Proyecto.objects.get(id=pk_proy)
+            for per in rol.permisos.all():
+                for participante in rol.participantes.all():
+                    if per.content_type.model == 'proyecto':
+                        user = participante
+                        assign_perm(per,user,proyecto)
+            for past_part in form.initial['permisos']:
+                    if past_part not in form.cleaned_data['permisos']:
+                        if per.content_type.model == 'proyecto':
+                            remove_perm(per,past_part,proyecto)
             messages.success(request, 'Rol de proyecto actualizado exitosamente')
             return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':pk_proy}))
         contexto['form'] = form
@@ -362,9 +372,13 @@ def eliminarParticipanteView(request, pk_proy, pk, template_name='proyecto/delet
     """
     proyecto = get_object_or_404(Proyecto, pk=pk_proy)
     user = get_object_or_404(User, pk=pk)
-    roles = proyecto.rolproyecto_set
+    roles = proyecto.rolproyecto_set.all()
 
     if request.method=='POST':
+        for rol in roles:
+            if rol.participantes.filter(pk=user.pk).exists():
+                rol.participantes.remove(user)
+
         permisos = get_user_perms(user,proyecto)
         for per in permisos:
             remove_perm(per,user,proyecto)
@@ -385,49 +399,6 @@ def edit(request, pk, template_name='proyecto/edit.html'):
         return HttpResponseRedirect(reverse('proyecto:index'))
     return render(request, template_name, {'form':form})
 
-
-@permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
-def cancelar(request, pk, template_name='proyecto/confirm-cancel.html'):
-    """ Este view está obsoleto. En el futuro se va eliminar. """
-    proyecto = get_object_or_404(Proyecto, pk=pk)
-    if request.method=='POST':
-        proyecto.estado_de_proyecto = 'C'
-        proyecto.save()
-        return HttpResponseRedirect(reverse('proyecto:index'))
-    return render(request, template_name, {'object':proyecto})
-
-@csrf_exempt
-@permission_required('sso.pg_puede_acceder_proyecto', return_403=True, accept_global_perms=True)
-@permission_required('sso.pg_puede_crear_proyecto', return_403=True, accept_global_perms=True)
-@permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
-def iniciar_proyecto(request, pk):
-    """ Este view está obsoleto. En el futuro se va eliminar. """
-    proyecto = Proyecto.objects.get(pk=pk)
-    proyecto.estado_de_proyecto = 'A'
-    proyecto.save()
-    return HttpResponse("Iniciado")
-
-@csrf_exempt
-@permission_required('sso.pg_puede_acceder_proyecto', return_403=True, accept_global_perms=True)
-@permission_required('sso.pg_puede_crear_proyecto', return_403=True, accept_global_perms=True)
-@permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
-def cancelar_proyecto(request, pk):
-    """ Este view está obsoleto. En el futuro se va eliminar. """
-    proyecto = Proyecto.objects.get(pk=pk)
-    proyecto.estado_de_proyecto = 'C'
-    proyecto.save()
-    return HttpResponse("Cancelado")
-
-@csrf_exempt
-@permission_required('sso.pg_puede_acceder_proyecto', return_403=True, accept_global_perms=True)
-@permission_required('sso.pg_puede_crear_proyecto', return_403=True, accept_global_perms=True)
-@permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
-def finalizar_proyecto(request, pk):
-    """ Este view está obsoleto. En el futuro se va eliminar. """
-    proyecto = Proyecto.objects.get(pk=pk)
-    proyecto.estado_de_proyecto = 'F'
-    proyecto.save()
-    return HttpResponse("Finalizado")
 
 
 class AgregarDesarrolladorView(CreateView):
