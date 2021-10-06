@@ -16,7 +16,7 @@ from django.views.generic import ListView, DetailView
 from django.urls import reverse
 import proyecto
 from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoEditForm,ProyectoCreateForm,AgregarParticipanteForm, DesarrolladorCreateForm,PermisoSolicitudForm,SprintCrearForm, AgregarUserStoryForm
-from proyecto.forms import EquipoFormset, UserStoryAssingForm, UserStoryDevForm, SprintModificarForm, SprintFinalizarForm, QaForm
+from proyecto.forms import EquipoFormset, UserStoryAssingForm, UserStoryDevForm, SprintModificarForm, SprintFinalizarForm, QaForm, UserstoryAprobarForm
 from proyecto.models import RolProyecto, Proyecto, ProyectUser, Sprint, UserStory, ProductBacklog
 from django.views.generic.edit import UpdateView, DeleteView, FormView, CreateView
 from django.urls import reverse_lazy
@@ -720,23 +720,19 @@ def agregar_user_story_view(request, pk_proy):
         contexto['form'] = form
         return render(request, 'proyecto/nuevo_user_story_view.html', context=contexto)
 
-class UserStoryUdateView(PermissionRequiredMixin,UpdateView):
+class UserStoryUdateView(UpdateView):
     """ View para modificar user storys no aprobados. """
     model = UserStory
     form_class= AgregarUserStoryForm
     template_name = 'proyecto/nuevo_user_story_view.html'
     raise_exception = True
-    permission_required = ('proyecto.p_administrar_us')
+    # permission_required = ('proyecto.p_administrar_us')
 
     def get_object(self, queryset=None):
         """ Función que retorna el user story que vamos a modificar. """
         id = self.kwargs['us_id']
         return self.model.objects.get(id=id)
 
-    def get_object(self):
-        """Función que retorna el proyecto con el cual vamos a comprobar el permiso"""
-        self.obj = get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
-        return self.obj
 
     def get_context_data(self, **kwargs):
         """ Función para inyectar variables de contexto que serán utilizados en el template."""
@@ -768,13 +764,41 @@ class ProductBacklogView(PermissionRequiredMixin, ListView):
         return context
 
 
-def aprobar_user_story(request,pk_proy,pk):
-    """ View para aprobar un user story por un htmx post call. """
-    if request.method == 'POST': 
-        user_story = get_object_or_404(UserStory,pk=pk)
-        user_story.estado_aprobacion = 'A'
-        user_story.save()
-    return HttpResponse('<a style="color: green;"  role="button"><i class="fas fa-check-square me-4"></i></i></a>')
+class AprobarUserStoryView(UpdateView):
+    model = UserStory
+    template_name = 'proyecto/userstory_aprobar_confirm.html'
+    form_class= UserstoryAprobarForm
+    raise_exception = True
+
+    def dispatch(self, request, *args, **kwargs):
+        userstory = get_object_or_404(UserStory,pk=self.kwargs['us_id'])
+        next = request.GET.get('next')
+        if userstory.estado_aprobacion != 'T':
+            messages.warning(request, 'No se puede aprobar un user story ya aprobado')
+            return HttpResponseRedirect(next)
+        return super().dispatch(request, *args, **kwargs)
+
+
+    def get_object(self, queryset=None):
+        id = self.kwargs['us_id']
+        return self.model.objects.get(id=id)
+
+    def get_context_data(self, **kwargs):
+        """ Función para inyectar variables de contexto que serán utilizados en el template."""
+        context = super(AprobarUserStoryView, self).get_context_data(**kwargs)
+        context.update({
+            'proyecto_id': self.kwargs['pk_proy'],
+        })
+        return context
+
+    def form_valid(self, form):
+        userstory = form.save()
+        userstory.estado_aprobacion = 'A'
+        userstory.save()
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_success_url(self):
+        return reverse('proyecto:product-backlog', kwargs={'pk_proy': self.kwargs['pk_proy']})
 
 
 class SprintView(TemplateView):

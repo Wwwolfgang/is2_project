@@ -7,7 +7,7 @@ from proyecto.views import agregar_rol_proyecto_view
 from django.urls import path
 from django.views.generic import TemplateView
 from .views import EliminarRolProyectoView, ProyectoDetailView,agregar_user_story_view, edit, cancelar, editar_rol_proyecto_view, ListaProyectos, AssignUserRolProyecto,ImportarRolView,iniciar_proyecto,cancelar_proyecto, CreateProyectoView
-from .views import finalizar_proyecto, AgregarParticipanteProyecto, eliminarParticipanteView, AgregarDesarrolladorView,EditDesarrolladorView,EliminarDesarrolladorView,SolicitarPermisosView,AgregarSprintView,EquipoSprintUpdateView,aprobar_user_story
+from .views import finalizar_proyecto, AgregarParticipanteProyecto, eliminarParticipanteView, AgregarDesarrolladorView,EditDesarrolladorView,EliminarDesarrolladorView,SolicitarPermisosView,AgregarSprintView,EquipoSprintUpdateView
 from .views import UserStoryUdateView,SprintView,ListaProyectosCancelados, UserStoryDetailView, InspectUserStoryView, quitar_user_story_view, iniciar_sprint_view, SprintKanbanView,SprintUpdateView, mark_us_doing, mark_us_todo, mark_us_done,FinalizarSprintView
 app_name = 'proyecto'
 
@@ -55,7 +55,7 @@ urlpatterns = [
     path('proyecto/<int:pk_proy>/sprint/<int:sprint_id>/finalizar',FinalizarSprintView.as_view(),name='sprint-finalizar'),
     path('proyecto/<int:pk_proy>/sprint/<int:sprint_id>/kanban/',SprintKanbanView.as_view(),name='sprint-kanban'),
     path('proyecto/<int:pk_proy>/user-story/<int:us_id>/',InspectUserStoryView.as_view(),name='user-story-detail-unassigned'),
-    path('<int:pk_proy>/aprobar/user-story/<int:pk>/', aprobar_user_story, name='aprobar-user-story'),
+    path('<int:pk_proy>/aprobar/user-story/<int:us_id>/', views.AprobarUserStoryView.as_view(), name='aprobar-user-story'),
     path('<int:pk_proy>/sprint/<int:sprint_id>/doing/user-story/<int:us_id>/', mark_us_doing, name='doing-user-story'),
     path('<int:pk_proy>/sprint/<int:sprint_id>/todo/user-story/<int:us_id>/', mark_us_todo, name='todo-user-story'),
     path('<int:pk_proy>/sprint/<int:sprint_id>/done/user-story/<int:us_id>/', mark_us_done, name='done-user-story'),

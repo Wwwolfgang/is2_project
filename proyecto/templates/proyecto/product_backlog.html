@@ -42,7 +42,7 @@
                                 {% endif %}
                             </div>
                             <div class="col d-flex justify-content-end">
-                                <a style="color: green;" hx-post="{% url 'proyecto:aprobar-user-story' proyecto_id us.pk %}" role="button"
+                                <a style="color: green;" href="{% url 'proyecto:aprobar-user-story' proyecto_id us.pk %}" role="button"
                                     ><i class="fas fa-check me-4"></i></a>
                                 <a style="color: #55acee;" href="{% url 'proyecto:user-story update' proyecto_id us.pk %}" role="button"
                                     ><i class="fas fa-pen fa-sm me-4"></i
