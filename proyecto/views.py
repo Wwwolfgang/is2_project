@@ -20,7 +20,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView
 from django.urls import reverse
-from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoEditForm,ProyectoCreateForm,AgregarParticipanteForm, DesarrolladorCreateForm,PermisoSolicitudForm,SprintCrearForm, AgregarUserStoryForm, AgregarDailyForm
+from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoEditForm,ProyectoCreateForm,AgregarParticipanteForm, DesarrolladorCreateForm,PermisoSolicitudForm,SprintCrearForm, AgregarUserStoryForm, DailyForm
 from proyecto.forms import EquipoFormset
 from proyecto.models import RolProyecto, Proyecto, ProyectoUser, Sprint, UserStory, ProductBacklog
 from django.views.generic.edit import UpdateView, DeleteView, FormView, CreateView
@@ -760,22 +760,16 @@ class SprintView(TemplateView):
 def agregar_daily_view(request, pk_us):
     """
     Vista para agregar un daily.
-    Se toman como parámetros el nombre, la descripción y el tiempo estimado por el scrum master.
+    Se toman como parámetros la descripción, la lista de impedimientos, la lista de progreso y el user story asignado al daily
     """
     contexto = {}
     contexto.update({
         'proyecto_id': pk_us
     })
     if request.method == 'POST':      
-        form = AgregarDailyForm(request.POST or None)
+        form = DailyForm(request.POST or None)
         #Si el form se cargó correctamente, lo guardamos
         if form.is_valid():
-            backlog = ProductBacklog.objects.filter(proyecto__id=pk_us).count()
-
-            if backlog == 0:
-                ProductBacklog.objects.create(proyecto=get_object_or_404(Proyecto, pk=pk_us))
-            
-            backlog = ProductBacklog.objects.get(proyecto__pk=pk_us)
             daily = form.save()
             daily.save()
             #Redirigimos al daily
@@ -783,7 +777,7 @@ def agregar_daily_view(request, pk_us):
         contexto['form'] = form
         return render(request, 'proyecto/nuevo_daily_view.html', context=contexto)
     else:
-        form = AgregarDailyForm()
+        form = DailyForm()
         contexto['form'] = form
         return render(request, 'proyecto/nuevo_daily_view.html', context=contexto)
 
@@ -805,7 +799,7 @@ class EditDailyView(PermissionRequiredMixin, UpdateView):
     model = Daily
     permission_required = ('sso.pg_is_user')
     template_name = 'proyecto/edit_daily_view.html'
-    form_class= AgregarDailyForm
+    form_class= DailyForm
     raise_exception = True
 
     def get_object(self, queryset=None):
@@ -816,7 +810,7 @@ class EditDailyView(PermissionRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super(EditDailyView,self).get_context_data(**kwargs)
         context.update({
-            'user_story': self.kwargs['pk_us'],
+            'user_story': self.kwargs['us_pk'],
             'edit': True
         })
         return context
@@ -824,7 +818,7 @@ class EditDailyView(PermissionRequiredMixin, UpdateView):
     def get_form_kwargs(self):
         """ Función que inyecta el id del proyecto como argumento. """
         kwargs = super(EditDailyView, self).get_form_kwargs()
-        kwargs['pk_us'] = self.kwargs['pk_us']
+        kwargs['pk_us'] = self.kwargs['us_pk']
         return kwargs
 
 
