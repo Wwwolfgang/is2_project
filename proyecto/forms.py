@@ -152,13 +152,13 @@ class AgregarUserStoryForm(forms.ModelForm):
         model = UserStory
         fields = ['nombre','descripcion','prioridad_user_story']
 
-class AgregarDailyForm(forms.ModelForm):
+class DailyForm(forms.ModelForm):
     """
     Form para crear un Daily
     """
     def __init__(self, *args, **kwargs):
-        super(AgregarDailyForm, self).__init__(*args, **kwargs)
+        super(DailyForm, self).__init__(*args, **kwargs)
 
     class Meta:
         model = Daily
-        fields = ['duracion','lista_impedimiento','lista_progreso']
+        fields = ['duracion','lista_impedimiento','lista_progreso','user_story']
