@@ -722,7 +722,7 @@ def agregar_user_story_view(request, pk_proy):
             u_story.product_backlog = backlog
             u_story.creador = request.user
             u_story.save()
-            HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=u_story.pk), version=0, nombre=u_story.nombre, descripcion=u_story.descripcion)
+            HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=u_story.pk), version=1, nombre=u_story.nombre, descripcion=u_story.descripcion, prioridad = u_story.prioridad_user_story)
             #Redirigimos al product backlog
             return redirect('proyecto:product-backlog', pk_proy)  
         contexto['form'] = form
@@ -760,7 +760,7 @@ class UserStoryUdateView(UpdateView):
         us = form.save()
         ver = HistorialUS.objects.filter(us_fk__id=us.pk).count()
         ver += 1
-        HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=us.pk), version=ver, nombre=us.nombre, descripcion=us.descripcion)
+        HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=us.pk), version=ver, nombre=us.nombre, descripcion=us.descripcion, prioridad = us.prioridad_user_story)
         return HttpResponseRedirect(self.get_success_url())
 
 class ProductBacklogView(PermissionRequiredMixin, ListView):
@@ -924,6 +924,7 @@ class InspectUserStoryView(DetailView):
         context = super(InspectUserStoryView,self).get_context_data(**kwargs)
         context.update({
             'proyecto_id': self.kwargs['pk_proy'],
+            'historial' : HistorialUS.objects.filter(us_fk__pk = self.kwargs['us_id']).exclude(version = HistorialUS.objects.filter(us_fk__id=(self.kwargs['us_id'])).count()).order_by('-version')
         })
         return context
 
