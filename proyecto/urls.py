@@ -60,6 +60,11 @@ urlpatterns = [
     path('<int:pk_proy>/sprint/<int:sprint_id>/done/user-story/<int:us_id>/', mark_us_done, name='done-user-story'),
     path('proyecto/<int:pk_proy>/sprint/<int:sprint_id>/user-story-qa/<int:us_id>/',views.QaView.as_view(),name='user-story-qa'),
     path('proyecto/<int:pk_proy>/sprint/<int:sprint_id>/burndown-chart/',views.SprintBurndownchartView.as_view(),name='sprint-burndownchart'),
+    path('proyecto/<int:pk_proy>/sprint/<int:sprint_id>/user-story/<int:us_id>/agregar-daily',views.agregar_daily_view,name='userstory-add-daily'),
+    path('proyecto/<int:pk_proy>/sprint/<int:sprint_id>/user-story/<int:us_id>/editar-daily/<int:d_pk>/',views.EditDailyView.as_view(),name='editar-daily'),
+    path('proyecto/<int:pk_proy>/sprint/<int:sprint_id>/user-story/<int:us_id>/eliminar-daily/<int:d_pk>/',views.EliminarDailyView.as_view(),name='eliminar-daily'),
+
+
 
 
 ]

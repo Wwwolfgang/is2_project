@@ -65,7 +65,7 @@ class Proyecto(models.Model):
     )
     owner = models.ForeignKey(User,blank=True,null=True,on_delete=CASCADE,related_name='creador')
     equipo = models.ManyToManyField(User,blank=True)
-    equipo_desarrollador = models.ManyToManyField('proyectouser',blank=True)
+    equipo_desarrollador = models.ManyToManyField('proyectuser',blank=True)
 
     class Meta:
         permissions = (
@@ -216,12 +216,17 @@ class HistorialUS(models.Model):
         default='B',
     )
     us_fk = models.ForeignKey(UserStory, on_delete=CASCADE, null=False)
+
+
 class Daily(models.Model):
     """
-    Clase Daily: Actividad diaria donde el equipo se reune por un breve tiempo y discute del progreso del User Story
-    TODO:Agregar views de agregar, listar y modificar Daily
+    Clase Daily: El desarrollador anota cuanto tiempo trabajó en el user story en horas. Puede anotar los impedimientos que entregó en el proceso,
+    puede anotar los progresos que hizo. Cada objeto daily se relaciona con un sprint ya que un user story puede ser tratado en diferentes sprints si no fue
+    terminado.
     """
-    duracion            = models.IntegerField(verbose_name='Duracion del daily (en minutos)',name='duracion',default=15)
-    lista_impedimiento  = ArrayField(models.CharField(verbose_name='Descripcion de las dificultades encontradas durante el desarrollo',name='descripcion_impedimiento',max_length=100,blank=False,default='Ingrese una descripcion...'),verbose_name='Listado de impedimientos encontrados en el desarrollo',name='lista_impedimiento',max_length=5)
-    lista_progreso      = ArrayField(models.CharField(verbose_name='Descripcion de los progresos encontrados durante el desarrollo',name='descripcion_progreso',max_length=100,blank=False,default='Ingrese un progreso...'),verbose_name='Listado de progresos encontrados en el desarrollo',name='lista_progreso',max_length=5)
-    user_story          = models.ForeignKey('UserStory',on_delete=CASCADE,blank=True,null=True)
+    duracion = models.DecimalField(help_text='Trabajo realizado en horas.', decimal_places=2, max_digits=4)
+    impedimiento_comentario = models.TextField(verbose_name='Descripcion de las dificultades encontradas durante el desarrollo', blank=True)
+    progreso_comentario = models.TextField(verbose_name='Descripcion de los progresos encontrados durante el desarrollo', blank=True)
+    user_story = models.ForeignKey('userstory',on_delete=CASCADE, blank=True, null=True)
+    sprint = models.ForeignKey('sprint', on_delete=CASCADE, blank=True,null=True)
+    fecha = models.DateField(null=True,blank=True)

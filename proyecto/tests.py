@@ -1,4 +1,4 @@
-from proyecto.models import Proyecto, RolProyecto, Sprint, ProyectoUser
+from proyecto.models import Proyecto, RolProyecto, Sprint, ProyectUser
 from sso import models
 from django.db.models import fields
 from django.db.models.query_utils import PathInfo
@@ -38,7 +38,7 @@ def proyecto_creado():
 @pytest.fixture
 def proyecto_user_creado(): 
     horas_diarias = 9
-    return ProyectoUser.objects.create(horas_diarias = horas_diarias)
+    return ProyectUser.objects.create(horas_diarias = horas_diarias)
 
 @pytest.mark.django_db
 class TestModelRolProyecto:

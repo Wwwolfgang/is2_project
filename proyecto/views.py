@@ -306,7 +306,7 @@ class ProyectoDetailView(PermissionRequiredMixin, DetailView):
         self.request.session['proyecto_nombre'] = proyecto.nombreProyecto
         context.update({
             'proyecto': proyecto,
-            'Sprints': Sprints
+            'sprints': Sprints
         }) 
         return context
 
@@ -822,7 +822,7 @@ class SprintView(TemplateView):
         Los encargados y participantes del proyecto pueden ver los user storys asignados al sprint.
     """
     model = Sprint
-    template_name = 'proyecto/Sprint_detail.html'
+    template_name = 'proyecto/sprint_detail.html'
 
     def get_context_data(self, **kwargs):
         """ Función para inyectar variables de contexto que serán utilizados en el template."""
@@ -887,6 +887,7 @@ class UserStoryDetailView(UpdateView):
             'assignar': True,
             'scrum_master' : Proyecto.objects.get(pk=self.kwargs['pk_proy']).owner,
             'sprint_id': self.kwargs['sprint_id'],
+            'daily_list': Daily.objects.filter(user_story__pk=self.kwargs['us_id']).filter(sprint__pk=self.kwargs['sprint_id'])
         })
         return context
 
@@ -1049,11 +1050,13 @@ def mark_us_doing(request, pk_proy, sprint_id,us_id):
     us.save()
     return HttpResponseRedirect(reverse('proyecto:sprint-kanban',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id}))
 
+
 def mark_us_todo(request, pk_proy, sprint_id,us_id):
     us = get_object_or_404(UserStory, pk=us_id)
     us.estado_user_story = 'TD'
     us.save()
     return HttpResponseRedirect(reverse('proyecto:sprint-kanban',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id}))
+
 
 def mark_us_done(request, pk_proy, sprint_id,us_id):
     us = get_object_or_404(UserStory, pk=us_id)
@@ -1250,69 +1253,69 @@ def userstory_cancelar(request, pk_proy, us_id, template_name='proyecto/userstor
         return HttpResponseRedirect(reverse('proyecto:product-backlog', kwargs={'pk_proy': pk_proy}))
     return render(request, template_name, {'object': userstory, 'proyecto_id':pk_proy})
 
-def agregar_daily_view(request, pk_us):
+
+def agregar_daily_view(request, pk_proy, sprint_id,us_id):
     """
     Vista para agregar un daily.
     Se toman como parámetros la descripción, la lista de impedimientos, la lista de progreso y el user story asignado al daily
     """
+    sprint = get_object_or_404(Sprint,pk=sprint_id)
+    userstory = get_object_or_404(UserStory,pk=us_id)
     contexto = {}
     contexto.update({
-        'proyecto_id': pk_us
+        'proyecto_id': pk_proy,
+        'sprint': sprint,
+        'sprint_id': sprint_id,
+        'user_story': userstory
     })
     if request.method == 'POST':      
         form = DailyForm(request.POST or None)
         #Si el form se cargó correctamente, lo guardamos
         if form.is_valid():
             daily = form.save()
+            daily.user_story = userstory
+            daily.sprint = sprint
+            daily.fecha = datetime.now()
             daily.save()
             #Redirigimos al daily
-            return redirect('proyecto:daily', pk_us)  
+            return HttpResponseRedirect(reverse('proyecto:user-story-detail',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id, 'us_id':us_id})) 
         contexto['form'] = form
-        return render(request, 'proyecto/nuevo_daily_view.html', context=contexto)
+        return render(request, 'proyecto/daily_view_form.html', context=contexto)
     else:
         form = DailyForm()
         contexto['form'] = form
-        return render(request, 'proyecto/nuevo_daily_view.html', context=contexto)
+        return render(request, 'proyecto/daily_view_form.html', context=contexto)
 
-class ListaDailyView(PermissionRequiredMixin, ListView):
-    permission_required = ('sso.pg_puede_acceder_proyecto','sso.pg_is_user')
-    raise_exception = True
-    model = Daily
-    template_name = 'proyecto/index.html'
-    context_object_name = 'daily_list'
 
-    def get_queryset(self):
-        return Daily.objects.all()
-
-class EditDailyView(PermissionRequiredMixin, UpdateView):
+class EditDailyView(UpdateView):
     """
     Vista para editar un Daily
     TODO:funcionalidad del View
     """
     model = Daily
-    permission_required = ('sso.pg_is_user')
-    template_name = 'proyecto/edit_daily_view.html'
+    # permission_required = ('sso.pg_is_user')
+    template_name = 'proyecto/daily_view_form.html'
     form_class= DailyForm
     raise_exception = True
 
     def get_object(self, queryset=None):
         """ Función que retorna el proyecto cuyo equipo va ser modificado """
-        us = self.kwargs['us_pk']
-        return self.model.objects.get(user_story = us)
+        d_pk = self.kwargs['d_pk']
+        return self.model.objects.get(pk = d_pk)
 
     def get_context_data(self, **kwargs):
         context = super(EditDailyView,self).get_context_data(**kwargs)
+        sprint = get_object_or_404(Sprint,pk=self.kwargs['sprint_id'])
+        userstory = get_object_or_404(UserStory,pk=self.kwargs['us_id'])
+
         context.update({
-            'user_story': self.kwargs['us_pk'],
-            'edit': True
+            'proyecto_id': self.kwargs['pk_proy'],
+            'user_story': userstory,
+            'edit': True,
+            'sprint': sprint,
+            'sprint_id': self.kwargs['sprint_id'],
         })
         return context
-
-    def get_form_kwargs(self):
-        """ Función que inyecta el id del proyecto como argumento. """
-        kwargs = super(EditDailyView, self).get_form_kwargs()
-        kwargs['pk_us'] = self.kwargs['us_pk']
-        return kwargs
 
 
     def form_valid(self, form):
@@ -1320,4 +1323,39 @@ class EditDailyView(PermissionRequiredMixin, UpdateView):
         En esta función se agrega los usuarios marcados por el usuario al campo equipo del proyecto
         """
         form.save()
-        return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_us':self.kwargs['pk_us']}))
+        return HttpResponseRedirect(reverse('proyecto:user-story-detail',kwargs={'pk_proy':self.kwargs['pk_proy'],'sprint_id':self.kwargs['sprint_id'], 'us_id':self.kwargs['us_id']}))
+
+
+class EliminarDailyView(DeleteView):
+    """
+    
+    """
+    model = Daily
+    template_name = 'proyecto/eliminar_daily_confirm.html'
+    # permission_required = ('proyecto.p_administrar_roles')
+    raise_exception = True
+
+    def get_object(self, queryset=None):
+        """ Función que retorna el proyecto cuyo equipo va ser modificado """
+        d_pk = self.kwargs['d_pk']
+        return self.model.objects.get(pk = d_pk)
+
+    def get_context_data(self, **kwargs):
+        context = super(EliminarDailyView, self).get_context_data(**kwargs)
+        sprint = get_object_or_404(Sprint,pk=self.kwargs['sprint_id'])
+        userstory = get_object_or_404(UserStory,pk=self.kwargs['us_id'])
+        context.update({
+            'proyecto_id': self.kwargs['pk_proy'],
+            'sprint': sprint,
+            'sprint_id': self.kwargs['sprint_id'],
+            'user_story': userstory,
+        })
+        return context
+
+    def form_valid(self, form):
+        form.save()
+        return HttpResponseRedirect(self.get_success_url(self.kwargs['pk_proy']))
+
+
+    def get_success_url(self,**kwargs):
+        return reverse_lazy('proyecto:user-story-detail',kwargs={'pk_proy':self.kwargs['pk_proy'],'sprint_id':self.kwargs['sprint_id'], 'us_id':self.kwargs['us_id']})

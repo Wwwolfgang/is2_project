@@ -2,7 +2,7 @@ from django.contrib.auth import models
 from django.forms import fields, widgets
 from django.contrib.auth.models import Permission
 from django import forms
-from .models import Proyecto, ProyectoUser, RolProyecto, Sprint, UserStory, Daily
+from .models import Proyecto, ProyectUser, RolProyecto, Sprint, UserStory, Daily
 from sso.models import User
 from django import forms
 from django.forms.models import inlineformset_factory
@@ -133,7 +133,7 @@ class DesarrolladorCreateForm(forms.ModelForm):
         self.fields['horas_diarias'].required = True
         self.fields['usuario'].required = True
     class Meta:
-        model = ProyectoUser
+        model = ProyectUser
         fields = ['usuario','horas_diarias']
 
 
@@ -174,7 +174,7 @@ class UserstoryAprobarForm(forms.ModelForm):
         fields = ['estado_aprobacion']
 
 
-EquipoFormset = inlineformset_factory(Sprint, ProyectoUser,fields=('usuario','horas_diarias',),form=DesarrolladorCreateForm,can_delete=True)
+EquipoFormset = inlineformset_factory(Sprint, ProyectUser,fields=('usuario','horas_diarias',),form=DesarrolladorCreateForm,can_delete=True)
 class AgregarUserStoryForm(forms.ModelForm):
     """
     Form para crear un user story
@@ -228,4 +228,4 @@ class DailyForm(forms.ModelForm):
 
     class Meta:
         model = Daily
-        fields = ['duracion','lista_impedimiento','lista_progreso','user_story']
+        fields = ['duracion','impedimiento_comentario','progreso_comentario']
