@@ -1,4 +1,6 @@
-from proyecto.models import Proyecto, RolProyecto, ProyectoUser
+from functools import _Descriptor
+from _pytest.mark import deselect_by_keyword
+from proyecto.models import Proyecto, RolProyecto, ProyectoUser, UserStory, Daily
 from sso import models
 from django.db.models import fields
 from django.db.models.query_utils import PathInfo
@@ -34,6 +36,21 @@ def proyecto_creado():
     estado_de_proyecto = 'I'
     return Proyecto.objects.create(nombreProyecto = nombreProyecto,fechaInicio = fechaInicio,fechaFin = fechaFin, estado_de_proyecto = estado_de_proyecto)
 
+def user_story_creado():
+    nombre = "User Story"
+    descripcion = "Descripcion de User Story"
+    tiempo_estimado_scrum_master = 14
+    tiempo_estimado_dev = 14
+    prioridad_user_story = 'B'
+    estado_aprobacion = 'T'
+    estado_user_story = 'TD'
+    return UserStory.objects.create(nombre = nombre, descripcion = descripcion, tiempo_estimado_scrum_master = tiempo_estimado_scrum_master, tiempo_estimado_dev = tiempo_estimado_dev, prioridad_user_story = prioridad_user_story, estado_aprobacion = estado_aprobacion, estado_user_story = estado_user_story )
+
+def daily_creado():
+    duracion = 15
+    lista_impedimiento = ["Impedimiento1","Impedimiento2","Impedimiento3"]
+    lista_progreso = ["Progreso1","Progreso2","Progreso3"]
+    return Daily.objects.create(duracion = duracion, lista_impedimiento = lista_impedimiento, lista_progreso = lista_progreso)
 @pytest.fixture
 def proyecto_user_creado(): 
     horas_diarias = 9
@@ -160,5 +177,66 @@ class TestViewsProyectoUser:
         proyectoUser.permisos.set(list(Permission.objects.all()))
         proyectoUser.save()
         return proyectoUser
-    
-    
+
+class TestUserStory:
+    """
+    Tests para comprobar las funcionalidades de los modelos de User Story
+    """
+    def test_user_story_nombre_invalido(self):
+        user_story = user_story_creado()
+        nombre = user_story.nombre
+        caracteresInvalidos = "0123456789!@#$%^&*()_+-=[]<>?/"
+        for caracter in caracteresInvalidos:
+            assert caracter not in nombre
+    def test_user_story_descripcion_vacia(self):
+        user_story = user_story_creado()
+        descripcion = user_story.descripcion
+        assert descripcion != ''
+    def test_user_story_tiempo_estimado_invalido(self):
+        user_story = user_story_creado()
+        tiempo_scrum = user_story.tiempo_estimado_scrum_master
+        tiempo_dev = user_story.tiempo_estimado_dev
+        assert tiempo_scrum > 0 and tiempo_scrum < 60 and tiempo_dev > 0 and tiempo_dev < 60
+    def test_user_story_prioridad_invalida(self):
+        user_story = user_story_creado()
+        prioridad = user_story.prioridad_user_story
+        assert prioridad in user_story.PRIORIDAD_DE_USER_STORY_CHOICES
+    def test_user_story_estado_invalido(self):
+        user_story = user_story_creado()
+        estado_aprobacion = user_story.estado_aprobacion
+        estado_user_story = user_story.estado_user_story
+        assert estado_aprobacion in user_story.ESTADO_APROBACION_USER_STORY and estado_user_story in user_story.ESTADO_DE_USER_STORY_CHOICES
+    def test_user_story_creador(self):
+        user_story = user_story_creado()
+        creador = usuario_creado()
+        user_story.save()
+        creador.save()
+        user_story.creador.add(creador)
+        assert '@' in user_story.creador.email
+@pytest.mark.django_db    
+class TestModelDaily:
+    """
+    Test para comprobar las funcionalidades de los modelos de Daily
+    """
+    def test_daily_duracion_invalida(self):
+        """
+        La duracion del daily no puede durar mas de 60 minutos
+        """
+        daily = daily_creado()
+        assert daily.duracion > 0 and daily.duracion < 60
+    def test_daily_lista_impedimiento_invalida(self):
+        daily = daily_creado()
+        for impedimiento in daily.lista_impedimiento:
+            assert len(impedimiento) > 5
+    def test_daily_lista_progreso_invalida(self):
+        daily = daily_creado()
+        for progreso in daily.lista_progreso:
+            assert len(progreso) > 5
+    def test_daily_user_story(self):
+        daily = daily_creado()
+        user_story = user_story_creado()
+        daily.save()
+        user_story.save()
+        daily.user_story.save(user_story)
+        assert daily.user_story.estado_aprobacion == 'T'
+        
