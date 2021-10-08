@@ -6,7 +6,7 @@ from django.contrib.auth.views import LogoutView
 from proyecto.views import agregar_rol_proyecto_view
 from django.urls import path
 from django.views.generic import TemplateView
-from .views import EliminarRolProyectoView, ProyectoDetailView,agregar_user_story_view, edit,editar_rol_proyecto_view, ListaProyectos, AssignUserRolProyecto,ImportarRolView, CreateProyectoView
+from .views import EliminarRolProyectoView, ProyectoDetailView,agregar_user_story_view, userstory_cancelar, edit,editar_rol_proyecto_view, ListaProyectos, AssignUserRolProyecto,ImportarRolView, CreateProyectoView
 from .views import  AgregarParticipanteProyecto, eliminarParticipanteView, AgregarDesarrolladorView,EditDesarrolladorView,EliminarDesarrolladorView,SolicitarPermisosView,AgregarSprintView,EquipoSprintUpdateView
 from .views import UserStoryUdateView,SprintView,ListaProyectosCancelados, UserStoryDetailView, InspectUserStoryView, quitar_user_story_view, iniciar_sprint_view, SprintKanbanView,SprintUpdateView, mark_us_doing, mark_us_todo, mark_us_done,FinalizarSprintView
 app_name = 'proyecto'
@@ -46,6 +46,7 @@ urlpatterns = [
     #URLS de user story
     path('proyecto/<int:pk_proy>/pbacklog',views.ProductBacklogView.as_view(),name='product-backlog'),
     path('proyecto/<int:pk_proy>/pbacklog/agregarUS',agregar_user_story_view,name='agregar-us'),
+    path('proyecto/<int:pk_proy>/cancelarUS/<int:us_id>', userstory_cancelar, name="userstory_cancelar"),
     path('proyecto/<int:pk_proy>/update-user-story/<int:us_id>',UserStoryUdateView.as_view(),name='user-story update'),
     path('proyecto/<int:pk_proy>/sprint/<int:sprint_id>/user-story/<int:us_id>/',UserStoryDetailView.as_view(),name='user-story-detail'),
     path('proyecto/<int:pk_proy>/sprint/<int:sprint_id>/user-story/<int:us_id>/quitar/',quitar_user_story_view,name='user-story-quitar'),

@@ -17,7 +17,7 @@ from django.urls import reverse
 import proyecto
 from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoEditForm,ProyectoCreateForm,AgregarParticipanteForm, DesarrolladorCreateForm,PermisoSolicitudForm,SprintCrearForm, AgregarUserStoryForm
 from proyecto.forms import EquipoFormset, UserStoryAssingForm, UserStoryDevForm, SprintModificarForm, SprintFinalizarForm, QaForm, UserstoryAprobarForm, ProyectoFinalizarForm
-from proyecto.models import RolProyecto, Proyecto, ProyectUser, Sprint, UserStory, ProductBacklog
+from proyecto.models import RolProyecto, Proyecto, ProyectUser, Sprint, UserStory, ProductBacklog, HistorialUS
 from django.views.generic.edit import UpdateView, DeleteView, FormView, CreateView
 from django.urls import reverse_lazy
 from guardian.decorators import permission_required_or_403,permission_required
@@ -721,6 +721,7 @@ def agregar_user_story_view(request, pk_proy):
             u_story.product_backlog = backlog
             u_story.creador = request.user
             u_story.save()
+            HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=u_story.pk), version=1, nombre=u_story.nombre, descripcion=u_story.descripcion, prioridad = u_story.prioridad_user_story)
             #Redirigimos al product backlog
             return redirect('proyecto:product-backlog', pk_proy)  
         contexto['form'] = form
@@ -756,6 +757,12 @@ class UserStoryUdateView(UpdateView):
     def get_success_url(self):
         return reverse('proyecto:product-backlog', kwargs={'pk_proy': self.kwargs['pk_proy'],})
 
+    def form_valid(self, form):
+        us = form.save()
+        ver = HistorialUS.objects.filter(us_fk__id=us.pk).count()
+        ver += 1
+        HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=us.pk), version=ver, nombre=us.nombre, descripcion=us.descripcion, prioridad = us.prioridad_user_story)
+        return HttpResponseRedirect(self.get_success_url())
 
 class ProductBacklogView(PermissionRequiredMixin, ListView):
     """ View de todos los user storys del proyecto. A la izquierda se ven los user storys temporales, a la derecha los aprobados que ya se encuentran el backlog. """
@@ -768,7 +775,7 @@ class ProductBacklogView(PermissionRequiredMixin, ListView):
         context = super(ProductBacklogView, self).get_context_data(**kwargs)
         context.update({
             'proyecto_id': self.kwargs['pk_proy'],
-            'user_storys_nuevos': ProductBacklog.objects.get(proyecto__pk = self.kwargs['pk_proy']).userstory_set.filter(estado_aprobacion='T'),
+            'user_storys_nuevos': ProductBacklog.objects.get(proyecto__pk = self.kwargs['pk_proy']).userstory_set.filter(estado_aprobacion='T').exclude(estado_aprobacion='C'),
             'product_backlog': ProductBacklog.objects.get(proyecto__pk = self.kwargs['pk_proy']).userstory_set.filter(estado_aprobacion='A'),
         })
         return context
@@ -954,6 +961,7 @@ class InspectUserStoryView(DetailView):
         context = super(InspectUserStoryView,self).get_context_data(**kwargs)
         context.update({
             'proyecto_id': self.kwargs['pk_proy'],
+            'historial' : HistorialUS.objects.filter(us_fk__pk = self.kwargs['us_id']).exclude(version = HistorialUS.objects.filter(us_fk__id=(self.kwargs['us_id'])).count()).order_by('-version')
         })
         return context
 
@@ -1232,3 +1240,13 @@ class SprintBurndownchartView(TemplateView):
             'sprint_id': self.kwargs['sprint_id'],
         })
         return context
+
+@permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
+def userstory_cancelar(request, pk_proy, us_id, template_name='proyecto/userstory_cancelar.html'):
+    """ Este view está obsoleto. En el futuro se va eliminar. """
+    userstory = get_object_or_404(UserStory, pk=us_id)
+    if request.method == 'POST':
+        userstory.estado_aprobacion = 'C'
+        userstory.save()
+        return HttpResponseRedirect(reverse('proyecto:product-backlog', kwargs={'pk_proy': pk_proy}))
+    return render(request, template_name, {'object': userstory, 'proyecto_id':pk_proy})

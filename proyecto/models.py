@@ -176,6 +176,7 @@ class UserStory(models.Model):
     ESTADO_APROBACION_USER_STORY = [
         ('T', 'Temporal'),
         ('A', 'Aprobado'),
+        ('C', 'Cancelado'),
     ]
     estado_aprobacion = models.CharField(
         max_length=1,
@@ -198,3 +199,20 @@ class UserStory(models.Model):
     creador = models.ForeignKey(User,blank=True,null=True,on_delete=CASCADE)
     sprint = models.ForeignKey('sprint',blank=True,null=True,on_delete=CASCADE)
     product_backlog = models.ForeignKey('productbacklog',on_delete=CASCADE, blank=True,null=True)
+
+class HistorialUS(models.Model):
+    nombre = models.CharField(verbose_name='Nombre del user story', max_length=20, blank=False, null=False)
+    descripcion = models.TextField(verbose_name='Descripción del user story', blank=True)
+    version = models.IntegerField()
+    PRIORIDAD_DE_USER_STORY_CHOICES = [
+        ('B', 'Baja'),
+        ('A', 'Alta'),
+        ('M', 'Media'),
+        ('E', 'Emergencia')
+    ]
+    prioridad = models.CharField(
+        max_length=1,
+        choices=PRIORIDAD_DE_USER_STORY_CHOICES,
+        default='B',
+    )
+    us_fk = models.ForeignKey(UserStory, on_delete=CASCADE, null=False)

@@ -105,6 +105,28 @@
                     {% endif %}
             </div>
         {% endif %}
+        {% for historial in historial %}
+            <br/>
+            <div class="card ">
+            <div class="card-header">
+                <strong>Version: </strong>{{historial.version}} User story: {{historial.nombre}}
+                {% if historial.prioridad == 'A' %}
+                    <span class="badge  bg-warning text-dark">Alta</span>
+                {% elif historial.prioridad == 'B'%}
+                    <span class="badge  bg-success text-right">Baja</span>
+                {% elif historial.prioridad == 'M'%}
+                    <span class="badge  bg-primary text-right">Media</span>
+                {% elif historial.prioridad == 'E'%}
+                    <span class="badge  bg-danger text-right">Emergencia</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">Descripción:</h5>
+                {{historial.descripcion}}</div>
+            <div class="card-body">
+
+            </div>
+        {% endfor %}
     </div>
 </div>
 
