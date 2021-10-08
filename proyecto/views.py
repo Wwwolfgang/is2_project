@@ -1,3 +1,4 @@
+from django.contrib.auth.models import Permission
 from django.db.models import Sum
 from django.views.generic.base import TemplateView
 from django.views.generic.detail import SingleObjectMixin
@@ -309,7 +310,7 @@ class ProyectoDetailView(PermissionRequiredMixin, DetailView):
         return context
 
 
-class CreateProyectoView(CreateView):
+class CreateProyectoView(PermissionRequiredMixin,CreateView):
     """ Vista para crear proyectos. En esta vista por el momento solo se llenan la duracion del sprint y la fecha de finalización. 
         Hay que evaluar que más campos se van a tratar aqui.
     """
@@ -317,12 +318,7 @@ class CreateProyectoView(CreateView):
     template_name = "proyecto/proyecto_form.html"
     form_class = ProyectoCreateForm
     raise_exception = True
-
-    def get_form_kwargs(self):
-        """ Función que inyecta el usuario al form como argumento. """
-        kwargs = super(CreateProyectoView, self).get_form_kwargs()
-        kwargs['user_id'] = self.request.user.id
-        return kwargs
+    permission_required = ('sso.pg_puede_crear_proyecto')
 
     def form_valid(self,form):
         user = User.objects.get(pk =self.request.user.id)
@@ -331,7 +327,22 @@ class CreateProyectoView(CreateView):
         model.owner = user
         model.save()
         ProductBacklog.objects.create(proyecto=get_object_or_404(Proyecto, pk=model.pk))
+        #Aquí asignamos todos los permisos para el proyecto al creador del proyecto
+        proyecto=get_object_or_404(Proyecto, pk=model.pk)
+        for p in Permission.objects.all():
+            if (p.codename.startswith('p_') and not p.codename.startswith('pg_')):
+                    if p.content_type.model == 'proyecto':
+                        assign_perm(p,user,proyecto)
         return HttpResponseRedirect(reverse('proyecto:index'))
+
+    def get_form_kwargs(self):
+        """ Función que inyecta el usuario al form como argumento. """
+        kwargs = super(CreateProyectoView, self).get_form_kwargs()
+        kwargs['user_id'] = self.request.user.id
+        return kwargs
+    
+    def get_object(self): 
+        return None
 
 
 class AgregarParticipanteProyecto(PermissionRequiredMixin, UpdateView):
@@ -398,7 +409,15 @@ def edit(request, pk, template_name='proyecto/edit.html'):
         return HttpResponseRedirect(reverse('proyecto:index'))
     return render(request, template_name, {'form':form})
 
-
+@permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
+def cancelar(request, pk, template_name='proyecto/confirm-cancel.html'):
+    """ Este view está obsoleto. En el futuro se va eliminar. """
+    proyecto = get_object_or_404(Proyecto, pk=pk)
+    if request.method=='POST':
+        proyecto.estado_de_proyecto = 'C'
+        proyecto.save()
+        return HttpResponseRedirect(reverse('proyecto:index'))
+    return render(request, template_name, {'object':proyecto})
 
 class AgregarDesarrolladorView(CreateView):
     """ Este view está obsoleto. En el futuro se va eliminar. """
@@ -685,13 +704,17 @@ def agregar_user_story_view(request, pk_proy):
         contexto['form'] = form
         return render(request, 'proyecto/nuevo_user_story_view.html', context=contexto)
 
-class UserStoryUdateView(UpdateView):
+class UserStoryUdateView(PermissionRequiredMixin,UpdateView):
     """ View para modificar user storys no aprobados. """
     model = UserStory
     form_class= AgregarUserStoryForm
     template_name = 'proyecto/nuevo_user_story_view.html'
     raise_exception = True
-    # permission_required = ('proyecto.p_administrar_us')
+    permission_required = ('proyecto.p_administrar_us_qa')
+    raise_exception = True
+
+    def get_permission_object(self):
+        return get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
 
     def get_object(self, queryset=None):
         """ Función que retorna el user story que vamos a modificar. """
@@ -729,11 +752,16 @@ class ProductBacklogView(PermissionRequiredMixin, ListView):
         return context
 
 
-class AprobarUserStoryView(UpdateView):
+class AprobarUserStoryView(PermissionRequiredMixin,UpdateView):
     model = UserStory
     template_name = 'proyecto/userstory_aprobar_confirm.html'
     form_class= UserstoryAprobarForm
     raise_exception = True
+    permission_required = ('proyecto.p_administrar_us')
+    raise_exception = True
+
+    def get_permission_object(self):
+        return get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
 
     def dispatch(self, request, *args, **kwargs):
         userstory = get_object_or_404(UserStory,pk=self.kwargs['us_id'])
@@ -980,6 +1008,7 @@ class SprintKanbanView(TemplateView):
         return context
 
 
+@permission_required_or_403('proyecto.p_administrar_us',(Proyecto,'pk','pk_proy'))
 def mark_us_doing(request, pk_proy, sprint_id,us_id):
     """ 
     Vista, que marca como en proceso a un user story en el Kanban. Con este view se cambia el estado a Doing.
@@ -990,12 +1019,14 @@ def mark_us_doing(request, pk_proy, sprint_id,us_id):
     us.save()
     return HttpResponseRedirect(reverse('proyecto:sprint-kanban',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id}))
 
+@permission_required_or_403('proyecto.p_administrar_us',(Proyecto,'pk','pk_proy'))
 def mark_us_todo(request, pk_proy, sprint_id,us_id):
     us = get_object_or_404(UserStory, pk=us_id)
     us.estado_user_story = 'TD'
     us.save()
     return HttpResponseRedirect(reverse('proyecto:sprint-kanban',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id}))
 
+@permission_required_or_403('proyecto.p_administrar_us',(Proyecto,'pk','pk_proy'))
 def mark_us_done(request, pk_proy, sprint_id,us_id):
     us = get_object_or_404(UserStory, pk=us_id)
     us.estado_user_story = 'QA'
@@ -1003,11 +1034,16 @@ def mark_us_done(request, pk_proy, sprint_id,us_id):
     return HttpResponseRedirect(reverse('proyecto:sprint-kanban',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id}))
 
 
-class FinalizarSprintView(UpdateView):
+class FinalizarSprintView(PermissionRequiredMixin,UpdateView):
     model = Sprint
     template_name = 'proyecto/sprint_finalizar_confirm.html'
     form_class=SprintFinalizarForm
     raise_exception = True
+    permission_required = ('proyecto.p_administrar_sprint')
+    raise_exception = True
+
+    def get_permission_object(self):
+        return get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
 
     def dispatch(self, request, *args, **kwargs):
         sprint = get_object_or_404(Sprint,pk=self.kwargs['sprint_id'])
@@ -1041,9 +1077,14 @@ class FinalizarSprintView(UpdateView):
         return reverse('proyecto:sprint-kanban', kwargs={'pk_proy': self.kwargs['pk_proy'],'sprint_id':self.kwargs['sprint_id'],})
 
 
-class QaView(FormView):
+class QaView(PermissionRequiredMixin,FormView):
     form_class=QaForm
     template_name = 'proyecto/qa_form.html'
+    permission_required = ('proyecto.p_administrar_us_qa')
+    raise_exception = True
+
+    def get_permission_object(self):
+        return get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
 
     def dispatch(self, request, *args, **kwargs):
         """ 

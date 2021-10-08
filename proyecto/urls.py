@@ -24,6 +24,7 @@ urlpatterns = [
     path('proyecto/<int:pk_proy>/agregar-desarrollador/',AgregarDesarrolladorView.as_view(), name='agregar-desarrollador-proyecto'),
     path('proyecto/<int:pk_proy>/editar-desarrollador/<int:dev_pk>/',EditDesarrolladorView.as_view(), name='editar-desarrollador-proyecto'),
     path('proyecto/<int:pk_proy>/sacar-desarrollador/<int:dev_pk>/',EliminarDesarrolladorView.as_view(), name='debaja-desarrollador-proyecto'),
+    path('proyecto/cancelar/<int:pk>/', views.cancelar, name='cancelar'),
 
     #URLS de roles de proyecto
     path('proyecto/<int:pk_proy>/rol/agregar',agregar_rol_proyecto_view,name='agregar-rol'),

@@ -80,7 +80,8 @@ class Proyecto(models.Model):
             #Permisos de sprint
             ("p_administrar_sprint","Permite que el usuario pueda gestionar los parámetros de los sprints, así como planificarlos, iniciarlos y finalizarlos."),
             #Permisos de user story
-            ("p_administrar_us","Permite que el usuario pueda agregar, editar y eliminar los user stories del proyecto."),     
+            ("p_administrar_us","Permite que el usuario pueda agregar, editar y eliminar los user stories del proyecto."),
+            ("p_administrar_us_qa","Con este permiso el usuario puede cambiar el estado de un user story a QA. Inicialmente es un permiso reservado al scrum master.")     
         )
 
 
