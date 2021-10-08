@@ -132,8 +132,9 @@ class Sprint(models.Model):
         choices=ESTADO_DE_SPRINT_CHOICES,
         default='I',
     )
-    carga_horaria = models.DecimalField(blank=True,null=True,decimal_places=2,max_digits=4,help_text="Total de horas de todos los user storys asignados")
+    carga_horaria = models.DecimalField(blank=True,null=True,decimal_places=2,max_digits=8,help_text="Total de horas de todos los user storys asignados",default=0)
     proyecto = models.ForeignKey(Proyecto,on_delete=CASCADE, null=True)
+    horas_disponibles = models.DecimalField(blank=True,null=True,decimal_places=2,max_digits=8,default=0)
 
     def __str__(self):
        return self.identificador
@@ -176,13 +177,13 @@ class UserStory(models.Model):
     ESTADO_APROBACION_USER_STORY = [
         ('T', 'Temporal'),
         ('A', 'Aprobado'),
+        ('C', 'Cancelado'),
     ]
     estado_aprobacion = models.CharField(
         max_length=1,
         choices= ESTADO_APROBACION_USER_STORY,
         default='T',
     )
-    #encargado = 
     ESTADO_DE_USER_STORY_CHOICES = [
         ('TD', 'To do'),
         ('DG', 'Doing'),
@@ -194,7 +195,39 @@ class UserStory(models.Model):
         choices=ESTADO_DE_USER_STORY_CHOICES,
         default='TD',
     )
+    last_estimated = models.DecimalField(blank=True,null=True,decimal_places=2,max_digits=4)
     encargado = models.ForeignKey(ProyectUser,blank=True,null=True,on_delete=CASCADE)
     creador = models.ForeignKey(User,blank=True,null=True,on_delete=CASCADE)
     sprint = models.ForeignKey('sprint',blank=True,null=True,on_delete=CASCADE)
     product_backlog = models.ForeignKey('productbacklog',on_delete=CASCADE, blank=True,null=True)
+
+class HistorialUS(models.Model):
+    nombre = models.CharField(verbose_name='Nombre del user story', max_length=20, blank=False, null=False)
+    descripcion = models.TextField(verbose_name='Descripción del user story', blank=True)
+    version = models.IntegerField()
+    PRIORIDAD_DE_USER_STORY_CHOICES = [
+        ('B', 'Baja'),
+        ('A', 'Alta'),
+        ('M', 'Media'),
+        ('E', 'Emergencia')
+    ]
+    prioridad = models.CharField(
+        max_length=1,
+        choices=PRIORIDAD_DE_USER_STORY_CHOICES,
+        default='B',
+    )
+    us_fk = models.ForeignKey(UserStory, on_delete=CASCADE, null=False)
+
+
+class Daily(models.Model):
+    """
+    Clase Daily: El desarrollador anota cuanto tiempo trabajó en el user story en horas. Puede anotar los impedimientos que entregó en el proceso,
+    puede anotar los progresos que hizo. Cada objeto daily se relaciona con un sprint ya que un user story puede ser tratado en diferentes sprints si no fue
+    terminado.
+    """
+    duracion = models.DecimalField(help_text='Trabajo realizado en horas.', decimal_places=2, max_digits=4)
+    impedimiento_comentario = models.TextField(verbose_name='Descripcion de las dificultades encontradas durante el desarrollo', blank=True)
+    progreso_comentario = models.TextField(verbose_name='Descripcion de los progresos encontrados durante el desarrollo', blank=True)
+    user_story = models.ForeignKey('userstory',on_delete=CASCADE, blank=True, null=True)
+    sprint = models.ForeignKey('sprint', on_delete=CASCADE, blank=True,null=True)
+    fecha = models.DateField(null=True,blank=True)

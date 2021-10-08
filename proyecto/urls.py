@@ -6,7 +6,7 @@ from django.contrib.auth.views import LogoutView
 from proyecto.views import agregar_rol_proyecto_view
 from django.urls import path
 from django.views.generic import TemplateView
-from .views import EliminarRolProyectoView, ProyectoDetailView,agregar_user_story_view, edit,editar_rol_proyecto_view, ListaProyectos, AssignUserRolProyecto,ImportarRolView, CreateProyectoView
+from .views import EliminarRolProyectoView, ProyectoDetailView,agregar_user_story_view, userstory_cancelar, edit,editar_rol_proyecto_view, ListaProyectos, AssignUserRolProyecto,ImportarRolView, CreateProyectoView
 from .views import  AgregarParticipanteProyecto, eliminarParticipanteView, AgregarDesarrolladorView,EditDesarrolladorView,EliminarDesarrolladorView,SolicitarPermisosView,AgregarSprintView,EquipoSprintUpdateView
 from .views import UserStoryUdateView,SprintView,ListaProyectosCancelados, UserStoryDetailView, InspectUserStoryView, quitar_user_story_view, iniciar_sprint_view, SprintKanbanView,SprintUpdateView, mark_us_doing, mark_us_todo, mark_us_done,FinalizarSprintView
 app_name = 'proyecto'
@@ -17,7 +17,9 @@ urlpatterns = [
     path('proyectos/', ListaProyectos.as_view(), name='index'),
     path('proyecto/<int:pk>/', ProyectoDetailView.as_view(), name='detail'),
     path('proyecto/edit/<int:pk>/', edit, name='edit'),
+    path('proyecto/cancelar/<int:pk>/', views.cancelar, name='cancelar'),
     path('proyecto/create/', CreateProyectoView.as_view(), name='create'),
+    path('proyecto/<int:pk_proy>/finalizar/', views.FinalizarProyectoView.as_view(), name='finalizar-proyecto'),
     path('proyecto/proyectos-cancelados/', ListaProyectosCancelados.as_view(), name='cancelados'),
     path('proyecto/<int:pk_proy>/agregar-participantes/',AgregarParticipanteProyecto.as_view(), name='agregar-participantes-proyecto'),
     path('proyecto/<int:pk_proy>/debaja-participante/<int:pk>/',eliminarParticipanteView, name='debaja-participante-proyecto'),
@@ -45,6 +47,7 @@ urlpatterns = [
     #URLS de user story
     path('proyecto/<int:pk_proy>/pbacklog',views.ProductBacklogView.as_view(),name='product-backlog'),
     path('proyecto/<int:pk_proy>/pbacklog/agregarUS',agregar_user_story_view,name='agregar-us'),
+    path('proyecto/<int:pk_proy>/cancelarUS/<int:us_id>', userstory_cancelar, name="userstory_cancelar"),
     path('proyecto/<int:pk_proy>/update-user-story/<int:us_id>',UserStoryUdateView.as_view(),name='user-story update'),
     path('proyecto/<int:pk_proy>/sprint/<int:sprint_id>/user-story/<int:us_id>/',UserStoryDetailView.as_view(),name='user-story-detail'),
     path('proyecto/<int:pk_proy>/sprint/<int:sprint_id>/user-story/<int:us_id>/quitar/',quitar_user_story_view,name='user-story-quitar'),
@@ -57,5 +60,12 @@ urlpatterns = [
     path('<int:pk_proy>/sprint/<int:sprint_id>/todo/user-story/<int:us_id>/', mark_us_todo, name='todo-user-story'),
     path('<int:pk_proy>/sprint/<int:sprint_id>/done/user-story/<int:us_id>/', mark_us_done, name='done-user-story'),
     path('proyecto/<int:pk_proy>/sprint/<int:sprint_id>/user-story-qa/<int:us_id>/',views.QaView.as_view(),name='user-story-qa'),
+    path('proyecto/<int:pk_proy>/sprint/<int:sprint_id>/burndown-chart/',views.SprintBurndownchartView.as_view(),name='sprint-burndownchart'),
+    path('proyecto/<int:pk_proy>/sprint/<int:sprint_id>/user-story/<int:us_id>/agregar-daily',views.agregar_daily_view,name='userstory-add-daily'),
+    path('proyecto/<int:pk_proy>/sprint/<int:sprint_id>/user-story/<int:us_id>/editar-daily/<int:d_pk>/',views.EditDailyView.as_view(),name='editar-daily'),
+    path('proyecto/<int:pk_proy>/sprint/<int:sprint_id>/user-story/<int:us_id>/eliminar-daily/<int:d_pk>/',views.EliminarDailyView.as_view(),name='eliminar-daily'),
+
+
+
 
 ]

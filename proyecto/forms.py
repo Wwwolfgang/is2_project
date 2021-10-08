@@ -2,7 +2,7 @@ from django.contrib.auth import models
 from django.forms import fields, widgets
 from django.contrib.auth.models import Permission
 from django import forms
-from .models import Proyecto, ProyectUser, RolProyecto, Sprint, UserStory
+from .models import Proyecto, ProyectUser, RolProyecto, Sprint, UserStory, Daily
 from sso.models import User
 from django import forms
 from django.forms.models import inlineformset_factory
@@ -75,6 +75,14 @@ class ProyectoCreateForm(forms.ModelForm):
         choices=[(p.id, "%s" % p.first_name + " " + p.last_name) for p in User.objects.exclude(first_name__isnull=True).exclude(first_name__exact='').exclude(pk=user.pk) if p.has_perm('sso.pg_is_user')],
         required=False
     )
+
+class ProyectoFinalizarForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(ProyectoFinalizarForm, self).__init__(*args, **kwargs)
+        self.fields['estado_de_proyecto'].required = False
+    class Meta:
+        model = Proyecto
+        fields = ["estado_de_proyecto",]
 
 
 class ImportarRolProyectoForm(forms.Form):
@@ -211,3 +219,13 @@ class UserStoryDevForm(forms.ModelForm):
 
 class QaForm(forms.Form):
     comentario = forms.CharField(widget=forms.Textarea,label='Comentario',help_text='De un comentario o recomendación.',required=True)
+class DailyForm(forms.ModelForm):
+    """
+    Form para crear un Daily
+    """
+    def __init__(self, *args, **kwargs):
+        super(DailyForm, self).__init__(*args, **kwargs)
+
+    class Meta:
+        model = Daily
+        fields = ['duracion','impedimiento_comentario','progreso_comentario']
