@@ -1,4 +1,3 @@
-from logging import raiseExceptions
 from django.db.models import Sum
 from django.views.generic.base import TemplateView
 from django.views.generic.detail import SingleObjectMixin
@@ -16,8 +15,8 @@ from django.views.generic import ListView, DetailView
 from django.urls import reverse
 import proyecto
 from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoEditForm,ProyectoCreateForm,AgregarParticipanteForm, DesarrolladorCreateForm,PermisoSolicitudForm,SprintCrearForm, AgregarUserStoryForm
-from proyecto.forms import EquipoFormset, UserStoryAssingForm, UserStoryDevForm, SprintModificarForm, SprintFinalizarForm, QaForm, UserstoryAprobarForm, ProyectoFinalizarForm
-from proyecto.models import RolProyecto, Proyecto, ProyectUser, Sprint, UserStory, ProductBacklog, HistorialUS
+from proyecto.forms import EquipoFormset, UserStoryAssingForm, UserStoryDevForm, SprintModificarForm, SprintFinalizarForm, QaForm, UserstoryAprobarForm, ProyectoFinalizarForm, DailyForm
+from proyecto.models import RolProyecto, Proyecto, ProyectUser, Sprint, UserStory, ProductBacklog, HistorialUS, Daily
 from django.views.generic.edit import UpdateView, DeleteView, FormView, CreateView
 from django.urls import reverse_lazy
 from guardian.decorators import permission_required_or_403,permission_required
@@ -301,13 +300,13 @@ class ProyectoDetailView(PermissionRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super(ProyectoDetailView,self).get_context_data(**kwargs)
         id = self.kwargs['pk']
-        sprints = Sprint.objects.filter(proyecto__pk=id)
+        Sprints = Sprint.objects.filter(proyecto__pk=id)
         proyecto = self.model.objects.get(id=id)
         self.request.session['proyecto_id'] = id
         self.request.session['proyecto_nombre'] = proyecto.nombreProyecto
         context.update({
             'proyecto': proyecto,
-            'sprints': sprints
+            'Sprints': Sprints
         }) 
         return context
 
@@ -550,7 +549,7 @@ class SolicitarPermisosView(FormView):
 
 class AgregarSprintView(PermissionRequiredMixin, CreateView):
     model = Sprint
-    template_name = "proyecto/agregar_sprint.html"
+    template_name = "proyecto/agregar_Sprint.html"
     form_class = SprintCrearForm
     raise_exception = True
     permission_required = ('proyecto.p_administrar_sprint')
@@ -575,12 +574,12 @@ class AgregarSprintView(PermissionRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super(AgregarSprintView,self).get_context_data(**kwargs)
-        sprints_count = Sprint.objects.filter(proyecto__id=self.kwargs['pk_proy']).exclude(estado_de_sprint='C').count()
+        Sprints_count = Sprint.objects.filter(proyecto__id=self.kwargs['pk_proy']).exclude(estado_de_Sprint='C').count()
         context.update({
             'proyecto_id': self.kwargs['pk_proy'],
-            'count': sprints_count + 1,
-            'sprint_count': Sprint.objects.filter(proyecto__id=self.kwargs['pk_proy']).filter(
-            estado_de_sprint='I').count()
+            'count': Sprints_count + 1,
+            'Sprint_count': Sprint.objects.filter(proyecto__id=self.kwargs['pk_proy']).filter(
+            estado_de_Sprint='I').count()
 
         })
         return context
@@ -593,9 +592,9 @@ class AgregarSprintView(PermissionRequiredMixin, CreateView):
 
     def form_valid(self,form):
         proyecto = Proyecto.objects.get(pk = self.kwargs['pk_proy'])
-        sprints_count = Sprint.objects.filter(proyecto__id=self.kwargs['pk_proy']).exclude(estado_de_sprint='C').count()
+        Sprints_count = Sprint.objects.filter(proyecto__id=self.kwargs['pk_proy']).exclude(estado_de_Sprint='C').count()
         obj = form.save(commit=True)
-        obj.identificador = 'Sprint ' + str(sprints_count+1)
+        obj.identificador = 'Sprint ' + str(Sprints_count+1)
         obj.proyecto = proyecto
         obj.save()
         return HttpResponseRedirect(reverse('proyecto:detail',kwargs={'pk':self.kwargs['pk_proy']}))
@@ -618,7 +617,7 @@ class EquipoSprintUpdateView(PermissionRequiredMixin,SingleObjectMixin,FormView)
         context = super(EquipoSprintUpdateView,self).get_context_data(**kwargs)
         context.update({
             'proyecto_id': self.kwargs['pk_proy'],
-            'sprint': Sprint.objects.get(pk=self.kwargs['pk']),
+            'Sprint': Sprint.objects.get(pk=self.kwargs['pk']),
         })
         return context
 
@@ -643,7 +642,7 @@ class EquipoSprintUpdateView(PermissionRequiredMixin,SingleObjectMixin,FormView)
         messages.add_message(
             self.request,
             messages.SUCCESS,
-            'Equipo del sprint actualizado'
+            'Equipo del Sprint actualizado'
         )
 
         return HttpResponseRedirect(self.get_success_url())
@@ -823,7 +822,7 @@ class SprintView(TemplateView):
         Los encargados y participantes del proyecto pueden ver los user storys asignados al sprint.
     """
     model = Sprint
-    template_name = 'proyecto/sprint_detail.html'
+    template_name = 'proyecto/Sprint_detail.html'
 
     def get_context_data(self, **kwargs):
         """ Función para inyectar variables de contexto que serán utilizados en el template."""
@@ -1250,3 +1249,75 @@ def userstory_cancelar(request, pk_proy, us_id, template_name='proyecto/userstor
         userstory.save()
         return HttpResponseRedirect(reverse('proyecto:product-backlog', kwargs={'pk_proy': pk_proy}))
     return render(request, template_name, {'object': userstory, 'proyecto_id':pk_proy})
+
+def agregar_daily_view(request, pk_us):
+    """
+    Vista para agregar un daily.
+    Se toman como parámetros la descripción, la lista de impedimientos, la lista de progreso y el user story asignado al daily
+    """
+    contexto = {}
+    contexto.update({
+        'proyecto_id': pk_us
+    })
+    if request.method == 'POST':      
+        form = DailyForm(request.POST or None)
+        #Si el form se cargó correctamente, lo guardamos
+        if form.is_valid():
+            daily = form.save()
+            daily.save()
+            #Redirigimos al daily
+            return redirect('proyecto:daily', pk_us)  
+        contexto['form'] = form
+        return render(request, 'proyecto/nuevo_daily_view.html', context=contexto)
+    else:
+        form = DailyForm()
+        contexto['form'] = form
+        return render(request, 'proyecto/nuevo_daily_view.html', context=contexto)
+
+class ListaDailyView(PermissionRequiredMixin, ListView):
+    permission_required = ('sso.pg_puede_acceder_proyecto','sso.pg_is_user')
+    raise_exception = True
+    model = Daily
+    template_name = 'proyecto/index.html'
+    context_object_name = 'daily_list'
+
+    def get_queryset(self):
+        return Daily.objects.all()
+
+class EditDailyView(PermissionRequiredMixin, UpdateView):
+    """
+    Vista para editar un Daily
+    TODO:funcionalidad del View
+    """
+    model = Daily
+    permission_required = ('sso.pg_is_user')
+    template_name = 'proyecto/edit_daily_view.html'
+    form_class= DailyForm
+    raise_exception = True
+
+    def get_object(self, queryset=None):
+        """ Función que retorna el proyecto cuyo equipo va ser modificado """
+        us = self.kwargs['us_pk']
+        return self.model.objects.get(user_story = us)
+
+    def get_context_data(self, **kwargs):
+        context = super(EditDailyView,self).get_context_data(**kwargs)
+        context.update({
+            'user_story': self.kwargs['us_pk'],
+            'edit': True
+        })
+        return context
+
+    def get_form_kwargs(self):
+        """ Función que inyecta el id del proyecto como argumento. """
+        kwargs = super(EditDailyView, self).get_form_kwargs()
+        kwargs['pk_us'] = self.kwargs['us_pk']
+        return kwargs
+
+
+    def form_valid(self, form):
+        """
+        En esta función se agrega los usuarios marcados por el usuario al campo equipo del proyecto
+        """
+        form.save()
+        return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_us':self.kwargs['pk_us']}))

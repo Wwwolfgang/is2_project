@@ -14,4 +14,4 @@ __pycache__
 .pytest_cache
 /cesar/
 /*/__pycache__/
-proyecto/migrations
+*/migrations/

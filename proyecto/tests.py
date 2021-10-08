@@ -1,4 +1,4 @@
-from proyecto.models import Proyecto, RolProyecto, Sprint
+from proyecto.models import Proyecto, RolProyecto, Sprint, ProyectoUser
 from sso import models
 from django.db.models import fields
 from django.db.models.query_utils import PathInfo
@@ -12,7 +12,7 @@ from allauth.utils import get_user_model
 from datetime import datetime
 import pytest
 from pytest_django.asserts import assertTemplateUsed
-
+from datetime import datetime
 # Create your tests here.
 @pytest.fixture
 def create_rol(self, name="Scrum Master"):
@@ -25,6 +25,21 @@ def usuario_creado():
     last_name="Wiens Wohlgemuth"
     email="wwwolfgang469@gmail.com"
     return models.User.objects.create(username=username, first_name=first_name,last_name=last_name,email=email)
+
+@pytest.fixture
+def proyecto_creado():
+    nombreProyecto = 'Proyecto 1'
+    fechaInicio = datetime.now()
+    fechaFin = datetime.now()
+    fechaFin.day = fechaFin.day + 14
+    estado_de_proyecto = 'I'
+    return Proyecto.objects.create(nombreProyecto = nombreProyecto,fechaInicio = fechaInicio,fechaFin = fechaFin, estado_de_proyecto = estado_de_proyecto)
+
+@pytest.fixture
+def proyecto_user_creado(): 
+    horas_diarias = 9
+    return ProyectoUser.objects.create(horas_diarias = horas_diarias)
+
 @pytest.mark.django_db
 class TestModelRolProyecto:
     """
@@ -95,6 +110,29 @@ class TestViewsRolProyecto:
         proyecto = Proyecto.objects.create(nombreProyecto='proyectotest')
         response = self.client.get(reverse('proyecto:importar-roles',kwargs={'pk_proy':proyecto.pk}), follow=True)
         self.assertEqual(response.status_code, 200)
+
+@pytest.mark.django_db
+class TestModelsProyecto:
+    """
+    Tests para comprobar las funcionalidades del modelo de proyecto
+    """
+    def test_proyecto_nombre_vacio(self):
+        proyectoTest = proyecto_creado()
+        assert proyectoTest.nombreProyecto != ''
+    
+    def test_proyecto_fecha_invalida(self):
+        proyectoTest = proyecto_creado()
+        assert abs( proyectoTest.fechaFin - proyectoTest.fechaInicio ) == proyectoTest.fechaFin - proyectoTest.fechaInicio, "Error: Fecha Final es mas reciente que Fecha Inicial"
+    
+    def test_proyecto_owner_(self):
+        proyectoTest = proyecto_creado()
+        userTest = usuario_creado()
+        proyectoTest.save()
+        userTest.save()
+        proyectoTest.owner.add(userTest)
+        assert '@' in proyectoTest.owner.email 
+    
+
 @pytest.mark.django_db
 class TestViewsProyecto:
     """
@@ -134,3 +172,16 @@ class TestModelSprint:
         """
         sprint = Sprint.objects.create(fechaInicio=datetime.now, fechaFin=datetime.now, estado_de_sprint='A')
         assert abs(sprint.fechaFin - sprint.fechaInicio) == sprint.fechaFin - sprint.fechaInicio, "Error: Fecha Final es mas reciente que Fecha Inicial"
+    
+ 
+class TestViewsProyectoUser:
+    """
+    Tests para comprobar las funcionalidades de los views de proyecto user
+    """
+    def proyecto_user_inicializado(self):
+        proyectoUser = proyecto_user_creado()
+        proyectoUser.permisos.set(list(Permission.objects.all()))
+        proyectoUser.save()
+        return proyectoUser
+    
+    
