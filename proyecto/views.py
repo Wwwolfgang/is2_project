@@ -29,6 +29,7 @@ from statistics import mean
 from django.core.mail import send_mail
 from datetime import datetime, timedelta
 from django.core.serializers import serialize
+from decimal import Decimal
 
 
 class EliminarRolProyectoView(PermissionRequiredMixin, DeleteView):
@@ -261,6 +262,7 @@ class AssignUserRolProyecto(PermissionRequiredMixin,UpdateView):
 
         return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']}))
 #Views de proyecto
+
 class ListaProyectos(PermissionRequiredMixin, ListView):
     """ Listado de todos los proyectos a los cuales el usuario tiene acceso. Puede hacer algunas acciones como editar, eliminar, etc. o entrar en el proyecto. """
     permission_required = ('sso.pg_puede_acceder_proyecto','sso.pg_is_user')
@@ -363,6 +365,7 @@ class AgregarParticipanteProyecto(PermissionRequiredMixin, UpdateView):
             proyecto.equipo.add(user)
         return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']}))
 
+
 @permission_required_or_403('proyecto.p_administrar_participantes',(Proyecto,'pk','pk_proy'))
 def eliminarParticipanteView(request, pk_proy, pk, template_name='proyecto/delete_confirm_participante.html'):
     """ View para eliminar participantes de equipo de un proyecto. Es una vista de confirmación
@@ -410,6 +413,7 @@ def cancelar(request, pk, template_name='proyecto/confirm-cancel.html'):
         proyecto.save()
         return HttpResponseRedirect(reverse('proyecto:index'))
     return render(request, template_name, {'object':proyecto})
+
 
 class AgregarDesarrolladorView(CreateView):
     """ Este view está obsoleto. En el futuro se va eliminar. """
@@ -631,6 +635,10 @@ class EquipoSprintUpdateView(PermissionRequiredMixin,SingleObjectMixin,FormView)
 
     def form_valid(self, form):
         form.save()
+        sprint = Sprint.objects.get(pk=self.kwargs['pk'])
+        equipo = ProyectUser.objects.filter(sprint__pk=sprint.pk)
+        sprint.horas_disponibles = round(equipo.aggregate(Sum('horas_diarias')).get('horas_diarias__sum',0.00) * Decimal(sprint.duracionSprint),1)
+        sprint.save()
 
         messages.add_message(
             self.request,
@@ -641,7 +649,7 @@ class EquipoSprintUpdateView(PermissionRequiredMixin,SingleObjectMixin,FormView)
         return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
-        return reverse('proyecto:detail', kwargs={'pk': self.kwargs['pk_proy'],})
+        return reverse('proyecto:sprint-detail', kwargs={'pk_proy': self.kwargs['pk_proy'],'sprint_id':self.kwargs['pk']})
 
 
 class SprintUpdateView(PermissionRequiredMixin,UpdateView):
@@ -816,6 +824,8 @@ class SprintView(TemplateView):
         sprint_backlog = UserStory.objects.filter(sprint__pk = self.kwargs['sprint_id'])
         total_us = sprint_backlog.count()
         ready_us = sprint_backlog.exclude(tiempo_promedio_calculado__isnull=True).count()
+        sprint = Sprint.objects.get(pk=self.kwargs['sprint_id'])
+
         if total_us == ready_us and total_us != 0:
             context.update({
                 'ready_inicio': True
@@ -823,9 +833,10 @@ class SprintView(TemplateView):
 
         context.update({
             'proyecto_id': self.kwargs['pk_proy'],
-            'sprint': Sprint.objects.get(pk=self.kwargs['sprint_id']),
+            'sprint': sprint,
             'user_storys': ProductBacklog.objects.get(proyecto__pk = self.kwargs['pk_proy']).userstory_set.filter(estado_aprobacion='A').filter(sprint__isnull=True),
             'sprint_backlog': sprint_backlog,
+            'hours_remaining': sprint.horas_disponibles - sprint.carga_horaria,
             'owner': Proyecto.objects.get(pk=self.kwargs['pk_proy']).owner
         })
         return context
@@ -906,7 +917,12 @@ class UserStoryDetailView(UpdateView):
                 recipient_list=[us.encargado.usuario.email],
             )
         us.save()
-        sprint.carga_horaria = UserStory.objects.filter(sprint__id=self.kwargs['sprint_id']).aggregate(Sum('tiempo_promedio_calculado')).get('tiempo_promedio_calculado__sum',0.00)
+        tiempo = UserStory.objects.filter(sprint__id=self.kwargs['sprint_id']).aggregate(Sum('tiempo_promedio_calculado')).get('tiempo_promedio_calculado__sum',0.00)
+        if tiempo != None:
+            sprint.carga_horaria = tiempo
+        else:
+            sprint.carga_horaria = 0
+
         sprint.save()
         messages.add_message(
             self.request,
@@ -1201,3 +1217,18 @@ class FinalizarProyectoView(UpdateView):
 
     def get_success_url(self):
         return reverse('proyecto:detail', kwargs={'pk': self.kwargs['pk_proy']})
+
+
+class SprintBurndownchartView(TemplateView):
+    template_name='proyecto/sprint_burndownchart.html'
+    raise_exception = True
+
+    def get_context_data(self, **kwargs):
+        context = super(SprintBurndownchartView,self).get_context_data(**kwargs)
+
+        context.update({
+            'proyecto_id': self.kwargs['pk_proy'],
+            'sprint': Sprint.objects.get(pk=self.kwargs['sprint_id']),
+            'sprint_id': self.kwargs['sprint_id'],
+        })
+        return context

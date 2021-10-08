@@ -131,8 +131,9 @@ class Sprint(models.Model):
         choices=ESTADO_DE_SPRINT_CHOICES,
         default='I',
     )
-    carga_horaria = models.DecimalField(blank=True,null=True,decimal_places=2,max_digits=4,help_text="Total de horas de todos los user storys asignados")
+    carga_horaria = models.DecimalField(blank=True,null=True,decimal_places=2,max_digits=8,help_text="Total de horas de todos los user storys asignados",default=0)
     proyecto = models.ForeignKey(Proyecto,on_delete=CASCADE, null=True)
+    horas_disponibles = models.DecimalField(blank=True,null=True,decimal_places=2,max_digits=8,default=0)
 
     def __str__(self):
        return self.identificador
