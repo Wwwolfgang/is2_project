@@ -48,9 +48,10 @@ def user_story_creado():
 @pytest.fixture
 def daily_creado():
     duracion = 15
-    lista_impedimiento = ["Impedimiento1","Impedimiento2","Impedimiento3"]
-    lista_progreso = ["Progreso1","Progreso2","Progreso3"]
-    return Daily.objects.create(duracion = duracion, lista_impedimiento = lista_impedimiento, lista_progreso = lista_progreso)
+    impedimiento_comentario = "Impedimiento1\nImpedimiento2\nImpedimiento3"
+    progreso_comentario = "Progreso1\nProgreso2\nProgreso3"
+    fecha = datetime.now()
+    return Daily.objects.create(duracion = duracion, impedimiento_comentario = impedimiento_comentario, progreso_comentario = progreso_comentario, fecha = fecha)
 
 @pytest.fixture
 def proyecto_user_creado(): 
@@ -167,28 +168,24 @@ class TestViewsProyecto:
         Test encargado de comprobar que se cargue correctamente la página de listar proyectos.
         """
         response = cliente_loggeado.get(reverse('proyecto:index'), follow=True)
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
 @pytest.mark.django_db
 class TestModelSprint:
     """
     Pruebas unitarias que comprueban las funciones del model Sprint
-
     """
-
-
-
     def test_model_sprint(self):
-        sprint = Sprint.objects.create(fechaInicio=datetime.now, fechaFin=datetime.now, estado_de_sprint='A')
+        sprint = Sprint.objects.create(fechaInicio=datetime.now(), fechaFin=datetime.now(), estado_de_sprint='A')
         estado_sprint = Sprint.objects.get(estado_de_sprint='A')
-        assert estado_sprint in sprint.ESTADO_DE_SPRINT_CHOICES, "Estado de Sprint inválido"
+        assert estado_sprint in sprint.ESTADO_DE_SPRINT_CHOICES[0], "Estado de Sprint inválido"
 
     def test_fechaInicio(self):
         """
         Prueba unitaria que comprueba que el campo nombre de un rol tenga que ser
         distinto de ''
         """
-        sprint = Sprint.objects.create(fechaInicio=datetime.now, fechaFin=datetime.now, estado_de_sprint='A')
+        sprint = Sprint.objects.create(fechaInicio=datetime.now(), fechaFin=datetime.now(), estado_de_sprint='A')
         assert abs(sprint.fechaFin - sprint.fechaInicio) == sprint.fechaFin - sprint.fechaInicio, "Error: Fecha Final es mas reciente que Fecha Inicial"
     
 @pytest.mark.django_db 
@@ -252,12 +249,10 @@ class TestModelsDaily:
         assert daily.duracion > 0 and daily.duracion < 60
     def test_daily_lista_impedimiento_invalida(self,daily_creado):
         daily = daily_creado
-        for impedimiento in daily.lista_impedimiento:
-            assert len(impedimiento) > 5
+        assert len(daily.impedimiento_comentario) > 5
     def test_daily_lista_progreso_invalida(self,daily_creado):
         daily = daily_creado
-        for progreso in daily.lista_progreso:
-            assert len(progreso) > 5
+        assert len(daily.progreso_comentario) > 5
     def test_daily_user_story(self,daily_creado,user_story_creado):
         daily = daily_creado
         user_story = user_story_creado
