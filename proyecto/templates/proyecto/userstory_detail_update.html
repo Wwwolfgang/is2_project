@@ -106,54 +106,55 @@
                     {% endif %}
             </div>
         {% endif %}
-
-        <a class="nav-link" href="{% url 'proyecto:userstory-add-daily' proyecto_id sprint_id object.pk %}"><i class="fas fa-stopwatch me-2"></i>Agregar Daily</a>
-        {% if daily_list %}
-            {% for daily in daily_list %}
-            <div class="container">
-                <div class="card mb-2">
-                    <div class="card-header">
-                        <ul class="nav nav-pills card-header-pills">
-                            <li class="navbar-brand text-black">Daily</li>
-                            <li class="navbar-brand text-black">{{daily.fecha|default_if_none:""}}</li>
-                            <li class="nav-item">
-                                <a href="{% url 'proyecto:editar-daily' proyecto_id sprint_id object.pk daily.pk %}?next={{request.path}}" class="nav-link"><i class="fas fa-pen me-2"></i>Modificar</a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{% url 'proyecto:eliminar-daily' proyecto_id sprint_id object.pk daily.pk %}?next={{request.path}}" class="nav-link" style="color: red;"><i class="fas fa-trash me-2"></i>Eliminar</a>
-                            </li>
-                          </ul>
-                    </div>
-                    <div class="card-body">
-                        <strong>Duración: </strong>{{daily.duracion}} hs.<br/>
-                        <strong>Impedimientos: </strong>{{daily.impedimiento_comentario}}<br/>
-                        <strong>Progresos: </strong>{{daily.progreso_comentario}}<br/>
+        {% if sprint_id and object.sprint%}
+            <a class="nav-link" href="{% url 'proyecto:userstory-add-daily' proyecto_id sprint_id object.pk %}"><i class="fas fa-stopwatch me-2"></i>Agregar Daily</a>
+            {% if daily_list %}
+                {% for daily in daily_list %}
+                <div class="container">
+                    <div class="card mb-2">
+                        <div class="card-header">
+                            <ul class="nav nav-pills card-header-pills">
+                                <li class="navbar-brand text-black">Daily</li>
+                                <li class="navbar-brand text-black">{{daily.fecha|default_if_none:""}}</li>
+                                <li class="nav-item">
+                                    <a href="{% url 'proyecto:editar-daily' proyecto_id sprint_id object.pk daily.pk %}?next={{request.path}}" class="nav-link"><i class="fas fa-pen me-2"></i>Modificar</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{% url 'proyecto:eliminar-daily' proyecto_id sprint_id object.pk daily.pk %}?next={{request.path}}" class="nav-link" style="color: red;"><i class="fas fa-trash me-2"></i>Eliminar</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="card-body">
+                            <strong>Duración: </strong>{{daily.duracion}} hs.<br/>
+                            <strong>Impedimientos: </strong>{{daily.impedimiento_comentario}}<br/>
+                            <strong>Progresos: </strong>{{daily.progreso_comentario}}<br/>
+                        </div>
                     </div>
                 </div>
-            </div>
-            {% endfor %}
+                {% endfor %}
+            {% endif %}
         {% endif %}
+
 
         {% for historial in historial %}
             <br/>
             <div class="card ">
-            <div class="card-header">
-                <strong>Version: </strong>{{historial.version}} User story: {{historial.nombre}}
-                {% if historial.prioridad == 'A' %}
-                    <span class="badge  bg-warning text-dark">Alta</span>
-                {% elif historial.prioridad == 'B'%}
-                    <span class="badge  bg-success text-right">Baja</span>
-                {% elif historial.prioridad == 'M'%}
-                    <span class="badge  bg-primary text-right">Media</span>
-                {% elif historial.prioridad == 'E'%}
-                    <span class="badge  bg-danger text-right">Emergencia</span>
-                {% endif %}
-            </div>
-            <div class="card-body">
-                <h5 class="card-title">Descripción:</h5>
-                {{historial.descripcion}}</div>
-            <div class="card-body">
-
+                <div class="card-header">
+                    <strong>Version: </strong>{{historial.version}} User story: {{historial.nombre}}
+                    {% if historial.prioridad == 'A' %}
+                        <span class="badge  bg-warning text-dark">Alta</span>
+                    {% elif historial.prioridad == 'B'%}
+                        <span class="badge  bg-success text-right">Baja</span>
+                    {% elif historial.prioridad == 'M'%}
+                        <span class="badge  bg-primary text-right">Media</span>
+                    {% elif historial.prioridad == 'E'%}
+                        <span class="badge  bg-danger text-right">Emergencia</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Descripción:</h5>
+                    {{historial.descripcion}}
+                </div>
             </div>
         {% endfor %}
     </div>
