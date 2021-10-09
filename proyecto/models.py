@@ -1,10 +1,3 @@
-from django.contrib.postgres.fields import ArrayField
-from django.db import models
-from sso.models import User
-from django.contrib.auth.models import AbstractUser
-import datetime
-from django.db.models.fields import CharField
-from django.db.models.fields.related import ManyToManyField
 from django.contrib.auth.models import Permission
 from django.db import models
 from datetime import datetime
@@ -26,11 +19,7 @@ class RolProyecto(models.Model):
     permisos = models.ManyToManyField(Permission)
     participantes = models.ManyToManyField(User,blank=True)
     proyecto = models.ForeignKey('proyecto', on_delete=models.CASCADE, blank=True, null=True)
-    class Meta:
-        permissions = (
-                    ('p_administrar_roles','Permite que el usuario pueda configurar, crear, importar y eliminar roles del proyecto. Solo los permisos del scrum master no se podrán modificar.'),
-        )
-
+    
     def get_permisos(self):
         """
         Función que retorna la lista de permisos asociados al rol
@@ -76,31 +65,67 @@ class Proyecto(models.Model):
     )
     owner = models.ForeignKey(User,blank=True,null=True,on_delete=CASCADE,related_name='creador')
     equipo = models.ManyToManyField(User,blank=True)
-    equipo_desarrollador = models.ManyToManyField('proyectouser',blank=True)
+    equipo_desarrollador = models.ManyToManyField('proyectuser',blank=True)
 
     class Meta:
         permissions = (
+            #Permisos de proyecto
             ("p_acceder_proyectos","Permiso de acceder proyecto."),
             ("p_cancelar_proyectos","Permiso de cancelar proyecto."),
             ("p_editar_proyectos","Permiso de editar proyecto."),
-            ("p_finalizar_proyectos","Permiso de finalizar proyecto."),      
+            ("p_finalizar_proyectos","Permiso de finalizar proyecto."),
+            ("p_administrar_participantes","Permiso para agregar y eliminar participantes del proyecto."),
+            #Permiso de roles
+            ("p_administrar_roles","Permite que el usuario pueda agregar, editar, importar y eliminar roles del proyecto. Solo los permisos del scrum master no se podrán modificar."),
+            #Permisos de sprint
+            ("p_administrar_sprint","Permite que el usuario pueda gestionar los parámetros de los sprints, así como planificarlos, iniciarlos y finalizarlos."),
+            #Permisos de user story
+            #El permiso para administrar user stories va a ser aplicado junto al permiso de agregar y editar los dailys,
+            ("p_administrar_us","Permite que el usuario pueda editar los user stories del proyecto (cambiar estado, nombre, descripción y horas)."),
+            ("p_eliminar_us","Permite que el usuario pueda eliminar user stories del proyecto (cambiar estado, nombre, descripción y horas)."),
+            ("p_administrar_us_qa","Con este permiso el usuario puede cambiar el estado de un user story a QA. Inicialmente es un permiso reservado al scrum master."),
+            ("p_aprobar_us","Con este permiso el usuario puede agregar un user story en estado no aprobado, así como también modificarlo y aprobarlo para que pase al product backlog."),
+            #Agregado un permiso para eliminar el daily, que se gestionará como un permiso adicional
+            ("p_eliminar_daily","Permite que el usuario pueda eliminar el daily asociado a un user story."),
+            ("p_administrar_devs","Con este permiso el usuario puede gestionar los desarrolladores en un sprint."),    
         )
 
 
-class ProyectoUser(models.Model):
+class ProyectUser(models.Model):
+    """ 
+        Clase ProyctUser
+        Es un usuario o desarrollador asignado a un sprint
+        Se especifica el usuario y su carga horaria diaria y el sprint al cual fue asignado
+    """
     usuario = models.ForeignKey(User,on_delete=CASCADE)
     horas_diarias = models.DecimalField(blank=False,decimal_places=2,max_digits=4,null=False,help_text='La cantidad de horas que trabaja el desarrollador por día.')
     sprint = models.ForeignKey('sprint', related_name='sprint_team',on_delete=CASCADE)
 
+    def __str__(self):
+       return "%s" % self.usuario.first_name + " " + self.usuario.last_name + "  " + str(self.horas_diarias) + " hs/D"
 
 class ProductBacklog(models.Model):
+    """ Clase de Product Backlog es una llave foranea al proyecto """
     proyecto = models.ForeignKey(Proyecto,on_delete=CASCADE)
 
 
 class Sprint(models.Model):
+    """ 
+        Clase Sprint
+        El sprint es la unidad que contiene un conjunto de user storys
+        Campos:
+
+        - Identificador o Nombre
+        - Fecha inicio TODO falta asignar
+        - Fecha fin TODO falta asignar
+        - Duración del sprint en dias TODO falta hacer advertencias en la planificación
+        - Estado del sprint
+        - Carga horaria sumando los tiempos de los user storys
+        - Proyecto al cual pertenece
+    """
     identificador = models.CharField(default='Sprint',max_length=50)
     fechaInicio = models.DateField(null=True)
-    fechaFin = models.DateField(help_text='Fecha estimada de finalización del Sprint. Dependiendo de esta fecha se mostrarán alertas.')
+    fechaFin = models.DateField(null=True,help_text='Fecha estimada de finalización del Sprint. Dependiendo de esta fecha se mostrarán alertas.')
     duracionSprint = models.IntegerField(null=False, blank=False, default=14,validators=[MinValueValidator(1),MaxValueValidator(60)], help_text="Duración estimada en días")
     ESTADO_DE_SPRINT_CHOICES = [
         ('A', 'Activo'),
@@ -113,7 +138,9 @@ class Sprint(models.Model):
         choices=ESTADO_DE_SPRINT_CHOICES,
         default='I',
     )
+    carga_horaria = models.DecimalField(blank=True,null=True,decimal_places=2,max_digits=8,help_text="Total de horas de todos los user storys asignados",default=0)
     proyecto = models.ForeignKey(Proyecto,on_delete=CASCADE, null=True)
+    horas_disponibles = models.DecimalField(blank=True,null=True,decimal_places=2,max_digits=8,default=0)
 
     def __str__(self):
        return self.identificador
@@ -122,13 +149,26 @@ class Sprint(models.Model):
 class UserStory(models.Model):
     """
     Clase user story
-    TODO: Agregar el campo 'encargado', que relacione el user story con el participante del proyecto encargado de 
-    realizar la tarea
+    El modelo de user story es un modelo muy importante del sistema.
+    Sus campos son:
+
+    - Nombre
+    - Descripción del user story
+    - Tiempo de duración hasta completar estimado por el scrum master
+    - Tiempo de duración hasta completar estimado por el encargado
+    - Tiempo promedio calculado pro los dos tiempos anteriores
+    - Prioridad del user story: baja, alta, media, emergencia
+    - Estado de aprobación: temporal si fue creado pero no aprobado y aprobado si se aprobó y no puede ser modificado
+    - Encargado, desarrollador asignado al user story
+    - Creador, usuario que lo creó
+    - Sprint, el sprint al cual el user story fue asignado
+    - Product Backlog para hacer la relación al proyecto (Un campo un poco innecesario)
     """
-    nombre = models.CharField(verbose_name='Nombre del user story', max_length=20, blank=False,null=False)
+    nombre = models.CharField(verbose_name='Nombre del user story', max_length=100, blank=False,null=False)
     descripcion = models.TextField(verbose_name='Descripción del user story',blank=True)
-    tiempo_estimado_scrum_master = models.PositiveIntegerField(blank=True,null=True,help_text="Tiempo de duración estimado por el scrum master.")
-    tiempo_estimado_dev = models.PositiveIntegerField(blank=True,null=True,help_text="Tiempo de duración estimado por el desarrollador asignado.")
+    tiempo_estimado_scrum_master = models.PositiveIntegerField(blank=True,null=True,help_text="Tiempo de duración estimado por el scrum master.",default=0)
+    tiempo_estimado_dev = models.PositiveIntegerField(blank=True,null=True,help_text="Tiempo de duración estimado por el desarrollador asignado.",default=0)
+    tiempo_promedio_calculado = models.DecimalField(blank=True,null=True,decimal_places=2,max_digits=4,help_text="Tiempo de duración promedio entre los dos tiempos estimados.")
     PRIORIDAD_DE_USER_STORY_CHOICES = [
         ('B', 'Baja'),
         ('A', 'Alta'),
@@ -143,13 +183,13 @@ class UserStory(models.Model):
     ESTADO_APROBACION_USER_STORY = [
         ('T', 'Temporal'),
         ('A', 'Aprobado'),
+        ('C', 'Cancelado'),
     ]
     estado_aprobacion = models.CharField(
         max_length=1,
         choices= ESTADO_APROBACION_USER_STORY,
         default='T',
     )
-    #encargado = 
     ESTADO_DE_USER_STORY_CHOICES = [
         ('TD', 'To do'),
         ('DG', 'Doing'),
@@ -161,16 +201,39 @@ class UserStory(models.Model):
         choices=ESTADO_DE_USER_STORY_CHOICES,
         default='TD',
     )
+    last_estimated = models.DecimalField(blank=True,null=True,decimal_places=2,max_digits=4)
+    encargado = models.ForeignKey(ProyectUser,blank=True,null=True,on_delete=CASCADE)
     creador = models.ForeignKey(User,blank=True,null=True,on_delete=CASCADE)
     sprint = models.ForeignKey('sprint',blank=True,null=True,on_delete=CASCADE)
     product_backlog = models.ForeignKey('productbacklog',on_delete=CASCADE, blank=True,null=True)
 
+class HistorialUS(models.Model):
+    nombre = models.CharField(verbose_name='Nombre del user story', max_length=20, blank=False, null=False)
+    descripcion = models.TextField(verbose_name='Descripción del user story', blank=True)
+    version = models.IntegerField()
+    PRIORIDAD_DE_USER_STORY_CHOICES = [
+        ('B', 'Baja'),
+        ('A', 'Alta'),
+        ('M', 'Media'),
+        ('E', 'Emergencia')
+    ]
+    prioridad = models.CharField(
+        max_length=1,
+        choices=PRIORIDAD_DE_USER_STORY_CHOICES,
+        default='B',
+    )
+    us_fk = models.ForeignKey(UserStory, on_delete=CASCADE, null=False)
+
+
 class Daily(models.Model):
     """
-    Clase Daily: Actividad diaria donde el equipo se reune por un breve tiempo y discute del progreso del User Story
-    TODO:Agregar views de agregar, listar y modificar Daily
+    Clase Daily: El desarrollador anota cuanto tiempo trabajó en el user story en horas. Puede anotar los impedimientos que entregó en el proceso,
+    puede anotar los progresos que hizo. Cada objeto daily se relaciona con un sprint ya que un user story puede ser tratado en diferentes sprints si no fue
+    terminado.
     """
-    duracion            = models.IntegerField(verbose_name='Duracion del daily (en minutos)',name='duracion',default=15)
-    lista_impedimiento  = ArrayField(models.CharField(verbose_name='Descripcion de las dificultades encontradas durante el desarrollo',name='descripcion_impedimiento',max_length=100,blank=False,default='Ingrese una descripcion...'),verbose_name='Listado de impedimientos encontrados en el desarrollo',name='lista_impedimiento',max_length=5)
-    lista_progreso      = ArrayField(models.CharField(verbose_name='Descripcion de los progresos encontrados durante el desarrollo',name='descripcion_progreso',max_length=100,blank=False,default='Ingrese un progreso...'),verbose_name='Listado de progresos encontrados en el desarrollo',name='lista_progreso',max_length=5)
-    user_story          = models.ForeignKey('UserStory',on_delete=CASCADE,blank=True,null=True)
+    duracion = models.DecimalField(help_text='Trabajo realizado en horas.', decimal_places=2, max_digits=4)
+    impedimiento_comentario = models.TextField(verbose_name='Descripcion de las dificultades encontradas durante el desarrollo', blank=True)
+    progreso_comentario = models.TextField(verbose_name='Descripcion de los progresos encontrados durante el desarrollo', blank=True)
+    user_story = models.ForeignKey('userstory',on_delete=CASCADE, blank=True, null=True)
+    sprint = models.ForeignKey('sprint', on_delete=CASCADE, blank=True,null=True)
+    fecha = models.DateField(null=True,blank=True)

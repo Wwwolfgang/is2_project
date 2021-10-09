@@ -1,6 +1,6 @@
-{% extends 'proyecto/proyecto-detalle.html' %}
+{% extends 'proyecto/sprint_detail.html' %}
 
-{% block proyecto_content %}
+{% block sprint_body %}
 <div class="container">
     <div class="row"></div>
     <br />
@@ -10,16 +10,15 @@
             <form method="post">
                 {% csrf_token %}
                 <div class="form-row">
-                    <div class="alert alert-warning">
-                        ¿Desea eliminar este Participante del proyecto?<br/>
-                        <h4>{{ usuario.first_name }} {{usuario.last_name}} </h4>
+                    <div class="alert alert-success">
+                        ¿Desea finalizar el Sprint?<br/>
                     </div>
                 </div>
                 <div>
-                    <a class="btn btn-warning" role="button" href="{% url 'proyecto:roles' object.id %}">
+                    <a class="btn btn-warning" role="button" href="{% url 'proyecto:sprint-detail' proyecto_id sprint_id %}">
                         Cancelar
                     </a>
-                    <button type="submit" class="my-2 btn btn-danger">Eliminar Participante</button>
+                    <button type="submit" class="my-2 btn btn-success"><i class="fas fa-flag-checkered me-3"></i>Finalizar Sprint</button>
                 </div>
             </form>
         </div>

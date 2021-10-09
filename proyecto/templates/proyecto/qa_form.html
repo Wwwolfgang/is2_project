@@ -1,0 +1,57 @@
+{% extends 'proyecto/sprint_detail.html' %}
+
+{% block sprint_body %}
+{% load widget_tweaks %}
+
+<div class="container-fluid">
+    <div class="row">
+        <h5 style="text-align:start;">
+            Quality assurance
+        </h5>
+        <div class="col-md-10 col-xs-10 col-sm-10 pb-5">
+            <div class="card ">
+                <div class="card-header">
+                    User story: {{user_story.nombre}}
+                    {% if user_story.prioridad_user_story == 'A' %}
+                        <span class="badge  bg-warning text-dark">{{user_story.get_prioridad_user_story_display}}</span>
+                    {% elif user_story.prioridad_user_story == 'B'%}
+                        <span class="badge  bg-success text-right">{{user_story.get_prioridad_user_story_display}}</span>
+                    {% elif user_story.prioridad_user_story == 'M'%}
+                        <span class="badge  bg-primary text-right">{{user_story.get_prioridad_user_story_display}}</span>
+                    {% elif user_story.prioridad_user_story == 'E'%}
+                        <span class="badge  bg-danger text-right">{{user_story.get_prioridad_user_story_display}}</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Descripción:</h5>
+        
+                    {{user_story.descripcion}}
+                    <p class="card-text"><strong>Dev asignado: </strong>{{user_story.encargado}}</p>
+                    <p class="card-text"><strong>Duración estimada: </strong>{{user_story.tiempo_promedio_calculado}} hs.</p>
+                </div>
+            </div>
+            <form method="post" novalidate>
+                {% csrf_token %}
+                <div class="form-row">
+                {% for field in form.visible_fields %}
+                    {% if field.name == 'comentario'%}
+                        Comentario (campo obligatorio):
+                        {% render_field field class="form-control" %}
+                        {% if field.help_text %}
+                            <small class="form-text text-muted">{{ field.help_text }}</small>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+                </div>
+                <div>
+                    <a class="btn btn-warning" role="button" href="{% url 'proyecto:sprint-kanban' proyecto_id sprint_id %}">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="my-2 btn btn-success" name="aprove" value="aproved"><i class="fas fa-flag-checkered me-3"></i>Listo para release</button>
+                    <button type="submit" class="my-2 btn btn-danger" name="aprove" value="denied"><i class="fas fa-bug me-3"></i>Mandar a revisar(DOING)</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,164 @@
+{% extends 'proyecto/proyecto-detalle.html' %}
+
+{% block proyecto_content %}
+{% load widget_tweaks %}
+{% load socialaccount %}
+
+<div class="card class mt-2 mx-0">
+    <div class="card ">
+        <div class="card-header">
+            User story: {{object.nombre}}
+            {% if object.prioridad_user_story == 'A' %}
+                <span class="badge  bg-warning text-dark">{{object.get_prioridad_user_story_display}}</span>
+            {% elif object.prioridad_user_story == 'B'%}
+                <span class="badge  bg-success text-right">{{object.get_prioridad_user_story_display}}</span>
+            {% elif object.prioridad_user_story == 'M'%}
+                <span class="badge  bg-primary text-right">{{object.get_prioridad_user_story_display}}</span>
+            {% elif object.prioridad_user_story == 'E'%}
+                <span class="badge  bg-danger text-right">{{object.get_prioridad_user_story_display}}</span>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">Descripción:</h5>
+
+            {{object.descripcion}}
+        </div>
+
+        {% if sprint_activo == False %}
+        <div class="card-body">
+            {% if object.last_estimated != None %}
+                <strong>Duración estimada anteriormente: </strong>{{object.last_estimated}} hs.
+            {% endif %}
+            <form action="" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {% for field in form.visible_fields %}
+                <div class="form-group class pb-2">
+                    
+                    {% if field.name == 'tiempo_estimado_scrum_master'%}
+                        {% if user == scrum_master %}
+                            Duración en horas
+                            {% render_field field class="form-control" %}
+                            {% if field.help_text %}
+                            <small class="form-text text-muted">{{ field.help_text }}</small>
+                            {% endif %}
+                        {% else %}
+                            <strong>Duración estimada por Scrum Master: </strong>{{object.tiempo_estimado_scrum_master}} hs. 
+                        {% endif %}
+                    {% endif %}
+                    {% if field.name == 'encargado'%}
+                        {% if user == scrum_master %}
+                            Encargado
+                            {% render_field field class="form-control" %}
+                            {% if field.help_text %}
+                            <small class="form-text text-muted">{{ field.help_text }}</small>
+                            {% endif %}
+                        {% else %}
+                            <strong>Desarrollador asignado: </strong>{{object.encargado}} hs.
+                        {% endif %}
+                    {% endif %}
+
+                    {% if is_assigned == True and user == object.encargado.usuario %}
+                        {% if field.name == 'tiempo_estimado_dev'%}
+                            Usted como Dev asignado, estime el tiempo en hs que toma para terminar el user story.
+                            {% render_field field class="form-control" %}
+                            {% if field.help_text %}
+                            <small class="form-text text-muted">{{ field.help_text }}</small>
+                            {% endif %}
+                        {% endif %}
+                    {% else %}
+                    {% endif %}
+
+                </div>
+                {% endfor %}
+                {% if sprint_id == None %}
+                    <a class="btn btn-warning" role="button" href="{% url 'proyecto:product-backlog' proyecto_id %}">
+                        Atrás
+                    </a>
+                {% else %}
+                    <a class="btn btn-warning" role="button" href="{% url 'proyecto:sprint-detail' proyecto_id sprint_id %}">
+                        Cancelar
+                    </a>
+                    {% if user == scrum_master or user == object.encargado.usuario %}
+                        {% if object.sprint == None %}
+                            <button type="submit" class="my-2 btn btn-success">Agregar al sprint</button>
+                        {% else %}
+                            <button type="submit" class="my-2 btn btn-success">Actualizar user story</button>
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+                
+                
+            </form>
+        </div>
+        {% else %}
+            <div class="card-body">
+                <p><strong>Desarrollador asignado: </strong>
+                    {% if object.encargado %}
+                        {{object.encargado}}</p>
+                    {% else %}
+                        No asignado
+                    {% endif %}
+                <p><strong>Duración estimada: </strong>
+                    {% if object.tiempo_promedio_calculado %}
+                        {{object.tiempo_promedio_calculado}} hs. </p>
+                    {% else %}
+                        No asignado
+                    {% endif %}
+            </div>
+        {% endif %}
+        {% if sprint_id and object.sprint%}
+            <a class="nav-link" href="{% url 'proyecto:userstory-add-daily' proyecto_id sprint_id object.pk %}"><i class="fas fa-stopwatch me-2"></i>Agregar Daily</a>
+            {% if daily_list %}
+                {% for daily in daily_list %}
+                <div class="container">
+                    <div class="card mb-2">
+                        <div class="card-header">
+                            <ul class="nav nav-pills card-header-pills">
+                                <li class="navbar-brand text-black">Daily</li>
+                                <li class="navbar-brand text-black">{{daily.fecha|default_if_none:""}}</li>
+                                <li class="nav-item">
+                                    <a href="{% url 'proyecto:editar-daily' proyecto_id sprint_id object.pk daily.pk %}?next={{request.path}}" class="nav-link"><i class="fas fa-pen me-2"></i>Modificar</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{% url 'proyecto:eliminar-daily' proyecto_id sprint_id object.pk daily.pk %}?next={{request.path}}" class="nav-link" style="color: red;"><i class="fas fa-trash me-2"></i>Eliminar</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="card-body">
+                            <strong>Duración: </strong>{{daily.duracion}} hs.<br/>
+                            <strong>Impedimientos: </strong>{{daily.impedimiento_comentario}}<br/>
+                            <strong>Progresos: </strong>{{daily.progreso_comentario}}<br/>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endif %}
+
+
+        {% for historial in historial %}
+            <br/>
+            <div class="card ">
+                <div class="card-header">
+                    <strong>Version: </strong>{{historial.version}} User story: {{historial.nombre}}
+                    {% if historial.prioridad == 'A' %}
+                        <span class="badge  bg-warning text-dark">Alta</span>
+                    {% elif historial.prioridad == 'B'%}
+                        <span class="badge  bg-success text-right">Baja</span>
+                    {% elif historial.prioridad == 'M'%}
+                        <span class="badge  bg-primary text-right">Media</span>
+                    {% elif historial.prioridad == 'E'%}
+                        <span class="badge  bg-danger text-right">Emergencia</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Descripción:</h5>
+                    {{historial.descripcion}}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+
+{% endblock %}
