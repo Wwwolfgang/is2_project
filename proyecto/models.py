@@ -80,7 +80,14 @@ class Proyecto(models.Model):
             #Permisos de sprint
             ("p_administrar_sprint","Permite que el usuario pueda gestionar los parámetros de los sprints, así como planificarlos, iniciarlos y finalizarlos."),
             #Permisos de user story
-            ("p_administrar_us","Permite que el usuario pueda agregar, editar y eliminar los user stories del proyecto."),     
+            #El permiso para administrar user stories va a ser aplicado junto al permiso de agregar y editar los dailys,
+            ("p_administrar_us","Permite que el usuario pueda editar los user stories del proyecto (cambiar estado, nombre, descripción y horas)."),
+            ("p_eliminar_us","Permite que el usuario pueda eliminar user stories del proyecto (cambiar estado, nombre, descripción y horas)."),
+            ("p_administrar_us_qa","Con este permiso el usuario puede cambiar el estado de un user story a QA. Inicialmente es un permiso reservado al scrum master."),
+            ("p_aprobar_us","Con este permiso el usuario puede agregar un user story en estado no aprobado, así como también modificarlo y aprobarlo para que pase al product backlog."),
+            #Agregado un permiso para eliminar el daily, que se gestionará como un permiso adicional
+            ("p_eliminar_daily","Permite que el usuario pueda eliminar el daily asociado a un user story."),
+            ("p_administrar_devs","Con este permiso el usuario puede gestionar los desarrolladores en un sprint."),    
         )
 
 
