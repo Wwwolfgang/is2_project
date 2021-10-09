@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.shortcuts import get_object_or_404
 from guardian.shortcuts import assign_perm, remove_perm, get_user_perms
+from django.forms.models import model_to_dict
 #Mixin de django por defecto
 #from django.contrib.auth.mixins import PermissionRequiredMixin,LoginRequiredMixin
 #Usamos el mixin de Django Guardian
@@ -32,7 +33,7 @@ from django.core.serializers import serialize
 from decimal import Decimal
 
 
-class EliminarRolProyectoView(PermissionRequiredMixin, DeleteView):
+class EliminarRolProyectoView(DeleteView):
     """
     Vista para eliminar un rol de proyecto.
     Se selecciona un rol, se confirma la eliminación, y se retorna a la
@@ -40,7 +41,7 @@ class EliminarRolProyectoView(PermissionRequiredMixin, DeleteView):
     """
     model = RolProyecto
     template_name = 'proyecto/eliminar_rol_proyecto.html'
-    permission_required = ('proyecto.p_administrar_roles')
+    # permission_required = ('proyecto.p_administrar_roles')
     raise_exception = True
 
     def get_object(self, queryset=None):
@@ -48,6 +49,14 @@ class EliminarRolProyectoView(PermissionRequiredMixin, DeleteView):
         id = self.kwargs['pk']
         return self.model.objects.get(id=id)
 
+    def dispatch(self, request, *args, **kwargs):
+        rol = get_object_or_404(RolProyecto,pk=kwargs['pk'])
+        next = request.GET.get('next')
+        if rol.participantes.all().count() != 0:
+            messages.warning(request, '¡Hay usuarios que fueron asignados a este rol, no se puede eliminar el rol si tiene usuarios asignados!')
+            return HttpResponseRedirect(next)
+        return super().dispatch(request, *args, **kwargs)
+        
     def get_permission_object(self):
         return get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
 
@@ -787,6 +796,7 @@ class UserStoryUdateView(PermissionRequiredMixin,UpdateView):
         HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=us.pk), version=ver, nombre=us.nombre, descripcion=us.descripcion, prioridad = us.prioridad_user_story)
         return HttpResponseRedirect(self.get_success_url())
 
+
 class ProductBacklogView(PermissionRequiredMixin, ListView):
     """ View de todos los user storys del proyecto. A la izquierda se ven los user storys temporales, a la derecha los aprobados que ya se encuentran el backlog. """
     model = UserStory
@@ -870,7 +880,7 @@ class SprintView(TemplateView):
             'sprint': sprint,
             'user_storys': ProductBacklog.objects.get(proyecto__pk = self.kwargs['pk_proy']).userstory_set.filter(estado_aprobacion='A').filter(sprint__isnull=True),
             'sprint_backlog': sprint_backlog,
-            'hours_remaining': sprint.horas_disponibles - sprint.carga_horaria,
+            'hours_remaining': sprint.horas_disponibles if sprint.horas_disponibles != None else 0 - sprint.carga_horaria,
             'owner': Proyecto.objects.get(pk=self.kwargs['pk_proy']).owner
         })
         return context
@@ -916,7 +926,7 @@ class UserStoryDetailView(UpdateView):
             'assignar': True,
             'scrum_master' : Proyecto.objects.get(pk=self.kwargs['pk_proy']).owner,
             'sprint_id': self.kwargs['sprint_id'],
-            'daily_list': Daily.objects.filter(user_story__pk=self.kwargs['us_id']).filter(sprint__pk=self.kwargs['sprint_id'])
+            'daily_list': Daily.objects.filter(user_story__pk=self.kwargs['us_id']).filter(sprint__pk=self.kwargs['sprint_id']),
         })
         return context
 
@@ -990,7 +1000,7 @@ class InspectUserStoryView(DetailView):
         context = super(InspectUserStoryView,self).get_context_data(**kwargs)
         context.update({
             'proyecto_id': self.kwargs['pk_proy'],
-            'historial' : HistorialUS.objects.filter(us_fk__pk = self.kwargs['us_id']).exclude(version = HistorialUS.objects.filter(us_fk__id=(self.kwargs['us_id'])).count()).order_by('-version')
+            'historial' : HistorialUS.objects.filter(us_fk__pk = self.kwargs['us_id']).exclude(version = HistorialUS.objects.filter(us_fk__id=(self.kwargs['us_id'])).count()).order_by('-version'),
         })
         return context
 
@@ -1244,7 +1254,7 @@ class FinalizarProyectoView(PermissionRequiredMixin,UpdateView):
         elif Sprint.objects.filter(proyecto__pk=self.kwargs['pk_proy']).count() != Sprint.objects.filter(proyecto__pk=self.kwargs['pk_proy']).filter(estado_de_sprint='F').count():
             messages.error(request, '¡No se puede finalizar un proyecto que tiene sprints que no fueron finalizados!')
             return HttpResponseRedirect(next)
-        elif ProductBacklog.objects.get(proyecto__pk=self.kwargs['pk_proy']).userstory_set.exclude(estado_user_story='DN').count() != 0:
+        elif ProductBacklog.objects.get(proyecto__pk=self.kwargs['pk_proy']).userstory_set.filter(estado_aprobacion='A').exclude(estado_user_story='DN').count() != 0:
             messages.error(request, '¡No se puede finalizar un proyecto que tiene user storys en el product backlog que no fueron completados!')
             return HttpResponseRedirect(next)
 
@@ -1279,11 +1289,32 @@ class SprintBurndownchartView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super(SprintBurndownchartView,self).get_context_data(**kwargs)
+        sprint = get_object_or_404(Sprint,pk=self.kwargs['sprint_id'])
+        fecha = sprint.fechaInicio
+        work_left = []
+        hours = sprint.carga_horaria
+        today = datetime.now()
+
+        for index in range(sprint.duracionSprint):
+            hours_worked = Daily.objects.filter(sprint__pk=self.kwargs['sprint_id']).filter(fecha=fecha).aggregate(Sum('duracion')).get('duracion__sum',0.00) 
+            if hours_worked == None:
+                hours_worked = 0
+            hours -= hours_worked
+            if hours != None and hours >= 0:
+                work_left.append(str(hours))
+            else:
+                work_left.append(str(0))
+
+            fecha += timedelta(days=1)
+            if fecha > today.date():
+                break
 
         context.update({
             'proyecto_id': self.kwargs['pk_proy'],
-            'sprint': Sprint.objects.get(pk=self.kwargs['sprint_id']),
+            'sprint': sprint,
             'sprint_id': self.kwargs['sprint_id'],
+            'sprint_json': json.dumps(work_left),
+            'dias': json.dumps(sprint.duracionSprint)
         })
         return context
 

@@ -205,9 +205,6 @@ SOCIALACCOUNT_PROVIDERS = {
         }
     }
 }
-
-GUARDIAN_RENDER_403=True
-
 """ 
 Se usa como proveedor de SSO a Google. Con esta configuración se configura todo el client_id y el secret, sacados de la 
 consola de developers de Google
