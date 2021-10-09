@@ -6,6 +6,51 @@
 
 <div class="card class mt-2 mx-0">
     <div class="card ">
+        {% if sprint_id and object.sprint %}
+        <div class="card-header">
+            <ul class="nav nav-pills card-header-pills">
+              <a class="navbar-brand text-black" href="{% url 'proyecto:sprint-detail' proyecto_id sprint_id %}">{{object.sprint.identificador}}
+                  {% if sprint.estado_de_sprint == 'I' %}
+                      <span class="badge bg-warning text-dark">{{sprint.get_estado_de_sprint_display}}</span>
+                  {% elif sprint.estado_de_sprint == 'F'%}
+                      <span class="badge bg-success text-right">{{sprint.get_estado_de_sprint_display}}</span>
+                  {% elif sprint.estado_de_sprint == 'A'%}
+                      <span class="badge bg-primary text-right">{{sprint.get_estado_de_sprint_display}}</span>
+                  {% elif sprint.estado_de_sprint == 'C'%}
+                      <span class="badge bg-danger text-right">{{sprint.get_estado_de_sprint_display}}</span>
+                  {% endif %}
+              </a>
+              
+              <li class="nav-item">
+                  <a href="{% url 'proyecto:sprint-team-edit' proyecto_id sprint_id%}" class="nav-link"><i class="fas fa-users me-2"></i>Team</a>
+              </li>
+
+              {% if sprint.estado_de_sprint != 'A' %}
+              <li class="nav-item">
+                  <a href="{% url 'proyecto:sprint-edit' proyecto_id sprint_id%}?next={{request.path}}" class="nav-link"><i class="fas fa-pen me-2"></i>Modificar</a>
+              </li>
+              {% endif %}
+              <li class="nav-item">
+                  <a class="nav-link" href="{% url 'proyecto:sprint-kanban' proyecto_id sprint_id %}"><i class="fas fa-map-marked me-2"></i>Kanban</a>
+              </li>
+              {% if ready_inicio == True and sprint.estado_de_sprint == 'I' %}
+              <a class="btn btn-outline-success" role="button" href="{% url 'proyecto:sprint-iniciar' proyecto_id sprint_id %}">
+                  Iniciar Sprint
+              </a>
+              {% elif sprint.estado_de_sprint == 'A'%}
+              <li class="nav-item">
+                  <a class="nav-link" href="{% url 'proyecto:sprint-burndownchart' proyecto_id sprint_id %}"><i class="fas fa-chart-line me-2"></i>Burndown-chart</a>
+              </li>
+
+              <li class="nav-item">
+                  <a class="nav-link" href="{% url 'proyecto:sprint-finalizar' proyecto_id sprint_id %}"><i class="fas fa-flag-checkered me-2"></i>Finalizar</a>
+              </li>
+              
+              {% endif %}
+            </ul>
+          </div>
+        {% endif %}
+        
         <div class="card-header">
             User story: {{object.nombre}}
             {% if object.prioridad_user_story == 'A' %}
@@ -106,7 +151,7 @@
                     {% endif %}
             </div>
         {% endif %}
-        {% if sprint_id and object.sprint%}
+        {% if sprint_id and object.sprint %}
             <a class="nav-link" href="{% url 'proyecto:userstory-add-daily' proyecto_id sprint_id object.pk %}"><i class="fas fa-stopwatch me-2"></i>Agregar Daily</a>
             {% if daily_list %}
                 {% for daily in daily_list %}

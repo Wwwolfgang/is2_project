@@ -207,6 +207,11 @@ class UserStory(models.Model):
     sprint = models.ForeignKey('sprint',blank=True,null=True,on_delete=CASCADE)
     product_backlog = models.ForeignKey('productbacklog',on_delete=CASCADE, blank=True,null=True)
 
+    class Meta:
+        permissions = (
+            ("us_manipular_userstory_dailys","Permiso de manipular los dailys de un userstory."),
+        )
+
 class HistorialUS(models.Model):
     nombre = models.CharField(verbose_name='Nombre del user story', max_length=20, blank=False, null=False)
     descripcion = models.TextField(verbose_name='Descripción del user story', blank=True)

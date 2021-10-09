@@ -56,7 +56,7 @@ class EliminarRolProyectoView(DeleteView):
             messages.warning(request, '¡Hay usuarios que fueron asignados a este rol, no se puede eliminar el rol si tiene usuarios asignados!')
             return HttpResponseRedirect(next)
         return super().dispatch(request, *args, **kwargs)
-        
+
     def get_permission_object(self):
         return get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
 
@@ -135,6 +135,7 @@ def agregar_rol_proyecto_view(request, pk_proy):
         form = AgregarRolProyectoForm()   
         contexto['form'] = form
         return render(request, 'proyecto/nuevo_rol_proyecto_view.html', context=contexto)
+
 
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
 @permission_required_or_403('proyecto.p_administrar_roles',(Proyecto,'pk','pk_proy'))
@@ -422,10 +423,15 @@ def edit(request, pk, template_name='proyecto/edit.html'):
     """ Vista para editar algunos atributos del proyecto como la duracion del sprint y la fecha de finalizacion. """
     proyecto = get_object_or_404(Proyecto, pk=pk)
     form = ProyectoEditForm(request.POST or None, instance=proyecto)
+    contexto = {}
+    contexto.update({
+        'proyecto_id': pk,
+        'form':form
+    })
     if form.is_valid():
         form.save()
         return HttpResponseRedirect(reverse('proyecto:index'))
-    return render(request, template_name, {'form':form})
+    return render(request, template_name, context=contexto)
 
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
 @permission_required_or_403('proyecto.p_cancelar_proyectos',(Proyecto,'pk','pk'))
@@ -963,6 +969,12 @@ class UserStoryDetailView(UpdateView):
                 recipient_list=[us.encargado.usuario.email],
             )
         us.save()
+        if us.encargado:
+            perm = Permission.objects.get(codename='us_manipular_userstory_dailys')
+            assign_perm(perm,us.encargado.usuario,us)
+            assign_perm(perm,proyecto.owner,us)
+
+
         tiempo = UserStory.objects.filter(sprint__id=self.kwargs['sprint_id']).aggregate(Sum('tiempo_promedio_calculado')).get('tiempo_promedio_calculado__sum',0.00)
         if tiempo != None:
             sprint.carga_horaria = tiempo
@@ -1080,7 +1092,7 @@ class SprintKanbanView(TemplateView):
         return context
 
 
-@permission_required_or_403('proyecto.p_administrar_us',(Proyecto,'pk','pk_proy'))
+@permission_required_or_403('proyecto.us_manipular_userstory_dailys',(UserStory,'pk','us_id'))
 def mark_us_doing(request, pk_proy, sprint_id,us_id):
     """ 
     Vista, que marca como en proceso a un user story en el Kanban. Con este view se cambia el estado a Doing.
@@ -1091,14 +1103,14 @@ def mark_us_doing(request, pk_proy, sprint_id,us_id):
     us.save()
     return HttpResponseRedirect(reverse('proyecto:sprint-kanban',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id}))
 
-@permission_required_or_403('proyecto.p_administrar_us',(Proyecto,'pk','pk_proy'))
+@permission_required_or_403('proyecto.us_manipular_userstory_dailys',(UserStory,'pk','us_id'))
 def mark_us_todo(request, pk_proy, sprint_id,us_id):
     us = get_object_or_404(UserStory, pk=us_id)
     us.estado_user_story = 'TD'
     us.save()
     return HttpResponseRedirect(reverse('proyecto:sprint-kanban',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id}))
 
-@permission_required_or_403('proyecto.p_administrar_us',(Proyecto,'pk','pk_proy'))
+@permission_required_or_403('proyecto.us_manipular_userstory_dailys',(UserStory,'pk','us_id'))
 def mark_us_done(request, pk_proy, sprint_id,us_id):
     us = get_object_or_404(UserStory, pk=us_id)
     us.estado_user_story = 'QA'
@@ -1318,6 +1330,7 @@ class SprintBurndownchartView(TemplateView):
         })
         return context
 
+
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
 def userstory_cancelar(request, pk_proy, us_id, template_name='proyecto/userstory_cancelar.html'):
     """ Este view está obsoleto. En el futuro se va eliminar. """
@@ -1328,8 +1341,9 @@ def userstory_cancelar(request, pk_proy, us_id, template_name='proyecto/userstor
         return HttpResponseRedirect(reverse('proyecto:product-backlog', kwargs={'pk_proy': pk_proy}))
     return render(request, template_name, {'object': userstory, 'proyecto_id':pk_proy})
 
-@permission_required_or_403('proyecto.p_administrar_us',(Proyecto,'pk','pk_proy'))
-def agregar_daily_view(request, pk_proy, sprint_id,us_id):
+
+@permission_required_or_403('proyecto.us_manipular_userstory_dailys',(UserStory,'pk','us_id'))
+def agregar_daily_view(request, pk_proy, sprint_id, us_id):
     """
     Vista para agregar un daily.
     Se toman como parámetros la descripción, la lista de impedimientos, la lista de progreso y el user story asignado al daily
@@ -1368,13 +1382,13 @@ class EditDailyView(PermissionRequiredMixin,UpdateView):
     TODO:funcionalidad del View
     """
     model = Daily
-    permission_required = ('proyecto.p_administrar_us')
+    permission_required = ('proyecto.us_manipular_userstory_dailys')
     template_name = 'proyecto/daily_view_form.html'
     form_class= DailyForm
     raise_exception = True
 
     def get_permission_object(self):
-        return get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
+        return get_object_or_404(UserStory, pk = self.kwargs['us_id'])
 
     def get_object(self, queryset=None):
         """ Función que retorna el proyecto cuyo equipo va ser modificado """
@@ -1406,12 +1420,16 @@ class EditDailyView(PermissionRequiredMixin,UpdateView):
 
 class EliminarDailyView(PermissionRequiredMixin,DeleteView):
     """
-    
+    Este View es un DeleteView para facilitar la eliminación de un registro de Daily.
+    Este View requiere el permiso de Eliminación de views
     """
     model = Daily
     template_name = 'proyecto/eliminar_daily_confirm.html'
-    permission_required = ('proyecto.p_eliminar_daily')
+    permission_required = ('proyecto.us_manipular_userstory_dailys')
     raise_exception = True
+
+    def get_permission_object(self):
+        return get_object_or_404(UserStory, pk = self.kwargs['us_id'])
 
     def get_object(self, queryset=None):
         """ Función que retorna el proyecto cuyo equipo va ser modificado """
