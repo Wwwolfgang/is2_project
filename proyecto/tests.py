@@ -260,3 +260,30 @@ class TestModelsDaily:
         user_story.save()
         daily.user_story = user_story
         assert daily.user_story.estado_aprobacion == 'T'
+
+@pytest.mark.django_db
+class TestViewsDaily:
+    def test_agregar_daily_view(self,daily_creado,user_story_creado):
+        daily = daily_creado
+        user_story = user_story_creado
+        daily.save()
+        user_story.save()
+        daily.user_story = user_story
+        response = self.client.get(reverse('proyecto:agregar-daily',kwargs={'pk_proy':proyecto.pk,'sprint_id':sprint.pk,'us_id':user_story.pk}), follow=True)
+        assert response.status_code == 200
+    def test_editar_daily_view(self,daily_creado,user_story_creado):
+        daily = daily_creado
+        user_story = user_story_creado
+        daily.save()
+        user_story.save()
+        daily.user_story = user_story
+        response = self.client.get(reverse('proyecto:editar-daily',kwargs={'pk_proy':proyecto.pk,'sprint_id':sprint.pk,'us_id':user_story.pk}), follow=True)
+        assert response.status_code == 200
+    def test_eliminar_daily_view(self,daily_creado,user_story_creado):
+        daily = daily_creado
+        user_story = user_story_creado
+        daily.save()
+        user_story.save()
+        daily.user_story = user_story
+        response = self.client.get(reverse('proyecto:eliminar-daily',kwargs={'pk_proy':proyecto.pk,'sprint_id':sprint.pk,'us_id':user_story.pk}), follow=True)
+        assert response.status_code == 200
