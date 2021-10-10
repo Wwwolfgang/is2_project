@@ -58,6 +58,15 @@ def proyecto_user_creado():
     horas_diarias = 9
     return ProyectUser.objects.create(horas_diarias = horas_diarias)
 
+@pytest.fixture
+def sprint_creado():
+    nombre = 'Sprint'
+    fechai = datetime.now
+    fechaf = datetime.now
+    estado= 'A'
+    sprint = Sprint.objects.create(identificador = nombre, fechaFin=fechaf, fechaInicio = fechai, estado_de_sprint= estado)
+    return sprint
+
 @pytest.mark.django_db
 class TestModelRolProyecto:
     """
@@ -198,6 +207,7 @@ class TestViewsProyectoUser:
         proyectoUser.permisos.set(list(Permission.objects.all()))
         proyectoUser.save()
         return proyectoUser
+<<<<<<< HEAD
 
 @pytest.mark.django_db
 class TestModelsUserStory:
@@ -287,3 +297,41 @@ class TestViewsDaily:
         daily.user_story = user_story
         response = self.client.get(reverse('proyecto:eliminar-daily',kwargs={'pk_proy':proyecto.pk,'sprint_id':sprint.pk,'us_id':user_story.pk}), follow=True)
         assert response.status_code == 200
+=======
+    
+@pytest.mark.django_db
+class TestViewSprints:
+
+    """
+    Test para comprobar la funcionalidad de los views de Sprints
+    """
+
+    def sprint_inicializado(self):
+        sprint = sprint_creado()
+        return sprint
+
+    @pytest.fixture
+    def cliente_loggeado(self, usuario_creado):
+        client = Client()
+        client.login(username='user_test', password='password123')
+        return client
+
+
+    def test_lista_sprint_view(self, cliente_loggeado, usuario_creado):
+        """
+        Test encargado de comprobar que se cargue correctamente la página de listar Sprints.
+        """
+        response = cliente_loggeado.get(reverse('proyecto:index'), follow=True)
+        self.assertEqual(response.status_code, 200)
+
+
+    def test_sprint_update_view(self, cliente_loggeado, usuario_creado):
+        """
+        Test para comprobar la edición de un sprint
+        """
+        sprint = self.sprint_inicializado()
+        proyecto = Proyecto.objects.create(nombreProyecto='proyectotest')
+        response = self.client.get(
+            reverse('proyecto:sprint-edit', kwargs={'pk_proy': proyecto.pk, 'sprint_id': sprint.pk}), follow=True)
+        self.assertEqual(response.status_code, 403)
+>>>>>>> origin/julio
