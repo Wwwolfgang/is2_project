@@ -122,6 +122,7 @@ class Sprint(models.Model):
         - Estado del sprint
         - Carga horaria sumando los tiempos de los user storys
         - Proyecto al cual pertenece
+        - Horas disponibles, que es el total de días por horas de desarrolladores disponibles
     """
     identificador = models.CharField(default='Sprint',max_length=50)
     fechaInicio = models.DateField(null=True)
@@ -163,6 +164,10 @@ class UserStory(models.Model):
     - Creador, usuario que lo creó
     - Sprint, el sprint al cual el user story fue asignado
     - Product Backlog para hacer la relación al proyecto (Un campo un poco innecesario)
+    - Un campo del último tiempo estimado. En caso de que el user story debe ser tratado en un sprint futuro.
+    TODO 
+
+    - agregar un campo que guarda las horas completadas en el sprint si es que el user story no fue terminado en un sprint.
     """
     nombre = models.CharField(verbose_name='Nombre del user story', max_length=100, blank=False,null=False)
     descripcion = models.TextField(verbose_name='Descripción del user story',blank=True)
@@ -213,6 +218,16 @@ class UserStory(models.Model):
         )
 
 class HistorialUS(models.Model):
+    """ 
+    Modelo de historial. Cada entrada de historial es una nueva versión de un user story, es creado para cada modificación de un user story.
+    Guarda:
+    
+    - El nombre del user story
+    - La descripción del user story
+    - El número de versión de historial
+    - La prioridad del user story
+    - El user story padre de las versiones
+    """
     nombre = models.CharField(verbose_name='Nombre del user story', max_length=20, blank=False, null=False)
     descripcion = models.TextField(verbose_name='Descripción del user story', blank=True)
     version = models.IntegerField()
@@ -232,9 +247,17 @@ class HistorialUS(models.Model):
 
 class Daily(models.Model):
     """
-    Clase Daily: El desarrollador anota cuanto tiempo trabajó en el user story en horas. Puede anotar los impedimientos que entregó en el proceso,
+    Clase Daily: El desarrollador anota cuanto tiempo trabajó en el user story en horas. Puede anotar los impedimientos que encontró en el proceso y
     puede anotar los progresos que hizo. Cada objeto daily se relaciona con un sprint ya que un user story puede ser tratado en diferentes sprints si no fue
-    terminado.
+    terminado. Además se agrega la fecha de creación del daily.
+    Campos:
+
+    - duracipon en horas decimales
+    - los impedimientos
+    - los progresos
+    - el user story padre
+    - el sprint activo
+    - la fecha de creación
     """
     duracion = models.DecimalField(help_text='Trabajo realizado en horas.', decimal_places=2, max_digits=4)
     impedimiento_comentario = models.TextField(verbose_name='Descripcion de las dificultades encontradas durante el desarrollo', blank=True)
