@@ -60,11 +60,12 @@ def proyecto_user_creado():
 
 @pytest.fixture
 def sprint_creado():
-    nombre = 'Sprint'
-    fechai = datetime.now
-    fechaf = datetime.now
-    estado= 'A'
-    sprint = Sprint.objects.create(identificador = nombre, fechaFin=fechaf, fechaInicio = fechai, estado_de_sprint= estado)
+    identificador = 'Sprint'
+    fechaInicio = datetime.now()
+    fechaFin = datetime.now()
+    duracionSprint = 15
+    estado_de_sprint = 'A'
+    sprint = Sprint.objects.create(identificador = identificador, fechaInicio = fechaInicio, fechaFin = fechaFin,duracionSprint = duracionSprint, estado_de_sprint= estado_de_sprint)
     return sprint
 
 @pytest.mark.django_db
@@ -121,30 +122,30 @@ class TestViewsRolProyecto:
         response = client.get(reverse('proyecto:rol-editar',kwargs={'pk_proy':proyecto.pk,'id_rol':rolproyecto.id}), follow=True)
         assert response.status_code == 403
 
-    def test_lista_rol_proyecto_view(self, cliente_loggeado):
+    def test_lista_rol_proyecto_view(self, cliente_loggeado,proyecto_creado):
         """
         Test encargado de comprobar que se cargue correctamente la página de listar roles.
         """
-        proyecto = Proyecto.objects.create(nombreProyecto='proyectotest')
+        proyecto = proyecto_creado
         client = cliente_loggeado
         response = client.get(reverse('proyecto:roles',kwargs={'pk_proy':proyecto.pk}),follow=True)
         assert response.status_code == 200
 
-    def test_agregar_rol_proyecto_view(self, cliente_loggeado):
+    def test_agregar_rol_proyecto_view(self, proyecto_creado, cliente_loggeado):
         """
         Test encargado de comprobar que se cargue correctamente la página de agregar rol.
         """
         client = cliente_loggeado
-        proyecto = Proyecto.objects.create(nombreProyecto='proyectotest')
+        proyecto = proyecto_creado
         response = client.get(reverse('proyecto:agregar-rol',kwargs={'pk_proy':proyecto.pk}), follow=True)
         assert response.status_code == 200
 
-    def test_importar_rol_proyecto_view(self, cliente_loggeado):
+    def test_importar_rol_proyecto_view(self, proyecto_creado, cliente_loggeado):
         """
         Test encargado de comprobar que se cargue correctamente la página de agregar rol.
         """
         client = cliente_loggeado
-        proyecto = Proyecto.objects.create(nombreProyecto='proyectotest')
+        proyecto = proyecto_creado
         response = client.get(reverse('proyecto:importar-roles',kwargs={'pk_proy':proyecto.pk}), follow=True)
         assert response.status_code == 200
 
@@ -286,35 +287,38 @@ class TestViewsDaily:
         client = Client()
         client.login(username='user_test', password='password123')
         return client
-    def test_agregar_daily_view(self,daily_creado,user_story_creado,sprint_creado,cliente_loggeado):
+    def test_agregar_daily_view(self,daily_creado,user_story_creado,sprint_creado,proyecto_creado,cliente_loggeado):
         daily = daily_creado
         user_story = user_story_creado
         sprint = sprint_creado
         client = cliente_loggeado
+        proyecto = proyecto_creado
         daily.save()
         user_story.save()
         daily.user_story = user_story
-        response = client.get(reverse('proyecto:agregar-daily',kwargs={'pk_proy':proyecto.pk,'sprint_id':sprint.pk,'us_id':user_story.pk}), follow=True)
+        response = client.get(reverse('proyecto:userstory-add-daily',kwargs={'pk_proy':proyecto.pk,'sprint_id':sprint.pk, 'us_id':user_story.pk}))
         assert response.status_code == 200
-    def test_editar_daily_view(self,daily_creado,user_story_creado,sprint_creado,cliente_loggeado):
+    def test_editar_daily_view(self,daily_creado,user_story_creado,sprint_creado,proyecto_creado,cliente_loggeado):
         daily = daily_creado
         user_story = user_story_creado
         sprint = sprint_creado
         client = cliente_loggeado
+        proyecto = proyecto_creado
         daily.save()
         user_story.save()
         daily.user_story = user_story
-        response = client.get(reverse('proyecto:editar-daily',kwargs={'pk_proy':proyecto.pk,'sprint_id':sprint.pk,'us_id':user_story.pk}), follow=True)
+        response = client.get(reverse('proyecto:editar-daily',kwargs={'pk_proy':proyecto.pk,'sprint_id':sprint.pk, 'us_id':user_story.pk, 'd_pk':daily.pk}))
         assert response.status_code == 200
-    def test_eliminar_daily_view(self,daily_creado,user_story_creado,sprint_creado,cliente_loggeado):
+    def test_eliminar_daily_view(self,daily_creado,user_story_creado,sprint_creado,proyecto_creado,cliente_loggeado):
         daily = daily_creado
         user_story = user_story_creado
         sprint = sprint_creado
+        proyecto = proyecto_creado
         client = cliente_loggeado
         daily.save()
         user_story.save()
         daily.user_story = user_story
-        response = client.get(reverse('proyecto:eliminar-daily',kwargs={'pk_proy':proyecto.pk,'sprint_id':sprint.pk,'us_id':user_story.pk}), follow=True)
+        response = client.get(reverse('proyecto:eliminar-daily',kwargs={'pk_proy':proyecto.pk,'sprint_id':sprint.pk, 'us_id':user_story.pk, 'd_pk':daily.pk}))
         assert response.status_code == 200
     
 @pytest.mark.django_db
