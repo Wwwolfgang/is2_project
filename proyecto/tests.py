@@ -193,6 +193,7 @@ class TestViewsProyecto:
 class TestModelSprint:
     """
     Pruebas unitarias que comprueban las funciones del model Sprint
+
     """
     def test_model_sprint(self):
         sprint = Sprint.objects.create(fechaInicio=datetime.now(), fechaFin=datetime.now(), estado_de_sprint='A')
@@ -207,7 +208,7 @@ class TestModelSprint:
         sprint = Sprint.objects.create(fechaInicio=datetime.now(), fechaFin=datetime.now(), estado_de_sprint='A')
         assert abs(sprint.fechaFin - sprint.fechaInicio) == sprint.fechaFin - sprint.fechaInicio, "Error: Fecha Final es mas reciente que Fecha Inicial"
     
-@pytest.mark.django_db 
+@pytest.mark.django_db
 class TestViewsProyectoUser:
     """
     Tests para comprobar las funcionalidades de los views de proyecto user
@@ -255,7 +256,7 @@ class TestModelsUserStory:
         user_story.creador = creador
         assert '@' in user_story.creador.email
 
-@pytest.mark.django_db    
+@pytest.mark.django_db
 class TestModelsDaily:
     """
     Test para comprobar las funcionalidades de los modelos de Daily
