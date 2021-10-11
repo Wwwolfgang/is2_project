@@ -197,8 +197,9 @@ class TestModelSprint:
     """
     def test_model_sprint(self):
         sprint = Sprint.objects.create(fechaInicio=datetime.now(), fechaFin=datetime.now(), estado_de_sprint='A')
-        estado_sprint = Sprint.objects.get(pk =sprint.pk)
-        self.assertEqual(estado_sprint.estado_de_sprint,'A')
+        sprint.refresh_from_db()
+        created = Sprint.objects.get(pk =sprint.pk)
+        assert created.estado_de_sprint == 'A', 'Fallo'
 
     def test_fechaInicio(self):
         """
@@ -348,12 +349,3 @@ class TestViewSprints:
         assert response.status_code == 200
 
 
-    def test_sprint_update_view(self, cliente_loggeado, usuario_creado):
-        """
-        Test para comprobar la edición de un sprint
-        """
-        sprint = self.sprint_inicializado()
-        proyecto = Proyecto.objects.create(nombreProyecto='proyectotest')
-        response = self.client.get(
-            reverse('proyecto:sprint-edit', kwargs={'pk_proy': proyecto.pk, 'sprint_id': sprint.pk}), follow=True)
-        assert response.status_code == 403
