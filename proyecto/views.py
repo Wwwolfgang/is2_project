@@ -1404,7 +1404,7 @@ def agregar_daily_view(request, pk_proy, sprint_id, us_id):
             daily.fecha = datetime.now()
             daily.save()
             #Redirigimos al daily
-            return HttpResponseRedirect(reverse('proyecto:user-story-detail',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id, 'us_id':us_id})) 
+            return HttpResponseRedirect(reverse('proyecto:userstory-add-daily',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id, 'us_id':us_id})) 
         contexto['form'] = form
         return render(request, 'proyecto/daily_view_form.html', context=contexto)
     else:
@@ -1454,7 +1454,7 @@ class EditDailyView(PermissionRequiredMixin,UpdateView):
         En esta función se guarda los cambios hechos.
         """
         form.save()
-        return HttpResponseRedirect(reverse('proyecto:user-story-detail',kwargs={'pk_proy':self.kwargs['pk_proy'],'sprint_id':self.kwargs['sprint_id'], 'us_id':self.kwargs['us_id']}))
+        return HttpResponseRedirect(reverse('proyecto:editar-daily',kwargs={'pk_proy':self.kwargs['pk_proy'],'sprint_id':self.kwargs['sprint_id'], 'us_id':self.kwargs['us_id']}))
 
 
 class EliminarDailyView(PermissionRequiredMixin,DeleteView):
@@ -1498,4 +1498,4 @@ class EliminarDailyView(PermissionRequiredMixin,DeleteView):
 
     def get_success_url(self,**kwargs):
         """ Función que retorna a la ruta de éxito. """
-        return reverse_lazy('proyecto:user-story-detail',kwargs={'pk_proy':self.kwargs['pk_proy'],'sprint_id':self.kwargs['sprint_id'], 'us_id':self.kwargs['us_id']})
+        return reverse_lazy('proyecto:eliminar-daily',kwargs={'pk_proy':self.kwargs['pk_proy'],'sprint_id':self.kwargs['sprint_id'], 'us_id':self.kwargs['us_id']})
