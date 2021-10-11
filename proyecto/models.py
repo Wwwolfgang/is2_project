@@ -104,6 +104,7 @@ class ProyectUser(models.Model):
     def __str__(self):
        return "%s" % self.usuario.first_name + " " + self.usuario.last_name + "  " + str(self.horas_diarias) + " hs/D"
 
+
 class ProductBacklog(models.Model):
     """ Clase de Product Backlog es una llave foranea al proyecto """
     proyecto = models.ForeignKey(Proyecto,on_delete=CASCADE)
@@ -216,6 +217,7 @@ class UserStory(models.Model):
         permissions = (
             ("us_manipular_userstory_dailys","Permiso de manipular los dailys de un userstory."),
         )
+
 
 class HistorialUS(models.Model):
     """ 

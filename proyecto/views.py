@@ -291,7 +291,8 @@ class ListaProyectos(PermissionRequiredMixin, ListView):
     context_object_name = 'proyecto_list'
 
     def get_queryset(self):
-        return User.objects.get(id=self.request.user.id).proyecto_set.all().exclude(estado_de_proyecto='C') | Proyecto.objects.filter(owner_id=self.request.user.id).exclude(estado_de_proyecto='C')
+        proyectos = User.objects.get(id=self.request.user.id).proyecto_set.exclude(estado_de_proyecto='C') | Proyecto.objects.filter(owner_id=self.request.user.id).exclude(estado_de_proyecto='C')
+        return proyectos.distinct()
 
 
 class ListaProyectosCancelados(PermissionRequiredMixin, ListView):
@@ -845,6 +846,8 @@ class UserStoryDetailView(UpdateView):
     Dependiendo de la persona que abre el link, se muestran los campos del form.
     Si el user story no está asignado a un sprint, se le deja estimar al scrum master, asignar un desarrollador y hace su estimación de tiempo.
     Cuando el scrum master le asignó un dev, se le envia un correo al dev y el dev tiene que estimar el tiempo de duración del user story (planning poker).
+    TODO
+    falta ver que permisos se requieren en este view
     """
     model = UserStory
     template_name = 'proyecto/userstory_detail_update.html'
