@@ -21,18 +21,21 @@
                             {% endif %}
                         </div>
                         <div class="col d-flex justify-content-end align-content-center">
-                            <a href="{% url 'proyecto:user-story-detail' proyecto_id sprint.id us.id%}" class="btn btn-outline-primary btn-sm stretched-link">Abrir</a>
+                            <a href="{% url 'proyecto:user-story-detail' proyecto_id sprint.id us.id%}" class="btn btn-outline-primary btn-sm">Abrir</a>
                         </div>
                     </div>
                 </div>
                 <div class="card-body">
-                <h5 class="card-title">{{us.nombre}}</h5>
-                <p class="card-text">{{us.descripcion}}</p>
+                    <h5 class="card-title">{{us.nombre}}</h5>
+                    <p class="card-text">{{us.descripcion | truncatechars_html:80}}</p>
+                    <p class="card-text"><strong>Dev asignado: </strong>{{us.encargado}}</p>
+                    <p class="card-text"><strong>Duración estimada: </strong>{{us.tiempo_promedio_calculado}} hs.</p>
                 </div>
                 <div class="card-footer text-muted">
                     {% if us.creador %}
                         Creador: {{us.creador}}
                     {% endif %}
+                    <a href="{% url 'proyecto:doing-user-story' proyecto_id sprint.id us.id%}" class="btn btn-primary btn-sm">Iniciar</a>
                 </div>
             </div>
         {% endfor %}
@@ -62,7 +65,7 @@
                 </div>
                 <div class="card-body">
                     <h5 class="card-title">{{us.nombre}}</h5>
-                    <p class="card-text">{{us.descripcion}}</p>
+                    <p class="card-text">{{us.descripcion | truncatechars_html:80}}</p>
                     <p class="card-text"><strong>Dev asignado: </strong>{{us.encargado}}</p>
                     <p class="card-text"><strong>Duración estimada: </strong>{{us.tiempo_promedio_calculado}} hs.</p>
                 </div>
@@ -70,6 +73,8 @@
                     {% if us.creador %}
                         Creador: {{us.creador}}
                     {% endif %}
+                    <a href="{% url 'proyecto:todo-user-story' proyecto_id sprint.id us.id%}" class="btn btn-primary btn-sm">TO-DO</a>
+                    <a href="{% url 'proyecto:done-user-story' proyecto_id sprint.id us.id%}" class="btn btn-primary btn-sm">Enviar a revisión</a>
                 </div>
             </div>
         {% endfor %}
@@ -99,13 +104,18 @@
                 </div>
                 <div class="card-body">
                     <h5 class="card-title">{{us.nombre}}</h5>
-                    <p class="card-text">{{us.descripcion}}</p>
+                    <p class="card-text">{{us.descripcion | truncatechars_html:80}}</p>
                     <p class="card-text"><strong>Dev asignado: </strong>{{us.encargado}}</p>
                     <p class="card-text"><strong>Duración estimada: </strong>{{us.tiempo_promedio_calculado}} hs.</p>
                 </div>
                 <div class="card-footer text-muted">
                     {% if us.creador %}
                         Creador: {{us.creador}}
+                    {% endif %}
+                    {% if us.estado_user_story == 'QA' %}
+                        Necesita <a href="{% url 'proyecto:user-story-qa' proyecto_id sprint.id us.id %}?next={{request.path}}" class="btn btn-danger btn-sm">QA</a>
+                    {% elif us.estado_user_story == 'DN' %}
+                        <span class="text-success">Listo para release <i class="far fa-thumbs-up"></i></span>
                     {% endif %}
                 </div>
             </div>

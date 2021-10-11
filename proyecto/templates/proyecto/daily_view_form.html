@@ -1,0 +1,44 @@
+{% extends 'proyecto/sprint_detail.html' %}
+
+{% block sprint_body %}
+{% load widget_tweaks %}
+<div class="container">
+    <h3>Daily {{object.fecha|default_if_none:""}}</h3><a class="nav-link" href="{% url 'proyecto:user-story-detail' proyecto_id sprint.id user_story.pk%}"><i class="fas fa-sticky-note me-2"></i>{{user_story.nombre}}</a>
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% for field in form.visible_fields %}
+        <div class="form-group class pb-2">
+            
+            {% if field.name == 'duracion'%}
+                Trabajo en horas
+                {% render_field field class="form-control" %}
+                {% if field.help_text %}
+                <small class="form-text text-muted">{{ field.help_text }}</small>
+                {% endif %}
+            {% endif %}
+            {% if field.name == 'impedimiento_comentario'%}
+                Impedimientos:
+                {% render_field field class="form-control" %}
+                {% if field.help_text %}
+                <small class="form-text text-muted">{{ field.help_text }}</small>
+                {% endif %}
+            {% endif %}
+
+            {% if field.name == 'progreso_comentario'%}
+                Progresos 
+                {% render_field field class="form-control" %}
+                {% if field.help_text %}
+                <small class="form-text text-muted">{{ field.help_text }}</small>
+                {% endif %}
+            {% endif %}
+
+        </div>
+        {% endfor %}
+        <a class="btn btn-warning" role="button" href="{% url 'proyecto:user-story-detail' proyecto_id sprint.id user_story.pk%}">
+            Cancelar
+        </a>
+        <button type="submit" class="my-2 btn btn-success">Guardar daily</button>
+    </form>
+</div>
+
+{% endblock %}

@@ -29,14 +29,6 @@
                                 {% endif %}
                             {% endif %}
 
-                            {% if field.name == 'fechaFin'%}
-                                Fecha de finalización
-                                {% render_field field class="form-control" %}
-                                {% if field.help_text %}
-                                <small class="form-text text-muted">{{ field.help_text }}</small>
-                                {% endif %}
-                            {% endif %}
-
                         {% else %}
                             Equipo de desarrolladores:
                             {{field}}
