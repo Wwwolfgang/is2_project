@@ -1,0 +1,35 @@
+{% extends 'proyecto/base.html' %}
+
+{% block container %}
+{% if userstory.estado_aprobacion == 'A'%}
+
+
+        <h2><font color="red"> No se puede cancelar un user story aprobado</font></h2>
+        <a href="{% url 'proyecto:detail' proyecto_id %}" role="button" class="btn btn-secondary ">Atrás</a>
+        {% else %}
+<div class="container">
+    <div class="row"></div>
+    <br />
+    <div class="row">
+        <div class="col-md-2 col-xs-2 col-sm-2"></div>
+        <div class="col-md-10 col-xs-10 col-sm-10">
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-row">
+                    <div class="alert alert-warning">
+                        ¿Desea cancelar este User Story?  <br/>
+                        <h4>{{ object.nombre }} </h4>
+                    </div>
+                </div>
+                <div>
+                    <a class="btn btn-warning" role="button" href="{% url 'proyecto:product-backlog' proyecto_id %}">
+                        Salir
+                    </a>
+                    <button type="submit" class="my-2 btn btn-danger">Cancelar User Story</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

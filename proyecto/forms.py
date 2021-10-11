@@ -2,7 +2,7 @@ from django.contrib.auth import models
 from django.forms import fields, widgets
 from django.contrib.auth.models import Permission
 from django import forms
-from .models import Proyecto, ProyectUser, RolProyecto, Sprint, UserStory
+from .models import Proyecto, ProyectUser, RolProyecto, Sprint, UserStory, Daily
 from sso.models import User
 from django import forms
 from django.forms.models import inlineformset_factory
@@ -55,8 +55,6 @@ class ProyectoEditForm(forms.ModelForm):
         fields = ["nombreProyecto", "fechaInicio", "fechaFin"]
 
 
-
-
 class ProyectoCreateForm(forms.ModelForm):
     """
     Form de proyecto que recibe los parámetros asociados al nombre, duración del sprint, fecha de incio y fin
@@ -75,6 +73,15 @@ class ProyectoCreateForm(forms.ModelForm):
         choices=[(p.id, "%s" % p.first_name + " " + p.last_name) for p in User.objects.exclude(first_name__isnull=True).exclude(first_name__exact='').exclude(pk=user.pk) if p.has_perm('sso.pg_is_user')],
         required=False
     )
+
+class ProyectoFinalizarForm(forms.ModelForm):
+    """ Form para finalizar un Proyecto, no se muestran realmente campos pero el form es nescesario igual. """
+    def __init__(self, *args, **kwargs):
+        super(ProyectoFinalizarForm, self).__init__(*args, **kwargs)
+        self.fields['estado_de_proyecto'].required = False
+    class Meta:
+        model = Proyecto
+        fields = ["estado_de_proyecto",]
 
 
 class ImportarRolProyectoForm(forms.Form):
@@ -139,20 +146,41 @@ class SprintCrearForm(forms.ModelForm):
     """ Form utilizado para la creación de un sprint. Se llenan los campos duración del Sprint y fechafin """
     class Meta:
         model = Sprint
-        fields = ['duracionSprint','fechaFin']
+        fields = ['duracionSprint']
 
 
 class SprintModificarForm(forms.ModelForm):
+    """ Form para modificar la duración del sprint """
     class Meta:
         model = Sprint
-        fields = ['duracionSprint','fechaFin']
+        fields = ['duracionSprint']
 
+
+class SprintFinalizarForm(forms.ModelForm):
+    """ Form para la finalización de los sprints """
+
+    def __init__(self, *args, **kwargs):
+        super(SprintFinalizarForm, self).__init__(*args, **kwargs)
+        self.fields['estado_de_sprint'].required = False
+    class Meta:
+        model = Sprint
+        fields = ['estado_de_sprint']
+
+
+class UserstoryAprobarForm(forms.ModelForm):
+    """ From para aprobar un user story temporal. No muestra campos pero es nescesario. """
+    def __init__(self, *args, **kwargs):
+        super(UserstoryAprobarForm, self).__init__(*args, **kwargs)
+        self.fields['estado_aprobacion'].required = False
+    class Meta:
+        model = UserStory
+        fields = ['estado_aprobacion']
 
 
 EquipoFormset = inlineformset_factory(Sprint, ProyectUser,fields=('usuario','horas_diarias',),form=DesarrolladorCreateForm,can_delete=True)
 class AgregarUserStoryForm(forms.ModelForm):
     """
-    Form para crear un user story
+    Form para crear un user story nuevo, renderiza los campos de prioridad, nombre y descripción
     """
     def __init__(self, *args, **kwargs):
         super(AgregarUserStoryForm, self).__init__(*args, **kwargs)
@@ -190,3 +218,20 @@ class UserStoryDevForm(forms.ModelForm):
     class Meta:
         model = UserStory
         fields = ['tiempo_estimado_dev']
+
+
+class QaForm(forms.Form):
+    """ Form de qa. Se llena con un comentario de evaluación que es requerido y que se envia posteriormente al encargado del user story """
+    comentario = forms.CharField(widget=forms.Textarea,label='Comentario',help_text='De un comentario o recomendación.',required=True)
+
+
+class DailyForm(forms.ModelForm):
+    """
+    Form para crear y modificar un Daily. Se muestran los campos de duración, del comentario de impedimientos y del comentario de progresos.
+    """
+    def __init__(self, *args, **kwargs):
+        super(DailyForm, self).__init__(*args, **kwargs)
+
+    class Meta:
+        model = Daily
+        fields = ['duracion','impedimiento_comentario','progreso_comentario']
