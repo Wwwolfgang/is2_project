@@ -4,9 +4,8 @@ from django.db.models import fields
 from django.db.models.query_utils import PathInfo
 from django.http import response
 from django.test import TestCase
-from sso.models import User
 from django.urls import reverse
-from django.contrib.auth.models import Group,Permission, User
+from django.contrib.auth.models import Group,Permission
 from django.test.client import Client, RequestFactory
 from allauth.utils import get_user_model
 from datetime import datetime
@@ -127,6 +126,7 @@ class TestViewsRolProyecto:
         Test encargado de comprobar que se cargue correctamente la página de listar roles.
         """
         proyecto = proyecto_creado
+        proyecto.owner = cliente_loggeado
         client = cliente_loggeado
         response = client.get(reverse('proyecto:roles',kwargs={'pk_proy':proyecto.pk}),follow=True)
         assert response.status_code == 200
@@ -196,8 +196,8 @@ class TestModelSprint:
     """
     def test_model_sprint(self):
         sprint = Sprint.objects.create(fechaInicio=datetime.now(), fechaFin=datetime.now(), estado_de_sprint='A')
-        estado_sprint = Sprint.objects.get(estado_de_sprint='A')
-        assert estado_sprint in sprint.ESTADO_DE_SPRINT_CHOICES, "Estado de Sprint inválido"
+        estado_sprint = Sprint.objects.get(pk =sprint.pk)
+        self.assertEqual(estado_sprint.estado_de_sprint,'A')
 
     def test_fechaInicio(self):
         """
