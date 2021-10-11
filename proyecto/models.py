@@ -230,7 +230,7 @@ class HistorialUS(models.Model):
     - La prioridad del user story
     - El user story padre de las versiones
     """
-    nombre = models.CharField(verbose_name='Nombre del user story', max_length=20, blank=False, null=False)
+    nombre = models.CharField(verbose_name='Nombre del user story', max_length=100, blank=False, null=False)
     descripcion = models.TextField(verbose_name='Descripción del user story', blank=True)
     version = models.IntegerField()
     PRIORIDAD_DE_USER_STORY_CHOICES = [
