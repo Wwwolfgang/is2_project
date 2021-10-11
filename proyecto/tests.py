@@ -216,7 +216,7 @@ class TestViewSprints:
         Test encargado de comprobar que se cargue correctamente la página de listar Sprints.
         """
         response = cliente_loggeado.get(reverse('proyecto:index'), follow=True)
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
 
     def test_sprint_update_view(self, cliente_loggeado, usuario_creado):
@@ -227,4 +227,4 @@ class TestViewSprints:
         proyecto = Proyecto.objects.create(nombreProyecto='proyectotest')
         response = self.client.get(
             reverse('proyecto:sprint-edit', kwargs={'pk_proy': proyecto.pk, 'sprint_id': sprint.pk}), follow=True)
-        self.assertEqual(response.status_code, 403)
+        assert response.status_code == 403
