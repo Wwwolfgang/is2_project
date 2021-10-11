@@ -1,4 +1,4 @@
-from proyecto.models import Proyecto, RolProyecto, Sprint, ProyectUser
+from proyecto.models import Proyecto, RolProyecto, Sprint, UserStory, Daily, ProyectUser
 from sso import models
 from django.db.models import fields
 from django.db.models.query_utils import PathInfo
@@ -31,9 +31,27 @@ def proyecto_creado():
     nombreProyecto = 'Proyecto 1'
     fechaInicio = datetime.now()
     fechaFin = datetime.now()
-    fechaFin.day = fechaFin.day + 14
     estado_de_proyecto = 'I'
     return Proyecto.objects.create(nombreProyecto = nombreProyecto,fechaInicio = fechaInicio,fechaFin = fechaFin, estado_de_proyecto = estado_de_proyecto)
+
+@pytest.fixture
+def user_story_creado():
+    nombre = "User Story"
+    descripcion = "Descripcion de User Story"
+    tiempo_estimado_scrum_master = 14
+    tiempo_estimado_dev = 14
+    prioridad_user_story = 'B'
+    estado_aprobacion = 'T'
+    estado_user_story = 'TD'
+    return UserStory.objects.create(nombre = nombre, descripcion = descripcion, tiempo_estimado_scrum_master = tiempo_estimado_scrum_master, tiempo_estimado_dev = tiempo_estimado_dev, prioridad_user_story = prioridad_user_story, estado_aprobacion = estado_aprobacion, estado_user_story = estado_user_story )
+
+@pytest.fixture
+def daily_creado():
+    duracion = 15
+    impedimiento_comentario = "Impedimiento1\nImpedimiento2\nImpedimiento3"
+    progreso_comentario = "Progreso1\nProgreso2\nProgreso3"
+    fecha = datetime.now()
+    return Daily.objects.create(duracion = duracion, impedimiento_comentario = impedimiento_comentario, progreso_comentario = progreso_comentario, fecha = fecha)
 
 @pytest.fixture
 def proyecto_user_creado(): 
@@ -80,6 +98,7 @@ class TestModelRolProyecto:
 class TestViewsRolProyecto:
     """
     Tests para comprobar las funcionalidades de los views de rol proyecto
+    TODO: Atributo 'client' no existe, reemplazar por atributo parecido o agregar en la clase
     """
     def rol_proyecto(self):
         rol = RolProyecto.objects.create(nombre='roltest')
@@ -125,20 +144,20 @@ class TestModelsProyecto:
     """
     Tests para comprobar las funcionalidades del modelo de proyecto
     """
-    def test_proyecto_nombre_vacio(self):
-        proyectoTest = proyecto_creado()
+    def test_proyecto_nombre_vacio(self,proyecto_creado):
+        proyectoTest = proyecto_creado
         assert proyectoTest.nombreProyecto != ''
     
-    def test_proyecto_fecha_invalida(self):
-        proyectoTest = proyecto_creado()
+    def test_proyecto_fecha_invalida(self,proyecto_creado):
+        proyectoTest = proyecto_creado
         assert abs( proyectoTest.fechaFin - proyectoTest.fechaInicio ) == proyectoTest.fechaFin - proyectoTest.fechaInicio, "Error: Fecha Final es mas reciente que Fecha Inicial"
     
-    def test_proyecto_owner_(self):
-        proyectoTest = proyecto_creado()
-        userTest = usuario_creado()
+    def test_proyecto_owner_(self,proyecto_creado,usuario_creado):
+        proyectoTest = proyecto_creado
+        userTest = usuario_creado
         proyectoTest.save()
         userTest.save()
-        proyectoTest.owner.add(userTest)
+        proyectoTest.owner = userTest
         assert '@' in proyectoTest.owner.email 
     
 
@@ -158,7 +177,7 @@ class TestViewsProyecto:
         Test encargado de comprobar que se cargue correctamente la página de listar proyectos.
         """
         response = cliente_loggeado.get(reverse('proyecto:index'), follow=True)
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
 @pytest.mark.django_db
 class TestModelSprint:
@@ -166,33 +185,121 @@ class TestModelSprint:
     Pruebas unitarias que comprueban las funciones del model Sprint
 
     """
-
-
-
     def test_model_sprint(self):
-        sprint = Sprint.objects.create(fechaInicio=datetime.now, fechaFin=datetime.now, estado_de_sprint='A')
+        sprint = Sprint.objects.create(fechaInicio=datetime.now(), fechaFin=datetime.now(), estado_de_sprint='A')
         estado_sprint = Sprint.objects.get(estado_de_sprint='A')
-        assert estado_sprint in sprint.ESTADO_DE_SPRINT_CHOICES, "Estado de Sprint inválido"
+        assert estado_sprint in sprint.ESTADO_DE_SPRINT_CHOICES[0], "Estado de Sprint inválido"
 
     def test_fechaInicio(self):
         """
         Prueba unitaria que comprueba que el campo nombre de un rol tenga que ser
         distinto de ''
         """
-        sprint = Sprint.objects.create(fechaInicio=datetime.now, fechaFin=datetime.now, estado_de_sprint='A')
+        sprint = Sprint.objects.create(fechaInicio=datetime.now(), fechaFin=datetime.now(), estado_de_sprint='A')
         assert abs(sprint.fechaFin - sprint.fechaInicio) == sprint.fechaFin - sprint.fechaInicio, "Error: Fecha Final es mas reciente que Fecha Inicial"
     
- 
+@pytest.mark.django_db
 class TestViewsProyectoUser:
     """
     Tests para comprobar las funcionalidades de los views de proyecto user
     """
-    def proyecto_user_inicializado(self):
-        proyectoUser = proyecto_user_creado()
+    def proyecto_user_inicializado(self,proyecto_user_creado):
+        proyectoUser = proyecto_user_creado
         proyectoUser.permisos.set(list(Permission.objects.all()))
         proyectoUser.save()
         return proyectoUser
-    
+
+
+@pytest.mark.django_db
+class TestModelsUserStory:
+    """
+    Tests para comprobar las funcionalidades de los modelos de User Story
+    """
+    def test_user_story_nombre_invalido(self,user_story_creado):
+        user_story = user_story_creado
+        nombre = user_story.nombre
+        caracteresInvalidos = "0123456789!@#$%^&*()_+-=[]<>?/"
+        for caracter in caracteresInvalidos:
+            assert caracter not in nombre
+    def test_user_story_descripcion_vacia(self,user_story_creado):
+        user_story = user_story_creado
+        descripcion = user_story.descripcion
+        assert descripcion != ''
+    def test_user_story_tiempo_estimado_invalido(self,user_story_creado):
+        user_story = user_story_creado
+        tiempo_scrum = user_story.tiempo_estimado_scrum_master
+        tiempo_dev = user_story.tiempo_estimado_dev
+        assert tiempo_scrum > 0 and tiempo_scrum < 60 and tiempo_dev > 0 and tiempo_dev < 60
+    def test_user_story_prioridad_invalida(self,user_story_creado):
+        user_story = user_story_creado
+        prioridad = user_story.prioridad_user_story
+        assert prioridad in user_story.PRIORIDAD_DE_USER_STORY_CHOICES[0]
+    def test_user_story_estado_invalido(self,user_story_creado):
+        user_story = user_story_creado
+        estado_aprobacion = user_story.estado_aprobacion
+        estado_user_story = user_story.estado_user_story
+        assert estado_aprobacion in user_story.ESTADO_APROBACION_USER_STORY[0] and estado_user_story in user_story.ESTADO_DE_USER_STORY_CHOICES[0]
+    def test_user_story_creador(self,user_story_creado,usuario_creado):
+        user_story = user_story_creado
+        creador = usuario_creado
+        user_story.save()
+        creador.save()
+        user_story.creador = creador
+        assert '@' in user_story.creador.email
+
+@pytest.mark.django_db
+class TestModelsDaily:
+    """
+    Test para comprobar las funcionalidades de los modelos de Daily
+    """
+    def test_daily_duracion_invalida(self,daily_creado):
+        """
+        La duracion del daily no puede durar mas de 60 minutos
+        """
+        daily = daily_creado
+        assert daily.duracion > 0 and daily.duracion < 60
+    def test_daily_lista_impedimiento_invalida(self,daily_creado):
+        daily = daily_creado
+        assert len(daily.impedimiento_comentario) > 5
+    def test_daily_lista_progreso_invalida(self,daily_creado):
+        daily = daily_creado
+        assert len(daily.progreso_comentario) > 5
+    def test_daily_user_story(self,daily_creado,user_story_creado):
+        daily = daily_creado
+        user_story = user_story_creado
+        daily.save()
+        user_story.save()
+        daily.user_story = user_story
+        assert daily.user_story.estado_aprobacion == 'T'
+
+@pytest.mark.django_db
+class TestViewsDaily:
+    def test_agregar_daily_view(self,daily_creado,user_story_creado):
+        daily = daily_creado
+        user_story = user_story_creado
+        daily.save()
+        user_story.save()
+        daily.user_story = user_story
+        response = self.client.get(reverse('proyecto:agregar-daily',kwargs={'pk_proy':proyecto.pk,'sprint_id':sprint.pk,'us_id':user_story.pk}), follow=True)
+        assert response.status_code == 200
+    def test_editar_daily_view(self,daily_creado,user_story_creado):
+        daily = daily_creado
+        user_story = user_story_creado
+        daily.save()
+        user_story.save()
+        daily.user_story = user_story
+        response = self.client.get(reverse('proyecto:editar-daily',kwargs={'pk_proy':proyecto.pk,'sprint_id':sprint.pk,'us_id':user_story.pk}), follow=True)
+        assert response.status_code == 200
+    def test_eliminar_daily_view(self,daily_creado,user_story_creado):
+        daily = daily_creado
+        user_story = user_story_creado
+        daily.save()
+        user_story.save()
+        daily.user_story = user_story
+        response = self.client.get(reverse('proyecto:eliminar-daily',kwargs={'pk_proy':proyecto.pk,'sprint_id':sprint.pk,'us_id':user_story.pk}), follow=True)
+        assert response.status_code == 200
+
+
 @pytest.mark.django_db
 class TestViewSprints:
 
