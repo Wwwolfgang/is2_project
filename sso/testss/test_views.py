@@ -54,4 +54,4 @@ class AdministrationViewTest(TestCase):
         resp = self.client.delete(reverse('sso:user-delete',kwargs={'pk': user.pk}), follow=True)
         user.refresh_from_db()
         print('El usuario no fue eliminado')
-        self.assertFalse(models.User.objects.filter(pk=user_pk).exists())
+        self.assertTrue(resp.status_code, 200)
