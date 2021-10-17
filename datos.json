@@ -1,0 +1,482 @@
+[
+  {
+    "model": "sso.User",
+    "pk": 1,
+    "fields": 
+    {
+      "username": "wolfgang",
+      "first_name": "Wolfgang",
+      "last_name": "Wien Wohlgemuth",
+      "email": "wwwolfgang@gmail.com"
+    }
+  },
+  {
+    "model": "sso.User",
+    "pk": 2,
+    "fields": 
+    {
+      "username": "cesar",
+      "first_name": "Cesar",
+      "last_name": "Rodas Espinola",
+      "email": "cesar_rodas@outlook.com"
+    }
+  },
+  {
+    "model": "sso.User",
+    "pk": 3,
+    "fields": 
+    {
+      "username": "julio",
+      "first_name": "Julio",
+      "last_name": "Lezcano Sosa",
+      "email": "lezcano17@gmail.com"
+    }
+  },
+  {
+    "model": "sso.User",
+    "pk": 4,
+    "fields": 
+    {
+      "username": "roberto",
+      "first_name": "Roberto",
+      "last_name": "Rodriguez Von Eckartsberg",
+      "email": "foneca@gmail.com"
+    }
+  },
+  {
+    "model": "sso.User",
+    "pk": 5,
+    "fields": 
+    {
+      "username": "john",
+      "first_name": "John",
+      "last_name": "Doe",
+      "email": "johndoe@outlook.com"
+    }
+  },
+  {
+    "model": "proyecto.RolProyecto",
+    "pk": 6,
+    "fields": 
+    {
+      "nombre": "RolProyecto1"
+    }
+  },
+  {
+    "model": "proyecto.RolProyecto",
+    "pk": 7,
+    "fields": 
+    {
+      "nombre": "RolProyecto2"
+    }
+  },
+  {
+    "model": "proyecto.RolProyecto",
+    "pk": 8,
+    "fields": 
+    {
+      "nombre": "RolProyecto3"
+    }
+  },
+  {
+    "model": "proyecto.RolProyecto",
+    "pk": 9,
+    "fields": 
+    {
+      "nombre": "RolProyecto4"
+    }
+  },
+  {
+    "model": "proyecto.RolProyecto",
+    "pk": 10,
+    "fields": 
+    {
+      "nombre": "RolProyecto5"
+    }
+  },
+  {
+    "model": "proyecto.Proyecto",
+    "pk": 11,
+    "fields": 
+    {
+      "nombreProyecto": "Proyecto1",
+      "fechaInicio": "2021-10-17T18:46:21.343959",
+      "fechaFin": "2021-10-27T18:46:21.343959",
+      "estado_de_proyecto": "I"
+    }
+  },
+  {
+    "model": "proyecto.Proyecto",
+    "pk": 12,
+    "fields": 
+    {
+      "nombreProyecto": "Proyecto2",
+      "fechaInicio": "2021-05-10T18:46:21.343959",
+      "fechaFin": "2021-05-20T18:46:21.343959",
+      "estado_de_proyecto": "I"
+    }
+  },
+  {
+    "model": "proyecto.Proyecto",
+    "pk": 13,
+    "fields": 
+    {
+      "nombreProyecto": "Proyecto3",
+      "fechaInicio": "2021-07-01T18:46:21.343959",
+      "fechaFin": "2021-07-17T18:46:21.343959",
+      "estado_de_proyecto": "I"
+    }
+  },
+  {
+    "model": "proyecto.Proyecto",
+    "pk": 14,
+    "fields": 
+    {
+      "nombreProyecto": "Proyecto4",
+      "fechaInicio": "2021-12-14T18:46:21.343959",
+      "fechaFin": "2021-12-24T18:46:21.343959",
+      "estado_de_proyecto": "I"
+    }
+  },
+  {
+    "model": "proyecto.Proyecto",
+    "pk": 15,
+    "fields": 
+    {
+      "nombreProyecto": "Proyecto5",
+      "fechaInicio": "2021-01-01T18:46:21.343959",
+      "fechaFin": "2021-01-11T18:46:21.343959",
+      "estado_de_proyecto": "I"
+    }
+  },
+  {
+    "model": "proyecto.ProyectUser",
+    "pk": 16,
+    "fields": 
+    {
+      "horas_diarias": 9
+    }
+  },
+  {
+    "model": "proyecto.ProyectUser",
+    "pk": 17,
+    "fields": 
+    {
+      "horas_diarias": 8
+    }
+  },
+  {
+    "model": "proyecto.ProyectUser",
+    "pk": 18,
+    "fields": 
+    {
+      "horas_diarias": 8
+    }
+  },
+  {
+    "model": "proyecto.ProyectUser",
+    "pk": 19,
+    "fields": 
+    {
+      "horas_diarias": 9
+    }
+  },
+  {
+    "model": "proyecto.ProyectUser",
+    "pk": 20,
+    "fields": 
+    {
+      "horas_diarias": 9
+    }
+  },
+  {
+    "model": "proyecto.ProductBacklog",
+    "pk": 21,
+    "fields": 
+    {
+    }
+  },
+  {
+    "model": "proyecto.ProductBacklog",
+    "pk": 22,
+    "fields": 
+    {
+    }
+  },
+  {
+    "model": "proyecto.ProductBacklog",
+    "pk": 23,
+    "fields": 
+    {
+    }
+  },
+  {
+    "model": "proyecto.ProductBacklog",
+    "pk": 24,
+    "fields": 
+    {
+    }
+  },
+  {
+    "model": "proyecto.ProductBacklog",
+    "pk": 25,
+    "fields": 
+    {
+    }
+  },
+  {
+    "model": "proyecto.Sprint",
+    "pk": 26,
+    "fields": 
+    {
+      "identificador": "Sprint1",
+      "fechaInicio": "2021-10-17T18:46:21.343959",
+      "duracionSprint": 15,
+      "estado_de_sprint": "I",
+      "carga_horaria": 0,
+      "horas_disponibles": 80
+    }
+  },
+  {
+    "model": "proyecto.Sprint",
+    "pk": 27,
+    "fields": 
+    {
+      "identificador": "Sprint2",
+      "fechaInicio": "2021-05-10T18:46:21.343959",
+      "duracionSprint": 20,
+      "estado_de_sprint": "I",
+      "carga_horaria": 0,
+      "horas_disponibles": 55
+    }
+  },
+  {
+    "model": "proyecto.Sprint",
+    "pk": 28,
+    "fields": 
+    {
+      "identificador": "Sprint3",
+      "fechaInicio": "2021-07-01T18:46:21.343959",
+      "duracionSprint": 10,
+      "estado_de_sprint": "I",
+      "carga_horaria": 0,
+      "horas_disponibles": 40
+    }
+  },
+  {
+    "model": "proyecto.Sprint",
+    "pk": 29,
+    "fields": 
+    {
+      "identificador": "Sprint4",
+      "fechaInicio": "2021-12-14T18:46:21.343959",
+      "duracionSprint": 15,
+      "estado_de_sprint": "I",
+      "carga_horaria": 0,
+      "horas_disponibles": 70
+    }
+  },
+  {
+    "model": "proyecto.Sprint",
+    "pk": 30,
+    "fields": 
+    {
+      "identificador": "Sprint5",
+      "fechaInicio": "2021-01-01T18:46:21.343959",
+      "duracionSprint": 16,
+      "estado_de_sprint": "I",
+      "carga_horaria": 0,
+      "horas_disponibles": 65
+    }
+  },
+  {
+    "model": "proyecto.UserStory",
+    "pk": 31,
+    "fields": 
+    {
+      "nombre": "UserStory1",
+      "descripcion": "User Story 1",
+      "tiempo_estimado_scrum_master": 15,
+      "tiempo_estimado_dev": 15,
+      "tiempo_promedio_calculado": 15,
+      "prioridad_user_story": "B",
+      "estado_aprobacion": "T",
+      "estado_user_story": "TD",
+      "last_estimated": 20
+    }
+  },
+  {
+    "model": "proyecto.UserStory",
+    "pk": 32,
+    "fields": 
+    {
+      "nombre": "UserStory2",
+      "descripcion": "User Story 2",
+      "tiempo_estimado_scrum_master": 25,
+      "tiempo_estimado_dev": 16,
+      "tiempo_promedio_calculado": 20,
+      "prioridad_user_story": "B",
+      "estado_aprobacion": "T",
+      "estado_user_story": "TD",
+      "last_estimated": 25
+    }
+  },
+  {
+    "model": "proyecto.UserStory",
+    "pk": 33,
+    "fields": 
+    {
+      "nombre": "UserStory3",
+      "descripcion": "User Story 3",
+      "tiempo_estimado_scrum_master": 10,
+      "tiempo_estimado_dev": 14,
+      "tiempo_promedio_calculado": 11,
+      "prioridad_user_story": "M",
+      "estado_aprobacion": "T",
+      "estado_user_story": "TD",
+      "last_estimated": 18
+    }
+  },
+  {
+    "model": "proyecto.UserStory",
+    "pk": 34,
+    "fields": 
+    {
+      "nombre": "UserStory4",
+      "descripcion": "User Story 4",
+      "tiempo_estimado_scrum_master": 20,
+      "tiempo_estimado_dev": 18,
+      "tiempo_promedio_calculado": 19,
+      "prioridad_user_story": "M",
+      "estado_aprobacion": "T",
+      "estado_user_story": "TD",
+      "last_estimated": 15
+    }
+  },
+  {
+    "model": "proyecto.UserStory",
+    "pk": 35,
+    "fields": 
+    {
+      "nombre": "UserStory5",
+      "descripcion": "User Story 5",
+      "tiempo_estimado_scrum_master": 18,
+      "tiempo_estimado_dev": 10,
+      "tiempo_promedio_calculado": 14,
+      "prioridad_user_story": "A",
+      "estado_aprobacion": "T",
+      "estado_user_story": "TD",
+      "last_estimated": 25
+    }
+  },
+  {
+    "model": "proyecto.HistorialUS",
+    "pk": 36,
+    "fields": 
+    {
+      "nombre": "Historial1",
+      "descipcion": "Historial1",
+      "version": 1,
+      "prioridad": "B"
+    }
+  },
+  {
+    "model": "proyecto.HistorialUS",
+    "pk": 37,
+    "fields": 
+    {
+      "nombre": "Historial2",
+      "descipcion": "Historial2",
+      "version": 1,
+      "prioridad": "B"
+    }
+  },
+  {
+    "model": "proyecto.HistorialUS",
+    "pk": 38,
+    "fields": 
+    {
+      "nombre": "Historial3",
+      "descipcion": "Historial3",
+      "version": 1,
+      "prioridad": "M"
+    }
+  },
+  {
+    "model": "proyecto.HistorialUS",
+    "pk": 39,
+    "fields": 
+    {
+      "nombre": "Historial4",
+      "descipcion": "Historial4",
+      "version": 1,
+      "prioridad": "M"
+    }
+  },
+  {
+    "model": "proyecto.HistorialUS",
+    "pk": 40,
+    "fields": 
+    {
+      "nombre": "Historial5",
+      "descipcion": "Historial5",
+      "version": 1,
+      "prioridad": "A"
+    }
+  },
+  {
+    "model": "proyecto.Daily",
+    "pk": 41,
+    "fields": 
+    {
+      "duracion": 15,
+      "impedimiento_comentario": "Impedimiento1\nImpedimiento2\nImpedimiento3\nImpedimiento4\nImpedimiento5",
+      "progreso_comentario": "Progreso1\nProgreso2\nProgreso3\nProgreso4\nProgreso5",
+      "fecha": "2021-10-17T18:46:21.343959"
+    }
+  },
+  {
+    "model": "proyecto.Daily",
+    "pk": 42,
+    "fields": 
+    {
+      "duracion": 15,
+      "impedimiento_comentario": "Impedimiento1\nImpedimiento2\nImpedimiento3\nImpedimiento4\nImpedimiento5",
+      "progreso_comentario": "Progreso1\nProgreso2\nProgreso3\nProgreso4\nProgreso5",
+      "fecha": "2021-05-10T18:46:21.343959"
+    }
+  },
+  {
+    "model": "proyecto.Daily",
+    "pk": 43,
+    "fields": 
+    {
+      "duracion": 15,
+      "impedimiento_comentario": "Impedimiento1\nImpedimiento2\nImpedimiento3\nImpedimiento4\nImpedimiento5",
+      "progreso_comentario": "Progreso1\nProgreso2\nProgreso3\nProgreso4\nProgreso5",
+      "fecha": "2021-07-01T18:46:21.343959"
+    }
+  },
+  {
+    "model": "proyecto.Daily",
+    "pk": 44,
+    "fields": 
+    {
+      "duracion": 15,
+      "impedimiento_comentario": "Impedimiento1\nImpedimiento2\nImpedimiento3\nImpedimiento4\nImpedimiento5",
+      "progreso_comentario": "Progreso1\nProgreso2\nProgreso3\nProgreso4\nProgreso5",
+      "fecha": "2021-12-14T18:46:21.343959"
+    }
+  },
+  {
+    "model": "proyecto.Daily",
+    "pk": 45,
+    "fields": 
+    {
+      "duracion": 15,
+      "impedimiento_comentario": "Impedimiento1\nImpedimiento2\nImpedimiento3\nImpedimiento4\nImpedimiento5",
+      "progreso_comentario": "Progreso1\nProgreso2\nProgreso3\nProgreso4\nProgreso5",
+      "fecha": "2021-01-01T18:46:21.343959"
+    }
+  }
+]  
