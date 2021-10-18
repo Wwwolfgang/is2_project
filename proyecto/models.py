@@ -70,7 +70,7 @@ class Proyecto(models.Model):
     class Meta:
         permissions = (
             #Permisos de proyecto
-            ("p_acceder_proyectos","Permiso de acceder proyecto."),
+            ("p_acceder_proyecto","Permiso de acceder al proyecto."),
             ("p_cancelar_proyectos","Permiso de cancelar proyecto."),
             ("p_editar_proyectos","Permiso de editar proyecto."),
             ("p_finalizar_proyectos","Permiso de finalizar proyecto."),

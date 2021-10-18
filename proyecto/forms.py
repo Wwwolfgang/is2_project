@@ -16,7 +16,7 @@ class AgregarRolProyectoForm(forms.ModelForm):
         super(AgregarRolProyectoForm, self).__init__(*args, **kwargs)
         self.fields['permisos'] = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple,
                                                             choices=[(p.id, p.name) for p in Permission.objects.all() if
-                                                                     p.codename.startswith('p_') and not p.codename.startswith('pg_')])
+                                                                     p.codename.startswith('p_') and not p.codename.startswith('pg_') and not p.codename.startswith('p_acceder_proyecto')])
     class Meta:
         model = RolProyecto
         fields = ['nombre','permisos']
