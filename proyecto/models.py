@@ -97,16 +97,16 @@ class ProyectUser(models.Model):
         Es un usuario o desarrollador asignado a un sprint
         Se especifica el usuario y su carga horaria diaria y el sprint al cual fue asignado
     """
-    usuario = models.ForeignKey(User,on_delete=CASCADE)
+    usuario = models.ForeignKey(User,on_delete=CASCADE,blank=True,null=True)
     horas_diarias = models.DecimalField(blank=False,decimal_places=2,max_digits=4,null=False,help_text='La cantidad de horas que trabaja el desarrollador por día.')
-    sprint = models.ForeignKey('sprint', related_name='sprint_team',on_delete=CASCADE)
+    sprint = models.ForeignKey('sprint', related_name='sprint_team',on_delete=CASCADE,blank=True,null=True)
 
     def __str__(self):
        return "%s" % self.usuario.first_name + " " + self.usuario.last_name + "  " + str(self.horas_diarias) + " hs/D"
 
 class ProductBacklog(models.Model):
     """ Clase de Product Backlog es una llave foranea al proyecto """
-    proyecto = models.ForeignKey(Proyecto,on_delete=CASCADE)
+    proyecto = models.ForeignKey(Proyecto,on_delete=CASCADE,blank=True,null=True)
 
 
 class Sprint(models.Model):
@@ -140,7 +140,7 @@ class Sprint(models.Model):
         default='I',
     )
     carga_horaria = models.DecimalField(blank=True,null=True,decimal_places=2,max_digits=8,help_text="Total de horas de todos los user storys asignados",default=0)
-    proyecto = models.ForeignKey(Proyecto,on_delete=CASCADE, null=True)
+    proyecto = models.ForeignKey(Proyecto,on_delete=CASCADE,blank=True,null=True)
     horas_disponibles = models.DecimalField(blank=True,null=True,decimal_places=2,max_digits=8,default=0)
 
     def __str__(self):
@@ -242,7 +242,7 @@ class HistorialUS(models.Model):
         choices=PRIORIDAD_DE_USER_STORY_CHOICES,
         default='B',
     )
-    us_fk = models.ForeignKey(UserStory, on_delete=CASCADE, null=False)
+    us_fk = models.ForeignKey(UserStory, on_delete=CASCADE, null=True, blank=True)
 
 
 class Daily(models.Model):

@@ -100,8 +100,8 @@
         "fields": 
         {
             "nombreProyecto": "Proyecto1",
-            "fechaInicio": "2021-10-17T18:46:21.343959",
-            "fechaFin": "2021-10-27T18:46:21.343959",
+            "fechaInicio": "2021-10-17",
+            "fechaFin": "2021-10-27",
             "estado_de_proyecto": "I"
         }
     },
@@ -111,8 +111,8 @@
         "fields": 
         {
             "nombreProyecto": "Proyecto2",
-            "fechaInicio": "2021-05-10T18:46:21.343959",
-            "fechaFin": "2021-05-20T18:46:21.343959",
+            "fechaInicio": "2021-05-10",
+            "fechaFin": "2021-05-20",
             "estado_de_proyecto": "I"
         }
     },
@@ -122,8 +122,8 @@
         "fields": 
         {
             "nombreProyecto": "Proyecto3",
-            "fechaInicio": "2021-07-01T18:46:21.343959",
-            "fechaFin": "2021-07-17T18:46:21.343959",
+            "fechaInicio": "2021-07-01",
+            "fechaFin": "2021-07-17",
             "estado_de_proyecto": "I"
         }
     },
@@ -133,8 +133,8 @@
         "fields": 
         {
             "nombreProyecto": "Proyecto4",
-            "fechaInicio": "2021-12-14T18:46:21.343959",
-            "fechaFin": "2021-12-24T18:46:21.343959",
+            "fechaInicio": "2021-12-14",
+            "fechaFin": "2021-12-24",
             "estado_de_proyecto": "I"
         }
     },
@@ -144,8 +144,8 @@
         "fields": 
         {
             "nombreProyecto": "Proyecto5",
-            "fechaInicio": "2021-01-01T18:46:21.343959",
-            "fechaFin": "2021-01-11T18:46:21.343959",
+            "fechaInicio": "2021-01-01",
+            "fechaFin": "2021-01-11",
             "estado_de_proyecto": "I"
         }
     },
@@ -230,7 +230,7 @@
         "fields": 
         {
             "identificador": "Sprint1",
-            "fechaInicio": "2021-10-17T18:46:21.343959",
+            "fechaInicio": "2021-10-17",
             "duracionSprint": 15,
             "estado_de_sprint": "I",
             "carga_horaria": 0,
@@ -243,7 +243,7 @@
         "fields": 
         {
             "identificador": "Sprint2",
-            "fechaInicio": "2021-05-10T18:46:21.343959",
+            "fechaInicio": "2021-05-10",
             "duracionSprint": 20,
             "estado_de_sprint": "I",
             "carga_horaria": 0,
@@ -256,7 +256,7 @@
         "fields": 
         {
             "identificador": "Sprint3",
-            "fechaInicio": "2021-07-01T18:46:21.343959",
+            "fechaInicio": "2021-07-01",
             "duracionSprint": 10,
             "estado_de_sprint": "I",
             "carga_horaria": 0,
@@ -269,7 +269,7 @@
         "fields": 
         {
             "identificador": "Sprint4",
-            "fechaInicio": "2021-12-14T18:46:21.343959",
+            "fechaInicio": "2021-12-14",
             "duracionSprint": 15,
             "estado_de_sprint": "I",
             "carga_horaria": 0,
@@ -282,7 +282,7 @@
         "fields": 
         {
             "identificador": "Sprint5",
-            "fechaInicio": "2021-01-01T18:46:21.343959",
+            "fechaInicio": "2021-01-01",
             "duracionSprint": 16,
             "estado_de_sprint": "I",
             "carga_horaria": 0,
@@ -375,7 +375,7 @@
         "fields": 
         {
             "nombre": "Historial1",
-            "descipcion": "Historial1",
+            "descripcion": "Historial1",
             "version": 1,
             "prioridad": "B"
         }
@@ -386,7 +386,7 @@
         "fields": 
         {
             "nombre": "Historial2",
-            "descipcion": "Historial2",
+            "descripcion": "Historial2",
             "version": 1,
             "prioridad": "B"
         }
@@ -397,7 +397,7 @@
         "fields": 
         {
             "nombre": "Historial3",
-            "descipcion": "Historial3",
+            "descripcion": "Historial3",
             "version": 1,
             "prioridad": "M"
         }
@@ -408,7 +408,7 @@
         "fields": 
         {
             "nombre": "Historial4",
-            "descipcion": "Historial4",
+            "descripcion": "Historial4",
             "version": 1,
             "prioridad": "M"
         }
@@ -419,7 +419,7 @@
         "fields": 
         {
             "nombre": "Historial5",
-            "descipcion": "Historial5",
+            "descripcion": "Historial5",
             "version": 1,
             "prioridad": "A"
         }
@@ -432,7 +432,7 @@
             "duracion": 15,
             "impedimiento_comentario": "Impedimiento1\nImpedimiento2\nImpedimiento3\nImpedimiento4\nImpedimiento5",
             "progreso_comentario": "Progreso1\nProgreso2\nProgreso3\nProgreso4\nProgreso5",
-            "fecha": "2021-10-17T18:46:21.343959"
+            "fecha": "2021-10-17"
         }
     },
     {
@@ -443,7 +443,7 @@
             "duracion": 15,
             "impedimiento_comentario": "Impedimiento1\nImpedimiento2\nImpedimiento3\nImpedimiento4\nImpedimiento5",
             "progreso_comentario": "Progreso1\nProgreso2\nProgreso3\nProgreso4\nProgreso5",
-            "fecha": "2021-05-10T18:46:21.343959"
+            "fecha": "2021-05-10"
         }
     },
     {
@@ -454,7 +454,7 @@
             "duracion": 15,
             "impedimiento_comentario": "Impedimiento1\nImpedimiento2\nImpedimiento3\nImpedimiento4\nImpedimiento5",
             "progreso_comentario": "Progreso1\nProgreso2\nProgreso3\nProgreso4\nProgreso5",
-            "fecha": "2021-07-01T18:46:21.343959"
+            "fecha": "2021-07-01"
         }
     },
     {
@@ -465,7 +465,7 @@
             "duracion": 15,
             "impedimiento_comentario": "Impedimiento1\nImpedimiento2\nImpedimiento3\nImpedimiento4\nImpedimiento5",
             "progreso_comentario": "Progreso1\nProgreso2\nProgreso3\nProgreso4\nProgreso5",
-            "fecha": "2021-12-14T18:46:21.343959"
+            "fecha": "2021-12-14"
         }
     },
     {
@@ -476,7 +476,7 @@
             "duracion": 15,
             "impedimiento_comentario": "Impedimiento1\nImpedimiento2\nImpedimiento3\nImpedimiento4\nImpedimiento5",
             "progreso_comentario": "Progreso1\nProgreso2\nProgreso3\nProgreso4\nProgreso5",
-            "fecha": "2021-01-01T18:46:21.343959"
+            "fecha": "2021-01-01"
         }
     }
 ]  

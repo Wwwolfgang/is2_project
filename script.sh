@@ -1,7 +1,8 @@
 #!/bin/bash
-sudo su postgres $(psql "DROP DATABASE test_db;EXIT;";createdb test_db)
-./manage.py makemigrations
-./manage.py migrate
-django-admin loaddata datos.json
-./manage.py shell < datos.py
-gunicorn is_project.wsgi
+su -c "psql -c 'DROP DATABASE test_db;'" -l postgres
+su -c "createdb test_db" -l postgres
+python manage.py makemigrations
+python manage.py migrate
+python manage.py loaddata datos.json
+django-admin shell --command="exec(open('datos.py').read())"
+gunicorn is_project.wsgi 192.168.0.0:8000
