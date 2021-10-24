@@ -29,6 +29,11 @@ class RolProyecto(models.Model):
     def __str__(self):
        return self.nombre
 
+    def __iter__(self):
+        return[ self.nombre,
+                self.permisos,
+                self.participantes,
+                self.proyecto]
 
 class Proyecto(models.Model):
     """
@@ -66,6 +71,16 @@ class Proyecto(models.Model):
     owner = models.ForeignKey(User,blank=True,null=True,on_delete=CASCADE,related_name='creador')
     equipo = models.ManyToManyField(User,blank=True)
     equipo_desarrollador = models.ManyToManyField('proyectuser',blank=True)
+    def __iter__(self):
+        return[
+            self.nombreProyecto,
+            self.fechaInicio,
+            self.fechaFin,
+            self.estado_de_proyecto,
+            self.owner,
+            self.equipo,
+            self.equipo_desarrollador
+        ]
 
     class Meta:
         permissions = (
@@ -103,11 +118,19 @@ class ProyectUser(models.Model):
 
     def __str__(self):
        return "%s" % self.usuario.first_name + " " + self.usuario.last_name + "  " + str(self.horas_diarias) + " hs/D"
-
+    def __init__(self):
+        return[
+            self.usuario,
+            self.horas_diarias,
+            self.sprint
+        ]
 class ProductBacklog(models.Model):
     """ Clase de Product Backlog es una llave foranea al proyecto """
     proyecto = models.ForeignKey(Proyecto,on_delete=CASCADE,blank=True,null=True)
-
+    def __iter__(self):
+        return[
+            self.proyecto
+        ]
 
 class Sprint(models.Model):
     """ 
@@ -145,7 +168,17 @@ class Sprint(models.Model):
 
     def __str__(self):
        return self.identificador
-
+    def __iter__(self):
+        return[
+            self.identificador,
+            self.fechaInicio,
+            self.fechaFin,
+            self.duracionSprint,
+            self.estado_de_sprint,
+            self.carga_horaria,
+            self.proyecto,
+            self.horas_disponibles
+        ]
        
 class UserStory(models.Model):
     """
@@ -211,7 +244,22 @@ class UserStory(models.Model):
     creador = models.ForeignKey(User,blank=True,null=True,on_delete=CASCADE)
     sprint = models.ForeignKey('sprint',blank=True,null=True,on_delete=CASCADE)
     product_backlog = models.ForeignKey('productbacklog',on_delete=CASCADE, blank=True,null=True)
-
+    def __iter__(self):
+        return[
+            self.nombre,
+            self.descripcion,
+            self.tiempo_estimado_scrum_master,
+            self.tiempo_estimado_dev,
+            self.tiempo_promedio_calculado,
+            self.prioridad_user_story,
+            self.estado_aprobacion,
+            self.estado_user_story,
+            self.last_estimated,
+            self.encargado,
+            self.creador,
+            self.sprint,
+            self.product_backlog
+        ]
     class Meta:
         permissions = (
             ("us_manipular_userstory_dailys","Permiso de manipular los dailys de un userstory."),
@@ -243,7 +291,14 @@ class HistorialUS(models.Model):
         default='B',
     )
     us_fk = models.ForeignKey(UserStory, on_delete=CASCADE, null=True, blank=True)
-
+    def __iter__(self):
+        return[
+            self.nombre,
+            self.descripcion,
+            self.version,
+            self.prioridad,
+            self.us_fk
+        ]
 
 class Daily(models.Model):
     """
@@ -265,3 +320,12 @@ class Daily(models.Model):
     user_story = models.ForeignKey('userstory',on_delete=CASCADE, blank=True, null=True)
     sprint = models.ForeignKey('sprint', on_delete=CASCADE, blank=True,null=True)
     fecha = models.DateField(null=True,blank=True)
+    def __iter__(self):
+        return[
+            self.duracion,
+            self.impedimiento_comentario,
+            self.progreso_comentario,
+            self.user_story,
+            self.sprint,
+            self.fecha
+        ]
