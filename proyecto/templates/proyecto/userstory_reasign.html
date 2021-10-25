@@ -1,0 +1,26 @@
+{% extends 'proyecto/sprint_detail.html' %}
+
+{% block sprint_body %}
+{% load widget_tweaks %}
+    <div class="container">
+        <h3>Reasignar user story</h3>
+        <form action="" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% for field in form.visible_fields %}
+            <div class="form-group class pb-2">
+                {% if field.name == 'encargado'%}
+                    Encargado
+                    {% render_field field class="form-control" %}
+                    {% if field.help_text %}
+                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                    {% endif %}
+                {% endif %}
+            </div>
+            {% endfor %}
+            <a class="btn btn-warning" role="button" href="{% url 'proyecto:sprint-detail' proyecto_id sprint_id %}">
+                Cancelar
+            </a>
+            <button type="submit" class="my-2 btn btn-success">Actualizar user story</button>
+        </form>
+    </div>
+{% endblock %}

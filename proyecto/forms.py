@@ -5,6 +5,7 @@ from django import forms
 from .models import Proyecto, ProyectUser, RolProyecto, Sprint, UserStory, Daily
 from sso.models import User
 from django import forms
+from django.contrib.admin import widgets
 from django.forms.models import inlineformset_factory
 
 class AgregarRolProyectoForm(forms.ModelForm):
@@ -234,4 +235,18 @@ class DailyForm(forms.ModelForm):
 
     class Meta:
         model = Daily
-        fields = ['duracion','impedimiento_comentario','progreso_comentario']
+        fields = ['fecha','duracion','impedimiento_comentario','progreso_comentario']
+
+
+class ReasignarForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        sprint_id = kwargs.pop('sprint_id',None)
+        sprint = Sprint.objects.get(pk=sprint_id)
+        super().__init__(*args, **kwargs)
+        self.fields['encargado'] = forms.ModelChoiceField(
+            empty_label="Desarrollador",
+            queryset=sprint.sprint_team.all(),
+        )
+    class Meta:
+        model = UserStory
+        fields = ['encargado']

@@ -17,7 +17,7 @@ from django.views.generic import ListView, DetailView
 from django.urls import reverse
 import proyecto
 from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoEditForm,ProyectoCreateForm,AgregarParticipanteForm, DesarrolladorCreateForm,PermisoSolicitudForm,SprintCrearForm, AgregarUserStoryForm
-from proyecto.forms import EquipoFormset, UserStoryAssingForm, UserStoryDevForm, SprintModificarForm, SprintFinalizarForm, QaForm, UserstoryAprobarForm, ProyectoFinalizarForm, DailyForm
+from proyecto.forms import EquipoFormset, UserStoryAssingForm, UserStoryDevForm, SprintModificarForm, SprintFinalizarForm, QaForm, UserstoryAprobarForm, ProyectoFinalizarForm, DailyForm, ReasignarForm
 from proyecto.models import RolProyecto, Proyecto, ProyectUser, Sprint, UserStory, ProductBacklog, HistorialUS, Daily
 from django.views.generic.edit import UpdateView, DeleteView, FormView, CreateView
 from django.urls import reverse_lazy
@@ -28,9 +28,10 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 from statistics import mean
 from django.core.mail import send_mail
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from django.core.serializers import serialize
 from decimal import Decimal
+from workalendar.america import Paraguay
 
 
 class EliminarRolProyectoView(DeleteView):
@@ -1018,6 +1019,7 @@ def iniciar_sprint_view(request, pk_proy, sprint_id, template_name='proyecto/ini
     NO es posible iniciar un Sprint en planificación si hay otro Sprint activo.
     """
     sprint = get_object_or_404(Sprint, pk=sprint_id)
+    cal = Paraguay()
 
     if request.method=='POST':
         running = Sprint.objects.filter(proyecto__pk=pk_proy).filter(estado_de_sprint='A').count()
@@ -1026,7 +1028,7 @@ def iniciar_sprint_view(request, pk_proy, sprint_id, template_name='proyecto/ini
         else:
             sprint.estado_de_sprint = 'A'
             sprint.fechaInicio = datetime.now()
-            sprint.fechaFin = datetime.now()+timedelta(days=30)
+            sprint.fechaFin = cal.add_working_days(datetime.now(), sprint.duracionSprint)
             sprint.save()
         return HttpResponseRedirect(reverse('proyecto:sprint-detail',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id}))
     return render(request, template_name, {'proyecto_id':pk_proy, 'sprint_id':sprint_id})
@@ -1206,7 +1208,7 @@ class QaView(PermissionRequiredMixin,FormView):
             messages.warning(request, 'El proyecto fue finalizado, no se puede hacer cambios')
             return HttpResponseRedirect(next)
         if us.estado_user_story != 'QA':
-            messages.warning(request, 'No se puede hacer Qa de un user story que no fue enviado para QA.')
+            messages.warning(request, 'No se puede hacer Qa de un user story que no fue enviado al QA.')
             return HttpResponseRedirect(next)
         return super().dispatch(request, *args, **kwargs)
 
@@ -1336,8 +1338,9 @@ class SprintBurndownchartView(TemplateView):
         work_left = []
         hours = sprint.carga_horaria
         today = datetime.now()
+        proceed = True
 
-        for index in range(sprint.duracionSprint):
+        while proceed == True:
             hours_worked = Daily.objects.filter(sprint__pk=self.kwargs['sprint_id']).filter(fecha=fecha).aggregate(Sum('duracion')).get('duracion__sum',0.00) 
             if hours_worked == None:
                 hours_worked = 0
@@ -1347,16 +1350,22 @@ class SprintBurndownchartView(TemplateView):
             else:
                 work_left.append(str(0))
 
+            # if fecha == datetime.today().date():
+            #     proceed = False
+
+            if fecha == sprint.fechaFin:
+                proceed = False
+
             fecha += timedelta(days=1)
-            if fecha > today.date():
-                break
+            
 
         context.update({
             'proyecto_id': self.kwargs['pk_proy'],
             'sprint': sprint,
             'sprint_id': self.kwargs['sprint_id'],
             'sprint_json': json.dumps(work_left),
-            'dias': json.dumps(sprint.duracionSprint)
+            'dias': json.dumps(sprint.duracionSprint),
+            'total_horas': json.dumps(str(sprint.carga_horaria))
         })
         return context
 
@@ -1368,6 +1377,11 @@ def userstory_cancelar(request, pk_proy, us_id, template_name='proyecto/userstor
     Se accede desde la pantalla de editar un user story. Si se cancela, su estado es Cancelado y no será visible en el listado
     de user storys que se pueden agregar al Product backlog.
     """
+    proyecto = get_object_or_404(Proyecto,pk=pk_proy)
+    next = request.GET.get('next')
+    if proyecto.estado_de_proyecto != 'A':
+        messages.warning(request, 'El proyecto fue finalizado, no se puede hacer cambios')
+        return HttpResponseRedirect(next)
     userstory = get_object_or_404(UserStory, pk=us_id)
     if request.method == 'POST':
         userstory.estado_aprobacion = 'C'
@@ -1385,6 +1399,12 @@ def agregar_daily_view(request, pk_proy, sprint_id, us_id):
     La duración describida aquí es la información que influye en los datos del burndownchart del sprint. Donde por 
     día se resta los dailys del día del total de horas restantes.
     """
+    proyecto = get_object_or_404(Proyecto,pk=pk_proy)
+    next = request.GET.get('next')
+    if proyecto.estado_de_proyecto != 'A':
+        messages.warning(request, 'El proyecto fue finalizado, no se puede hacer cambios')
+        return HttpResponseRedirect(next)
+
     sprint = get_object_or_404(Sprint,pk=sprint_id)
     userstory = get_object_or_404(UserStory,pk=us_id)
     contexto = {}
@@ -1401,7 +1421,6 @@ def agregar_daily_view(request, pk_proy, sprint_id, us_id):
             daily = form.save()
             daily.user_story = userstory
             daily.sprint = sprint
-            daily.fecha = datetime.now()
             daily.save()
             #Redirigimos al daily
             return HttpResponseRedirect(reverse('proyecto:user-story-detail',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id, 'us_id':us_id})) 
@@ -1423,6 +1442,17 @@ class EditDailyView(PermissionRequiredMixin,UpdateView):
     template_name = 'proyecto/daily_view_form.html'
     form_class= DailyForm
     raise_exception = True
+
+    def dispatch(self, request, *args, **kwargs):
+        """ 
+        
+        """
+        proyecto = get_object_or_404(Proyecto,pk=self.kwargs['pk_proy'])
+        next = request.GET.get('next')
+        if proyecto.estado_de_proyecto != 'A':
+            messages.warning(request, 'El proyecto fue finalizado, no se puede hacer cambios')
+            return HttpResponseRedirect(next)
+        return super().dispatch(request, *args, **kwargs)
 
     def get_permission_object(self):
         """ Función que devuelve el user story sobre el cual se controlan si el usuario tiene permisos adecuados para este view """
@@ -1499,3 +1529,47 @@ class EliminarDailyView(PermissionRequiredMixin,DeleteView):
     def get_success_url(self,**kwargs):
         """ Función que retorna a la ruta de éxito. """
         return reverse_lazy('proyecto:user-story-detail',kwargs={'pk_proy':self.kwargs['pk_proy'],'sprint_id':self.kwargs['sprint_id'], 'us_id':self.kwargs['us_id']})
+
+
+class ReasignarDesarrrolladorView(UpdateView):
+    model = UserStory
+    template_name = 'proyecto/userstory_reasign.html'
+    form_class= ReasignarForm
+    raise_exception = True
+
+    def get_permission_object(self):
+        """ Función que devuelve el proyecto sobre el cual se controlan si el usuario tiene permisos adecuados para este view """
+        return get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
+
+    def get_object(self, queryset=None):
+        """ Función que retorna el user story que va ser modificado """
+        us_id = self.kwargs['us_id']
+        return self.model.objects.get(pk = us_id)
+
+    def get_form_kwargs(self):
+        """ Función que inyecta el id del sprint que se usa en el Form. """
+        kwargs = super(ReasignarDesarrrolladorView, self).get_form_kwargs()
+        kwargs['sprint_id'] = self.kwargs['sprint_id']
+        return kwargs
+
+
+    def get_context_data(self, **kwargs):
+        """ Función que inyecta todos las variables de contexto que se necesitan en el template. """
+        context = super(ReasignarDesarrrolladorView,self).get_context_data(**kwargs)
+        sprint = get_object_or_404(Sprint,pk=self.kwargs['sprint_id'])
+        userstory = get_object_or_404(UserStory,pk=self.kwargs['us_id'])
+
+        context.update({
+            'proyecto_id': self.kwargs['pk_proy'],
+            'user_story': userstory,
+            'sprint': sprint,
+            'sprint_id': self.kwargs['sprint_id'],
+        })
+        return context
+
+    def form_valid(self, form):
+        """
+        En esta función se guarda los cambios hechos.
+        """
+        form.save()
+        return HttpResponseRedirect(reverse('proyecto:user-story-detail',kwargs={'pk_proy':self.kwargs['pk_proy'],'sprint_id':self.kwargs['sprint_id'], 'us_id':self.kwargs['us_id']}))
