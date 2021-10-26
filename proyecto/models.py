@@ -118,7 +118,7 @@ class ProyectUser(models.Model):
 
     def __str__(self):
        return "%s" % self.usuario.first_name + " " + self.usuario.last_name + "  " + str(self.horas_diarias) + " hs/D"
-    def __init__(self):
+    def __iter__(self):
         return[
             self.usuario,
             self.horas_diarias,
