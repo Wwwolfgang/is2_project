@@ -42,6 +42,7 @@ mainmenu () {
 
             # git checkout tags/v.0.0.4 -b v.0.0.4-branch
             . docker-compose_up.sh
+            sleep 2
             echo
             sudo docker cp db.dump pg_container:/
             echo -e "\nCopiando backup a la BD..."
