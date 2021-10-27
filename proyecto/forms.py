@@ -35,9 +35,10 @@ class UserAssignRolForm(forms.ModelForm):
         proyecto_id = kwargs.pop('pk_proy',None)
         proyecto = Proyecto.objects.get(id=proyecto_id)
         super(UserAssignRolForm, self).__init__(*args, **kwargs)
-        self.fields['participantes'] = CustomUserMCF(queryset= proyecto.equipo.all() | User.objects.filter(pk=proyecto.owner.pk),
-        widget=forms.CheckboxSelectMultiple
-    )
+        self.fields['participantes'] = CustomUserMCF(queryset= proyecto.equipo.all(),
+            widget=forms.CheckboxSelectMultiple
+        )
+        self.fields['participantes'].required = False
 
 
 class CustomUserMCF(forms.ModelMultipleChoiceField):
@@ -74,6 +75,7 @@ class ProyectoCreateForm(forms.ModelForm):
         choices=[(p.id, "%s" % p.first_name + " " + p.last_name) for p in User.objects.exclude(first_name__isnull=True).exclude(first_name__exact='').exclude(pk=user.pk) if p.has_perm('sso.pg_is_user')],
         required=False
     )
+
 
 class ProyectoFinalizarForm(forms.ModelForm):
     """ Form para finalizar un Proyecto, no se muestran realmente campos pero el form es nescesario igual. """
@@ -250,3 +252,18 @@ class ReasignarForm(forms.ModelForm):
     class Meta:
         model = UserStory
         fields = ['encargado']
+
+
+class IntercambiarDevForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        pk_proy = kwargs.pop('pk_proy',None)
+        proyecto = Proyecto.objects.get(pk=pk_proy)
+        user = User.objects.filter(pk=proyecto.owner.pk)
+        super().__init__(*args, **kwargs)
+        self.fields['usuario'] = forms.ModelChoiceField(
+            empty_label="Desarrollador",
+            queryset=proyecto.equipo.all() | user,
+        )
+    class Meta:
+        model = ProyectUser
+        fields = ['usuario']

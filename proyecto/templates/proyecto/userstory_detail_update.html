@@ -140,7 +140,7 @@
                 <p><strong>Desarrollador asignado: </strong>
                     {% if object.encargado %}
                         {{object.encargado}} 
-                        {% if sprint_id %}<a href="{% url 'proyecto:user-story-reasignar' proyecto_id sprint_id object.pk %}"><i class="fas fa-user-edit me-2"></i></a>{% endif %}</p>
+                        {% if sprint_id %}<a href="{% url 'proyecto:user-story-reasignar' proyecto_id sprint_id object.pk %}?next={{request.path}}"><i class="fas fa-user-edit me-2"></i></a>{% endif %}</p>
                     {% else %}
                         No asignado
                     {% endif %}
