@@ -14,3 +14,6 @@
 
 ## Stop 
 ```sudo docker-compose -f docker-compose.yml down -v```
+
+## Backup
+```sudo docker exec is2_project_db_1 pg_dump -Fc -U root is_prod > db.dump```

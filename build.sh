@@ -70,15 +70,17 @@ mainmenu () {
 
             . docker-compose_up.sh
             read -n 1 -s -r -p "Presione una tecla para continuar..."
+            echo -e "\nJuntando los static files..."
+            sudo docker-compose -f docker-compose.yml exec web python manage.py collectstatic --no-input --clear
             echo
 
-            sudo docker cp db.dump pg_container:/
+            sudo docker cp db.dump is2_project_db_1:/
             echo -e "\nCopiando backup a la BD..."
-            sudo docker exec -it pg_container dropdb -U ${db_user} --if-exists ${prod_db_name}
-            sudo docker exec -it pg_container createdb -U ${db_user} ${prod_db_name}
-            sudo docker exec -it pg_container psql -U ${db_user} -d ${prod_db_name} -c "DROP SCHEMA public CASCADE;"
-            sudo docker exec -it pg_container psql -U ${db_user} -d ${prod_db_name} -c "CREATE SCHEMA public;"
-            sudo docker exec -it pg_container pg_restore -U ${db_user} -d ${prod_db_name} --no-owner db.dump
+            sudo docker exec -it is2_project_db_1 dropdb -U ${db_user} --if-exists ${prod_db_name}
+            sudo docker exec -it is2_project_db_1 createdb -U ${db_user} ${prod_db_name}
+            sudo docker exec -it is2_project_db_1 psql -U ${db_user} -d ${prod_db_name} -c "DROP SCHEMA public CASCADE;"
+            sudo docker exec -it is2_project_db_1 psql -U ${db_user} -d ${prod_db_name} -c "CREATE SCHEMA public;"
+            sudo docker exec -it is2_project_db_1 pg_restore -U ${db_user} -d ${prod_db_name} --no-owner db.dump
             echo "Listo para trabajar"
         fi
     else
