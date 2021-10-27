@@ -34,4 +34,4 @@ python manage.py collectstatic
 
 ## Dentro del .env tambien encuentran el id y el secret para el sso 
 ## Guía para ver la configuración del sso https://www.section.io/engineering-education/django-google-oauth/
-```sudo docker exec pg_container PGPASSWORD=root pg_dump -Fc -U root -d test_db > db.dump```
+```sudo docker exec pg_container PGPASSWORD=root pg_dump -Fc -U root test_db > db.dump```

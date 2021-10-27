@@ -19,16 +19,19 @@ mainmenu () {
         read -n 1 -p "Seleccione el Tag:" tag
         if [ "$tag" = "1" ];
         then
-            echo "Desarrollo TAG v.0.0.1:"
+            echo -e "\nDesarrollo TAG v.0.0.1:"
+            echo
             # git checkout tags/v.0.0.4 -b v.0.0.4-branch
             . docker-compose_up.sh
+            echo
             sudo docker cp db.dump pg_container:/
-            echo "Copiando backup a la BD..."
+            echo -e "\nCopiando backup a la BD..."
             sudo docker exec -it pg_container dropdb -U ${db_user} --if-exists ${des_db_name}
             sudo docker exec -it pg_container createdb -U ${db_user} ${des_db_name}
             sudo docker exec -it pg_container psql -U ${db_user} -d ${des_db_name} -c "DROP SCHEMA public CASCADE;"
             sudo docker exec -it pg_container psql -U ${db_user} -d ${des_db_name} -c "CREATE SCHEMA public;"
             sudo docker exec -it pg_container pg_restore -U ${db_user} -d ${des_db_name} --no-owner db.dump
+            echo "Listo para trabajar"
         fi
 
     elif [ "$mainmenuinput" = "2" ]; then
