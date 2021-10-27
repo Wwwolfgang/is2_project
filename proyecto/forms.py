@@ -244,6 +244,9 @@ class ReasignarForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         sprint_id = kwargs.pop('sprint_id',None)
         sprint = Sprint.objects.get(pk=sprint_id)
+        pk_proy = kwargs.pop('pk_proy',None)
+        proyecto = Proyecto.objects.get(pk=pk_proy)
+        user = User.objects.filter(pk=proyecto.owner.pk)
         super().__init__(*args, **kwargs)
         self.fields['encargado'] = forms.ModelChoiceField(
             empty_label="Desarrollador",

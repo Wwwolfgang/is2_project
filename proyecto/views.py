@@ -1420,7 +1420,11 @@ def agregar_daily_view(request, pk_proy, sprint_id, us_id):
         form = DailyForm(request.POST or None)
         #Si el form se cargó correctamente, lo guardamos
         if form.is_valid():
+            fecha = form.cleaned_data['fecha']
+            cal = Paraguay()
             daily = form.save()
+            if not cal.is_working_day(fecha):
+                daily.fecha = cal.add_working_days(fecha, 1)
             daily.user_story = userstory
             daily.sprint = sprint
             daily.save()
@@ -1574,6 +1578,7 @@ class ReasignarDesarrrolladorView(UpdateView):
         """ Función que inyecta el id del sprint que se usa en el Form. """
         kwargs = super(ReasignarDesarrrolladorView, self).get_form_kwargs()
         kwargs['sprint_id'] = self.kwargs['sprint_id']
+        kwargs['pk_proy'] = self.kwargs['pk_proy']
         return kwargs
 
 
@@ -1595,7 +1600,13 @@ class ReasignarDesarrrolladorView(UpdateView):
         """
         En esta función se guarda los cambios hechos.
         """
-        form.save()
+        encargado_anterior = form.initial['encargado']
+        us = form.save()
+        perm = Permission.objects.get(codename='us_manipular_userstory_dailys')
+        user = ProyectUser.objects.get(pk=encargado_anterior)
+        assign_perm(perm,us.encargado.usuario,us)
+        remove_perm(perm,user.usuario,us)
+
         return HttpResponseRedirect(reverse('proyecto:user-story-detail',kwargs={'pk_proy':self.kwargs['pk_proy'],'sprint_id':self.kwargs['sprint_id'], 'us_id':self.kwargs['us_id']}))
 
 
@@ -1650,5 +1661,12 @@ class IntercambiarDevView(UpdateView):
         """
         En esta función se guarda los cambios hechos.
         """
-        form.save()
+        en = form.save()
+        encargado_anterior = form.initial['usuario']
+        perm = Permission.objects.get(codename='us_manipular_userstory_dailys')
+        user_stories = UserStory.objects.filter(encargado__pk=en.pk)
+        user = User.objects.get(pk=encargado_anterior)
+        for us in user_stories:
+            assign_perm(perm,en.usuario,us)
+            remove_perm(perm,user,us)
         return HttpResponseRedirect(reverse('proyecto:sprint-team-edit',kwargs={'pk_proy':self.kwargs['pk_proy'],'pk':self.kwargs['sprint_id']}))
