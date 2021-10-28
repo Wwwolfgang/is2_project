@@ -118,12 +118,8 @@ class ProyectUser(models.Model):
 
     def __str__(self):
        return "%s" % self.usuario.first_name + " " + self.usuario.last_name + "  " + str(self.horas_diarias) + " hs/D"
-    def __iter__(self):
-        return[
-            self.usuario,
-            self.horas_diarias,
-            self.sprint
-        ]
+
+
 class ProductBacklog(models.Model):
     """ Clase de Product Backlog es una llave foranea al proyecto """
     proyecto = models.ForeignKey(Proyecto,on_delete=CASCADE,blank=True,null=True)
@@ -265,6 +261,7 @@ class UserStory(models.Model):
             ("us_manipular_userstory_dailys","Permiso de manipular los dailys de un userstory."),
         )
 
+
 class HistorialUS(models.Model):
     """ 
     Modelo de historial. Cada entrada de historial es una nueva versión de un user story, es creado para cada modificación de un user story.
@@ -276,7 +273,7 @@ class HistorialUS(models.Model):
     - La prioridad del user story
     - El user story padre de las versiones
     """
-    nombre = models.CharField(verbose_name='Nombre del user story', max_length=20, blank=False, null=False)
+    nombre = models.CharField(verbose_name='Nombre del user story', max_length=100, blank=False, null=False)
     descripcion = models.TextField(verbose_name='Descripción del user story', blank=True)
     version = models.IntegerField()
     PRIORIDAD_DE_USER_STORY_CHOICES = [

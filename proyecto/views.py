@@ -291,7 +291,8 @@ class ListaProyectos(PermissionRequiredMixin, ListView):
     context_object_name = 'proyecto_list'
 
     def get_queryset(self):
-        return User.objects.get(id=self.request.user.id).proyecto_set.all().exclude(estado_de_proyecto='C') | Proyecto.objects.filter(owner_id=self.request.user.id).exclude(estado_de_proyecto='C')
+        proyectos = User.objects.get(id=self.request.user.id).proyecto_set.exclude(estado_de_proyecto='C') | Proyecto.objects.filter(owner_id=self.request.user.id).exclude(estado_de_proyecto='C')
+        return proyectos.distinct()
 
 
 class ListaProyectosCancelados(PermissionRequiredMixin, ListView):
@@ -845,6 +846,8 @@ class UserStoryDetailView(UpdateView):
     Dependiendo de la persona que abre el link, se muestran los campos del form.
     Si el user story no está asignado a un sprint, se le deja estimar al scrum master, asignar un desarrollador y hace su estimación de tiempo.
     Cuando el scrum master le asignó un dev, se le envia un correo al dev y el dev tiene que estimar el tiempo de duración del user story (planning poker).
+    TODO
+    falta ver que permisos se requieren en este view
     """
     model = UserStory
     template_name = 'proyecto/userstory_detail_update.html'
@@ -1401,7 +1404,7 @@ def agregar_daily_view(request, pk_proy, sprint_id, us_id):
             daily.fecha = datetime.now()
             daily.save()
             #Redirigimos al daily
-            return HttpResponseRedirect(reverse('proyecto:userstory-add-daily',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id, 'us_id':us_id})) 
+            return HttpResponseRedirect(reverse('proyecto:user-story-detail',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id, 'us_id':us_id})) 
         contexto['form'] = form
         return render(request, 'proyecto/daily_view_form.html', context=contexto)
     else:
@@ -1451,7 +1454,7 @@ class EditDailyView(PermissionRequiredMixin,UpdateView):
         En esta función se guarda los cambios hechos.
         """
         form.save()
-        return HttpResponseRedirect(reverse('proyecto:editar-daily',kwargs={'pk_proy':self.kwargs['pk_proy'],'sprint_id':self.kwargs['sprint_id'], 'us_id':self.kwargs['us_id']}))
+        return HttpResponseRedirect(reverse('proyecto:user-story-detail',kwargs={'pk_proy':self.kwargs['pk_proy'],'sprint_id':self.kwargs['sprint_id'], 'us_id':self.kwargs['us_id']}))
 
 
 class EliminarDailyView(PermissionRequiredMixin,DeleteView):
@@ -1495,4 +1498,4 @@ class EliminarDailyView(PermissionRequiredMixin,DeleteView):
 
     def get_success_url(self,**kwargs):
         """ Función que retorna a la ruta de éxito. """
-        return reverse_lazy('proyecto:eliminar-daily',kwargs={'pk_proy':self.kwargs['pk_proy'],'sprint_id':self.kwargs['sprint_id'], 'us_id':self.kwargs['us_id']})
+        return reverse_lazy('proyecto:user-story-detail',kwargs={'pk_proy':self.kwargs['pk_proy'],'sprint_id':self.kwargs['sprint_id'], 'us_id':self.kwargs['us_id']})

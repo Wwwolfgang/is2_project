@@ -4,9 +4,8 @@ from django.db.models import fields
 from django.db.models.query_utils import PathInfo
 from django.http import response
 from django.test import TestCase
-from sso.models import User
 from django.urls import reverse
-from django.contrib.auth.models import Group,Permission, User
+from django.contrib.auth.models import Group,Permission
 from django.test.client import Client, RequestFactory
 from allauth.utils import get_user_model
 from datetime import datetime
@@ -127,6 +126,7 @@ class TestViewsRolProyecto:
         Test encargado de comprobar que se cargue correctamente la página de listar roles.
         """
         proyecto = proyecto_creado
+        proyecto.owner = cliente_loggeado
         client = cliente_loggeado
         response = client.get(reverse('proyecto:roles',kwargs={'pk_proy':proyecto.pk}),follow=True)
         assert response.status_code == 200
@@ -193,11 +193,13 @@ class TestViewsProyecto:
 class TestModelSprint:
     """
     Pruebas unitarias que comprueban las funciones del model Sprint
+
     """
     def test_model_sprint(self):
         sprint = Sprint.objects.create(fechaInicio=datetime.now(), fechaFin=datetime.now(), estado_de_sprint='A')
-        estado_sprint = Sprint.objects.get(estado_de_sprint='A')
-        assert estado_sprint in sprint.ESTADO_DE_SPRINT_CHOICES, "Estado de Sprint inválido"
+        sprint.refresh_from_db()
+        created = Sprint.objects.get(pk =sprint.pk)
+        assert created.estado_de_sprint == 'A', 'Fallo'
 
     def test_fechaInicio(self):
         """
@@ -207,7 +209,7 @@ class TestModelSprint:
         sprint = Sprint.objects.create(fechaInicio=datetime.now(), fechaFin=datetime.now(), estado_de_sprint='A')
         assert abs(sprint.fechaFin - sprint.fechaInicio) == sprint.fechaFin - sprint.fechaInicio, "Error: Fecha Final es mas reciente que Fecha Inicial"
     
-@pytest.mark.django_db 
+@pytest.mark.django_db
 class TestViewsProyectoUser:
     """
     Tests para comprobar las funcionalidades de los views de proyecto user
@@ -255,7 +257,7 @@ class TestModelsUserStory:
         user_story.creador = creador
         assert '@' in user_story.creador.email
 
-@pytest.mark.django_db    
+@pytest.mark.django_db
 class TestModelsDaily:
     """
     Test para comprobar las funcionalidades de los modelos de Daily
@@ -347,12 +349,3 @@ class TestViewSprints:
         assert response.status_code == 200
 
 
-    def test_sprint_update_view(self, cliente_loggeado, usuario_creado):
-        """
-        Test para comprobar la edición de un sprint
-        """
-        sprint = self.sprint_inicializado()
-        proyecto = Proyecto.objects.create(nombreProyecto='proyectotest')
-        response = self.client.get(
-            reverse('proyecto:sprint-edit', kwargs={'pk_proy': proyecto.pk, 'sprint_id': sprint.pk}), follow=True)
-        assert response.status_code == 403
