@@ -22,37 +22,53 @@ mainmenu () {
         echo "Presione 3 para TAG v.0.0.3"
         echo "Presione 4 para TAG v.0.0.4"
         read -n 1 -p "Seleccione el Tag:" tag
-        if [ "$tag" = "1" ];
-        then
-            echo -e "\nDesarrollo TAG v.0.0.1:"
-            echo
 
-            # echo "${green}>>> Creating virtualenv${reset}"
-            # python3 -m .venv
-            # echo "${green}>>> .venv is created.${reset}"
+        echo -e "\nDesarrollo TAG v.0.0.${tag}:"
+        echo
 
-            # sleep 2
-            # echo "${green}>>> activate the .venv.${reset}"
-            # source .venv/bin/activate
-            # sleep 2
+        # prepare env and install dependencies
+        echo "${green}>>> Creando entorno virtual${reset}"
+        python3 -m venv env
+        echo "${green}>>> env fue creado.${reset}"
 
-            # # installdjango
-            # echo "${green}>>> Installing the Django${reset}"
-            # pip install -r requirements.txt
+        sleep 2
+        echo "${green}>>> Activando el env.${reset}"
+        source env/bin/activate
+        sleep 2
 
-            # git checkout tags/v.0.0.4 -b v.0.0.4-branch
-            . docker-compose_up.sh
-            sleep 2
-            echo
-            sudo docker cp db.dump pg_container:/
-            echo -e "\nCopiando backup a la BD..."
-            sudo docker exec -it pg_container dropdb -U ${db_user} --if-exists ${des_db_name}
-            sudo docker exec -it pg_container createdb -U ${db_user} ${des_db_name}
-            sudo docker exec -it pg_container psql -U ${db_user} -d ${des_db_name} -c "DROP SCHEMA public CASCADE;"
-            sudo docker exec -it pg_container psql -U ${db_user} -d ${des_db_name} -c "CREATE SCHEMA public;"
-            sudo docker exec -it pg_container pg_restore -U ${db_user} -d ${des_db_name} --no-owner db.dump
-            echo "Listo para trabajar"
-        fi
+        echo "${green}>>> Instalando dependencias${reset}"
+        pip install -r requirements.txt
+
+
+        # if [ "$tag" = "1" ]; then
+            # git checkout tags/v.0.0.1 -b v.0.0.1-branch
+        # elif [ "$tag" = "2" ]; then
+        #     # git checkout tags/v.0.0.1 -b v.0.0.1-branch
+        # elif [ "$tag" = "3" ]; then
+        #     # git checkout tags/v.0.0.1 -b v.0.0.1-branch
+        # elif [ "$tag" = "4" ]; then
+        #     # git checkout tags/v.0.0.1 -b v.0.0.1-branch
+        # elif [ "$tag" = "5" ]; then
+        #     # git checkout tags/v.0.0.1 -b v.0.0.1-branch
+        # else 
+        #     echo -e "\nEsa versión no existe"
+        # fi
+
+        # prepare docker and database
+        echo -e "\nIniciando docker"
+        . docker-compose_up.sh
+        sleep 2
+        echo
+        sudo docker cp db.dump pg_container:/
+        echo -e "\nCopiando backup a la BD..."
+        sudo docker exec -it pg_container dropdb -U ${db_user} --if-exists ${des_db_name}
+        sudo docker exec -it pg_container createdb -U ${db_user} ${des_db_name}
+        sudo docker exec -it pg_container psql -U ${db_user} -d ${des_db_name} -c "DROP SCHEMA public CASCADE;"
+        sudo docker exec -it pg_container psql -U ${db_user} -d ${des_db_name} -c "CREATE SCHEMA public;"
+        sudo docker exec -it pg_container pg_restore -U ${db_user} -d ${des_db_name} --no-owner db.dump
+        echo "Listo para trabajar"
+
+        python manage.py runserver
 
     elif [ "$mainmenuinput" = "2" ]; then
         clear
