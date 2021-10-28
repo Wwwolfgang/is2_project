@@ -44,15 +44,15 @@ mainmenu () {
         echo
 
         if [ "$tag" = "1" ]; then
-            git checkout tags/v.0.0.1 -b v.0.0.1-branch
+            git switch --detach v.0.0.1
         elif [ "$tag" = "2" ]; then
-            git checkout tags/v.0.0.2 -b v.0.0.2-branch
+            git switch --detach v.0.0.2
         elif [ "$tag" = "3" ]; then
-            git checkout tags/v.0.0.3 -b v.0.0.3-branch
+            git switch --detach v.0.0.3
         elif [ "$tag" = "4" ]; then
             git switch --detach v.0.0.4
         elif [ "$tag" = "5" ]; then
-            git checkout tags/v.0.0.5 -b v.0.0.5-branch
+            git switch --detach v.0.0.5
         else 
             echo -e "${red}\n<<< Esa versión no existe >>>${reset}"
             sleep 2
@@ -96,7 +96,7 @@ mainmenu () {
         elif [ "$tag" = "4" ]; then
             git switch --detach v.0.0.4
         elif [ "$tag" = "5" ]; then
-            ggit switch --detach v.0.0.5
+            git switch --detach v.0.0.5
         else 
             echo -e "${red}\n<<< Esa versión no existe >>>${reset}"
             sleep 2
