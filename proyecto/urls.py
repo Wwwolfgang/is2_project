@@ -7,7 +7,7 @@ from proyecto.views import agregar_rol_proyecto_view
 from django.urls import path
 from django.views.generic import TemplateView
 from .views import EliminarRolProyectoView, ProyectoDetailView,agregar_user_story_view, userstory_cancelar, edit,editar_rol_proyecto_view, ListaProyectos, AssignUserRolProyecto,ImportarRolView, CreateProyectoView
-from .views import  AgregarParticipanteProyecto, eliminarParticipanteView, AgregarDesarrolladorView,EditDesarrolladorView,EliminarDesarrolladorView,SolicitarPermisosView,AgregarSprintView,EquipoSprintUpdateView
+from .views import  AgregarParticipanteProyecto, eliminarParticipanteView,SolicitarPermisosView,AgregarSprintView,EquipoSprintUpdateView
 from .views import UserStoryUdateView,SprintView,ListaProyectosCancelados, UserStoryDetailView, InspectUserStoryView, quitar_user_story_view, iniciar_sprint_view, SprintKanbanView,SprintUpdateView, mark_us_doing, mark_us_todo, mark_us_done,FinalizarSprintView
 app_name = 'proyecto'
 
@@ -23,15 +23,11 @@ urlpatterns = [
     path('proyecto/proyectos-cancelados/', ListaProyectosCancelados.as_view(), name='cancelados'),
     path('proyecto/<int:pk_proy>/agregar-participantes/',AgregarParticipanteProyecto.as_view(), name='agregar-participantes-proyecto'),
     path('proyecto/<int:pk_proy>/debaja-participante/<int:pk>/',eliminarParticipanteView, name='debaja-participante-proyecto'),
-    path('proyecto/<int:pk_proy>/agregar-desarrollador/',AgregarDesarrolladorView.as_view(), name='agregar-desarrollador-proyecto'),
-    path('proyecto/<int:pk_proy>/editar-desarrollador/<int:dev_pk>/',EditDesarrolladorView.as_view(), name='editar-desarrollador-proyecto'),
-    path('proyecto/<int:pk_proy>/sacar-desarrollador/<int:dev_pk>/',EliminarDesarrolladorView.as_view(), name='debaja-desarrollador-proyecto'),
 
     #URLS de roles de proyecto
     path('proyecto/<int:pk_proy>/rol/agregar',agregar_rol_proyecto_view,name='agregar-rol'),
     path('proyecto/<int:pk_proy>/roles/',views.ListaRolProyectoView.as_view(),name = 'roles'),
     path('proyecto/<int:pk_proy>/roles/importar',ImportarRolView.as_view(),name = 'importar-roles'),
-    path('proyecto/<int:pk_proy>/rol/<int:pk>', views.DetallesRolProyectoView.as_view(), name = 'rol-detalles'),
     path('proyecto/<int:pk_proy>/rol/<int:pk>/eliminar',views.EliminarRolProyectoView.as_view(),name = 'rol-eliminar'),
     path('proyecto/<int:pk_proy>/rol/<int:id_rol>/editar',editar_rol_proyecto_view,name='rol-editar'),
     path('proyecto/<int:pk_proy>/rol/<int:id_rol>/assignar',AssignUserRolProyecto.as_view(),name='rol-assignar'),
@@ -59,6 +55,8 @@ urlpatterns = [
     path('<int:pk_proy>/sprint/<int:sprint_id>/todo/user-story/<int:us_id>/', mark_us_todo, name='todo-user-story'),
     path('<int:pk_proy>/sprint/<int:sprint_id>/done/user-story/<int:us_id>/', mark_us_done, name='done-user-story'),
     path('proyecto/<int:pk_proy>/sprint/<int:sprint_id>/user-story-qa/<int:us_id>/',views.QaView.as_view(),name='user-story-qa'),
+    path('proyecto/<int:pk_proy>/sprint/<int:sprint_id>/user-story-reasign-dev/<int:us_id>/',views.ReasignarDesarrrolladorView.as_view(),name='user-story-reasignar'),
+    path('proyecto/<int:pk_proy>/sprint/<int:sprint_id>/dev-exchange/<int:dev_id>/',views.IntercambiarDevView.as_view(),name='sprint-dev-exchange'),
     path('proyecto/<int:pk_proy>/sprint/<int:sprint_id>/burndown-chart/',views.SprintBurndownchartView.as_view(),name='sprint-burndownchart'),
     path('proyecto/<int:pk_proy>/sprint/<int:sprint_id>/user-story/<int:us_id>/agregar-daily',views.agregar_daily_view,name='userstory-add-daily'),
     path('proyecto/<int:pk_proy>/sprint/<int:sprint_id>/user-story/<int:us_id>/editar-daily/<int:d_pk>/',views.EditDailyView.as_view(),name='editar-daily'),

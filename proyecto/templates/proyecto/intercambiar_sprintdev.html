@@ -1,0 +1,29 @@
+{% extends 'proyecto/sprint_detail.html' %}
+
+{% block sprint_body %}
+{% load widget_tweaks %}
+<div class="container">
+    <h3>Intercambiar desarrollador con otro miembro del equipo</h3>
+    <span>El nuevo desarrollador trabajará las mismas horas por día que el desarrollador cambiado. Además le serán asignados los user stories donde el usuario viejo era el encargado.</span>
+
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% for field in form.visible_fields %}
+        <div class="form-group class pt-3 pb-2">
+            {% if field.name == 'usuario'%}
+                Seleccione el usuario a Intercambiar
+                {% render_field field class="form-control" %}
+                {% if field.help_text %}
+                <small class="form-text text-muted">{{ field.help_text }}</small>
+                {% endif %}
+                Horas diarias: {{object.horas_diarias}}
+            {% endif %}
+        </div>
+        {% endfor %}
+        <a class="btn btn-warning" role="button" href="{% url 'proyecto:sprint-team-edit' proyecto_id sprint_id %}">
+            Cancelar
+        </a>
+        <button type="submit" class="my-2 btn btn-success">Intercambiar desarrollador</button>
+    </form>
+</div>
+{% endblock %}

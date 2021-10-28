@@ -5,6 +5,7 @@ from django import forms
 from .models import Proyecto, ProyectUser, RolProyecto, Sprint, UserStory, Daily
 from sso.models import User
 from django import forms
+from django.contrib.admin import widgets
 from django.forms.models import inlineformset_factory
 
 class AgregarRolProyectoForm(forms.ModelForm):
@@ -34,9 +35,10 @@ class UserAssignRolForm(forms.ModelForm):
         proyecto_id = kwargs.pop('pk_proy',None)
         proyecto = Proyecto.objects.get(id=proyecto_id)
         super(UserAssignRolForm, self).__init__(*args, **kwargs)
-        self.fields['participantes'] = CustomUserMCF(queryset= proyecto.equipo.all() | User.objects.filter(pk=proyecto.owner.pk),
-        widget=forms.CheckboxSelectMultiple
-    )
+        self.fields['participantes'] = CustomUserMCF(queryset= proyecto.equipo.all(),
+            widget=forms.CheckboxSelectMultiple
+        )
+        self.fields['participantes'].required = False
 
 
 class CustomUserMCF(forms.ModelMultipleChoiceField):
@@ -53,8 +55,6 @@ class ProyectoEditForm(forms.ModelForm):
     class Meta:
         model = Proyecto
         fields = ["nombreProyecto", "fechaInicio", "fechaFin"]
-
-
 
 
 class ProyectoCreateForm(forms.ModelForm):
@@ -76,7 +76,9 @@ class ProyectoCreateForm(forms.ModelForm):
         required=False
     )
 
+
 class ProyectoFinalizarForm(forms.ModelForm):
+    """ Form para finalizar un Proyecto, no se muestran realmente campos pero el form es nescesario igual. """
     def __init__(self, *args, **kwargs):
         super(ProyectoFinalizarForm, self).__init__(*args, **kwargs)
         self.fields['estado_de_proyecto'].required = False
@@ -151,11 +153,14 @@ class SprintCrearForm(forms.ModelForm):
 
 
 class SprintModificarForm(forms.ModelForm):
+    """ Form para modificar la duración del sprint """
     class Meta:
         model = Sprint
         fields = ['duracionSprint']
 
+
 class SprintFinalizarForm(forms.ModelForm):
+    """ Form para la finalización de los sprints """
 
     def __init__(self, *args, **kwargs):
         super(SprintFinalizarForm, self).__init__(*args, **kwargs)
@@ -166,6 +171,7 @@ class SprintFinalizarForm(forms.ModelForm):
 
 
 class UserstoryAprobarForm(forms.ModelForm):
+    """ From para aprobar un user story temporal. No muestra campos pero es nescesario. """
     def __init__(self, *args, **kwargs):
         super(UserstoryAprobarForm, self).__init__(*args, **kwargs)
         self.fields['estado_aprobacion'].required = False
@@ -177,7 +183,7 @@ class UserstoryAprobarForm(forms.ModelForm):
 EquipoFormset = inlineformset_factory(Sprint, ProyectUser,fields=('usuario','horas_diarias',),form=DesarrolladorCreateForm,can_delete=True)
 class AgregarUserStoryForm(forms.ModelForm):
     """
-    Form para crear un user story
+    Form para crear un user story nuevo, renderiza los campos de prioridad, nombre y descripción
     """
     def __init__(self, *args, **kwargs):
         super(AgregarUserStoryForm, self).__init__(*args, **kwargs)
@@ -218,14 +224,49 @@ class UserStoryDevForm(forms.ModelForm):
 
 
 class QaForm(forms.Form):
+    """ Form de qa. Se llena con un comentario de evaluación que es requerido y que se envia posteriormente al encargado del user story """
     comentario = forms.CharField(widget=forms.Textarea,label='Comentario',help_text='De un comentario o recomendación.',required=True)
+
+
 class DailyForm(forms.ModelForm):
     """
-    Form para crear un Daily
+    Form para crear y modificar un Daily. Se muestran los campos de duración, del comentario de impedimientos y del comentario de progresos.
     """
     def __init__(self, *args, **kwargs):
         super(DailyForm, self).__init__(*args, **kwargs)
 
     class Meta:
         model = Daily
-        fields = ['duracion','impedimiento_comentario','progreso_comentario']
+        fields = ['fecha','duracion','impedimiento_comentario','progreso_comentario']
+
+
+class ReasignarForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        sprint_id = kwargs.pop('sprint_id',None)
+        sprint = Sprint.objects.get(pk=sprint_id)
+        pk_proy = kwargs.pop('pk_proy',None)
+        proyecto = Proyecto.objects.get(pk=pk_proy)
+        user = User.objects.filter(pk=proyecto.owner.pk)
+        super().__init__(*args, **kwargs)
+        self.fields['encargado'] = forms.ModelChoiceField(
+            empty_label="Desarrollador",
+            queryset=sprint.sprint_team.all(),
+        )
+    class Meta:
+        model = UserStory
+        fields = ['encargado']
+
+
+class IntercambiarDevForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        pk_proy = kwargs.pop('pk_proy',None)
+        proyecto = Proyecto.objects.get(pk=pk_proy)
+        user = User.objects.filter(pk=proyecto.owner.pk)
+        super().__init__(*args, **kwargs)
+        self.fields['usuario'] = forms.ModelChoiceField(
+            empty_label="Desarrollador",
+            queryset=proyecto.equipo.all() | user,
+        )
+    class Meta:
+        model = ProyectUser
+        fields = ['usuario']
