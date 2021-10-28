@@ -69,7 +69,10 @@ mainmenu () {
         sleep 2
         echo "${green}>>> Instalando dependencias${reset}"
         pip install -r requirements.txt
-
+        python manage.py makemigrations
+        python manage.py migrate
+        python manage.py loaddata datos.json
+        python manage.py shell -c "exec(open('datos.py').read())"
         echo -e "${green}\n>>> Listo para trabajar${reset}"
         echo
         python manage.py runserver
@@ -114,7 +117,10 @@ mainmenu () {
         sudo docker exec -it pg_container psql -U ${db_user} -d ${prod_db_name} -c "DROP SCHEMA public CASCADE;"
         sudo docker exec -it pg_container psql -U ${db_user} -d ${prod_db_name} -c "CREATE SCHEMA public;"
         sudo docker exec -it pg_container pg_restore -U ${db_user} -d ${prod_db_name} --no-owner db.dump
-
+        python manage.py makemigrations
+        python manage.py migrate
+        python manage.py loaddata datos.json
+        python manage.py shell -c "exec(open('datos.py').read())"
         echo
         echo -e "${green}\n>>> Listo para trabajar${reset}"
 
