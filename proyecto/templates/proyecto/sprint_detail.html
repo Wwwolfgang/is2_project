@@ -34,14 +34,15 @@
                 <a class="btn btn-outline-success" role="button" href="{% url 'proyecto:sprint-iniciar' proyecto_id sprint_id %}">
                     Iniciar Sprint
                 </a>
-                {% elif sprint.estado_de_sprint == 'A'%}
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'proyecto:sprint-burndownchart' proyecto_id sprint_id %}"><i class="fas fa-chart-line me-2"></i>Burndown-chart</a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'proyecto:sprint-finalizar' proyecto_id sprint_id %}"><i class="fas fa-flag-checkered me-2"></i>Finalizar</a>
-                </li>
+                {% elif sprint.estado_de_sprint != 'I'%}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'proyecto:sprint-burndownchart' proyecto_id sprint_id %}"><i class="fas fa-chart-line me-2"></i>Burndown-chart</a>
+                    </li>
+                    {% if sprint.estado_de_sprint == 'A'%}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'proyecto:sprint-finalizar' proyecto_id sprint_id %}"><i class="fas fa-flag-checkered me-2"></i>Finalizar</a>
+                    </li>
+                    {% endif %}
                 
                 {% endif %}
               </ul>

@@ -691,6 +691,8 @@ def agregar_user_story_view(request, pk_proy):
             u_story.product_backlog = backlog
             u_story.creador = request.user
             u_story.save()
+            perm = Permission.objects.get(codename='us_manipular_userstory_dailys')
+            assign_perm(perm,proyecto.owner,u_story)
             HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=u_story.pk), version=1, nombre=u_story.nombre, descripcion=u_story.descripcion, prioridad = u_story.prioridad_user_story)
             #Redirigimos al product backlog
             return redirect('proyecto:product-backlog', pk_proy)  
@@ -876,10 +878,13 @@ class UserStoryDetailView(UpdateView):
         if sprint.estado_de_sprint == 'A':
             context.update({
                 'sprint_activo': True,
+                'daily_list': Daily.objects.filter(user_story__pk=self.kwargs['us_id']).filter(sprint__pk=self.kwargs['sprint_id']),
             })
         else:
             context.update({
                 'sprint_activo': False,
+                'daily_list': Daily.objects.filter(user_story__pk=self.kwargs['us_id']),
+                'horas_trabajadas' : Daily.objects.filter(user_story__pk=self.kwargs['us_id']).aggregate(Sum('duracion')).get('duracion__sum',0.00)
             })
 
         context.update({
@@ -887,7 +892,7 @@ class UserStoryDetailView(UpdateView):
             'assignar': True,
             'scrum_master' : Proyecto.objects.get(pk=self.kwargs['pk_proy']).owner,
             'sprint_id': self.kwargs['sprint_id'],
-            'daily_list': Daily.objects.filter(user_story__pk=self.kwargs['us_id']).filter(sprint__pk=self.kwargs['sprint_id']),
+            'historial' : HistorialUS.objects.filter(us_fk__pk = self.kwargs['us_id']).exclude(version = HistorialUS.objects.filter(us_fk__id=(self.kwargs['us_id'])).count()).order_by('-version'),
         })
         return context
 
@@ -971,6 +976,7 @@ class InspectUserStoryView(DetailView):
         context.update({
             'proyecto_id': self.kwargs['pk_proy'],
             'historial' : HistorialUS.objects.filter(us_fk__pk = self.kwargs['us_id']).exclude(version = HistorialUS.objects.filter(us_fk__id=(self.kwargs['us_id'])).count()).order_by('-version'),
+            'daily_list': Daily.objects.filter(user_story__pk=self.kwargs['us_id'])
         })
         return context
 
@@ -1075,6 +1081,18 @@ def mark_us_doing(request, pk_proy, sprint_id,us_id):
     Este view se usa para cambiar el estado de To-Do a Doing y solo puede ser hecho por el encargado del user story y
     por el scrum master.
     """
+    proyecto = get_object_or_404(Proyecto,pk=pk_proy)
+    sprint = get_object_or_404(Sprint,pk=sprint_id)
+
+    next = request.GET.get('next')
+    if proyecto.estado_de_proyecto != 'A':
+        messages.warning(request, 'El proyecto fue finalizado, no se puede hacer cambios')
+        return HttpResponseRedirect(next)
+
+    if sprint.estado_de_sprint != 'A':
+        messages.warning(request, 'El sprint no es activo, no se pueden agregar dailys en un sprint inactivo')
+        return HttpResponseRedirect(next)
+        
     us = get_object_or_404(UserStory, pk=us_id)
     us.estado_user_story = 'DG'
     us.save()
@@ -1088,6 +1106,18 @@ def mark_us_todo(request, pk_proy, sprint_id,us_id):
     Este view se usa para cambiar el estado de Doing a To-Do y solo puede ser hecho por el encargado del user story y
     por el scrum master.
     """
+    proyecto = get_object_or_404(Proyecto,pk=pk_proy)
+    sprint = get_object_or_404(Sprint,pk=sprint_id)
+
+    next = request.GET.get('next')
+    if proyecto.estado_de_proyecto != 'A':
+        messages.warning(request, 'El proyecto fue finalizado, no se puede hacer cambios')
+        return HttpResponseRedirect(next)
+
+    if sprint.estado_de_sprint != 'A':
+        messages.warning(request, 'El sprint no es activo, no se pueden agregar dailys en un sprint inactivo')
+        return HttpResponseRedirect(next)
+        
     us = get_object_or_404(UserStory, pk=us_id)
     us.estado_user_story = 'TD'
     us.save()
@@ -1102,6 +1132,18 @@ def mark_us_done(request, pk_proy, sprint_id,us_id):
     por el scrum master. En la vista se marca al user story en estado de QA. Eso hace que en la columna de Done,
     se indica en el user story que falta hacer QA.
     """
+    proyecto = get_object_or_404(Proyecto,pk=pk_proy)
+    sprint = get_object_or_404(Sprint,pk=sprint_id)
+
+    next = request.GET.get('next')
+    if proyecto.estado_de_proyecto != 'A':
+        messages.warning(request, 'El proyecto fue finalizado, no se puede hacer cambios')
+        return HttpResponseRedirect(next)
+
+    if sprint.estado_de_sprint != 'A':
+        messages.warning(request, 'El sprint no es activo, no se pueden agregar dailys en un sprint inactivo')
+        return HttpResponseRedirect(next)
+
     us = get_object_or_404(UserStory, pk=us_id)
     us.estado_user_story = 'QA'
     us.save()
@@ -1161,11 +1203,31 @@ class FinalizarSprintView(PermissionRequiredMixin,UpdateView):
         """
         sprint = form.save()
         sprint.estado_de_sprint = 'F'
+        sprint.fechaFinalizacion = datetime.now()
         sprint.save()
 
         us = UserStory.objects.filter(sprint__pk=sprint.pk)
         for story in us:
             if story.estado_user_story != 'DN':
+                snapshot = UserStory.objects.get(pk=story.pk)
+                snapshot.pk = None
+                snapshot.id = None
+                snapshot.product_backlog = None
+                snapshot.save()
+                daily_list = Daily.objects.filter(user_story__pk=story.pk).filter(sprint__pk=sprint.pk)
+                historial = HistorialUS.objects.filter(us_fk__pk = story.pk).exclude(version = HistorialUS.objects.filter(us_fk__id=(story.pk)).count()).order_by('-version')
+                for daily in daily_list:
+                    new = Daily.objects.get(pk=daily.pk)
+                    new.pk = None
+                    new.user_story = snapshot
+                    new.save()
+                
+                for hist in historial:
+                    new = HistorialUS.objects.get(pk=hist.pk)
+                    new.pk = None
+                    new.us_fk = snapshot
+                    new.save()
+
                 story.estado_user_story = 'TD'
                 story.prioridad_user_story = 'E'
                 story.tiempo_estimado_scrum_master = None
@@ -1402,12 +1464,17 @@ def agregar_daily_view(request, pk_proy, sprint_id, us_id):
     día se resta los dailys del día del total de horas restantes.
     """
     proyecto = get_object_or_404(Proyecto,pk=pk_proy)
+    sprint = get_object_or_404(Sprint,pk=sprint_id)
+
     next = request.GET.get('next')
     if proyecto.estado_de_proyecto != 'A':
         messages.warning(request, 'El proyecto fue finalizado, no se puede hacer cambios')
         return HttpResponseRedirect(next)
 
-    sprint = get_object_or_404(Sprint,pk=sprint_id)
+    if sprint.estado_de_sprint != 'A':
+        messages.warning(request, 'El sprint no es activo, no se pueden agregar dailys en un sprint inactivo')
+        return HttpResponseRedirect(next)
+
     userstory = get_object_or_404(UserStory,pk=us_id)
     contexto = {}
     contexto.update({
@@ -1559,9 +1626,13 @@ class ReasignarDesarrrolladorView(UpdateView):
         
         """
         proyecto = get_object_or_404(Proyecto,pk=self.kwargs['pk_proy'])
+        sprint = get_object_or_404(Sprint,pk=self.kwargs['sprint_id'])
         next = request.GET.get('next')
         if proyecto.estado_de_proyecto != 'A':
             messages.warning(request, 'El proyecto fue finalizado, no se puede hacer cambios')
+            return HttpResponseRedirect(next)
+        elif sprint.estado_de_sprint != 'A':
+            messages.warning(request, 'El sprint fue finalizado, no se puede hacer cambios')
             return HttpResponseRedirect(next)
         return super().dispatch(request, *args, **kwargs)
 
@@ -1621,9 +1692,13 @@ class IntercambiarDevView(UpdateView):
         
         """
         proyecto = get_object_or_404(Proyecto,pk=self.kwargs['pk_proy'])
+        sprint = get_object_or_404(Sprint,pk=self.kwargs['sprint_id'])
         next = request.GET.get('next')
         if proyecto.estado_de_proyecto != 'A':
             messages.warning(request, 'El proyecto fue finalizado, no se puede hacer cambios')
+            return HttpResponseRedirect(next)
+        elif sprint.estado_de_sprint != 'A':
+            messages.warning(request, 'El sprint fue finalizado, no se puede hacer cambios')
             return HttpResponseRedirect(next)
         return super().dispatch(request, *args, **kwargs)
 
