@@ -18,6 +18,7 @@ from guardian.shortcuts import assign_perm, remove_perm, get_user_perms
 from pytest_django.asserts import assertTemplateUsed
 from decimal import Decimal
 from datetime import datetime, timedelta
+from workalendar.america import Paraguay
 
 
 from proyecto import views, models, forms
@@ -38,7 +39,9 @@ class SprintTest(TestCase):
 
     def sprintCreate(self,estado = 'I',carga_horaria=0.0):
         """ Setup de un sprint de prueba """
-        self.sprint = models.Sprint.objects.create(identificador='Sprint 1',estado_de_sprint=estado,proyecto=self.proyecto,duracionSprint=14,carga_horaria=carga_horaria,fechaInicio=datetime.now())
+        cal = Paraguay()
+        self.sprint = models.Sprint.objects.create(identificador='Sprint 1',estado_de_sprint=estado,proyecto=self.proyecto,duracionSprint=14,carga_horaria=carga_horaria,fechaInicio=datetime.now(),fechaFin= cal.add_working_days(datetime.now(), 14))
+        self.dev = models.ProyectUser.objects.create(usuario=self.user,horas_diarias=10,sprint=self.sprint)
     
     def userstoryCreate(self,estado_ap='T',estado_user_story='TD',encargado=None):
         self.userstory = models.UserStory.objects.create(nombre='Prueba',descripcion='Prueba',prioridad_user_story='B',estado_aprobacion=estado_ap,creador=self.user2,product_backlog=self.productBacklog,estado_user_story=estado_user_story,encargado=encargado)
@@ -399,4 +402,31 @@ class SprintTest(TestCase):
         request = self.factory.get(url)
         request.user = self.user
         response = views.EliminarDailyView.as_view()(request,**kwargs)
+        self.assertEqual(response.status_code, 200)
+
+    def test_reasignar_desarrrollador_view(self):
+        """ Test para probar si el view ReasignarDesarrrolladorView es alcanzable con los correctos kwargs y permisos """
+        self.sprintCreate('A')
+        self.userstoryCreate('A','DG')
+        kwargs = {'pk_proy': self.proyecto.pk, 'sprint_id': self.sprint.pk, 'us_id':self.userstory.pk}
+        url = reverse('proyecto:user-story-reasignar', kwargs=kwargs)
+
+        perm = Permission.objects.get(codename='us_manipular_userstory_dailys')
+        assign_perm(perm,self.user,self.userstory)
+        request = self.factory.get(url)
+        request.user = self.user
+        response = views.ReasignarDesarrrolladorView.as_view()(request,**kwargs)
+        self.assertEqual(response.status_code, 200)
+
+    def test_intercambiar_dev_view(self):
+        """ Test para probar si el view ReasignarDesarrrolladorView es alcanzable con los correctos kwargs y permisos """
+        self.sprintCreate('A')
+        kwargs = {'pk_proy': self.proyecto.pk, 'sprint_id': self.sprint.pk, 'dev_id':self.dev.pk}
+        url = reverse('proyecto:sprint-dev-exchange', kwargs=kwargs)
+
+        # perm = Permission.objects.get(codename='us_manipular_userstory_dailys')
+        # assign_perm(perm,self.user,self.userstory)
+        request = self.factory.get(url)
+        request.user = self.user
+        response = views.IntercambiarDevView.as_view()(request,**kwargs)
         self.assertEqual(response.status_code, 200)

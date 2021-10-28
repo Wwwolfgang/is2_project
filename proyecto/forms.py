@@ -241,6 +241,7 @@ class DailyForm(forms.ModelForm):
 
 
 class ReasignarForm(forms.ModelForm):
+    """ Form para reasignar un user story a otro dev del sprint. Solo se cambiará el campo encargado del user story. """
     def __init__(self, *args, **kwargs):
         sprint_id = kwargs.pop('sprint_id',None)
         sprint = Sprint.objects.get(pk=sprint_id)
@@ -258,6 +259,7 @@ class ReasignarForm(forms.ModelForm):
 
 
 class IntercambiarDevForm(forms.ModelForm):
+    """ Form para intercambiar un desarrollador de un sprint con otro asociado al proyecto. Solo se cambai el usuario para cambiar el ProyectUser. """
     def __init__(self, *args, **kwargs):
         pk_proy = kwargs.pop('pk_proy',None)
         proyecto = Proyecto.objects.get(pk=pk_proy)

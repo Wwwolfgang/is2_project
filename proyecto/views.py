@@ -1616,6 +1616,10 @@ class EliminarDailyView(PermissionRequiredMixin,DeleteView):
 
 
 class ReasignarDesarrrolladorView(UpdateView):
+    """ 
+    En este view se maneja la reasignación de un user story a otro desarrollador del sprint. Este view solo es necesario si
+    el sprint ya está activo. El nuevo desarrollador será el nuevo encargado del user story.
+    """
     model = UserStory
     template_name = 'proyecto/userstory_reasign.html'
     form_class= ReasignarForm
@@ -1623,7 +1627,8 @@ class ReasignarDesarrrolladorView(UpdateView):
 
     def dispatch(self, request, *args, **kwargs):
         """ 
-        
+        Este función se ejecuta al inicio del request. Controla que el proyecto todavía no fue finalizado y que el sprint esté activo.
+        En caso de no cumplir una de esas condiciones se vuelve a la ruta anterior y se muestra un mensaje de advertencia.
         """
         proyecto = get_object_or_404(Proyecto,pk=self.kwargs['pk_proy'])
         sprint = get_object_or_404(Sprint,pk=self.kwargs['sprint_id'])
@@ -1646,7 +1651,7 @@ class ReasignarDesarrrolladorView(UpdateView):
         return self.model.objects.get(pk = us_id)
 
     def get_form_kwargs(self):
-        """ Función que inyecta el id del sprint que se usa en el Form. """
+        """ Función que inyecta el id del sprint y del proyecto que se usa en el Form. """
         kwargs = super(ReasignarDesarrrolladorView, self).get_form_kwargs()
         kwargs['sprint_id'] = self.kwargs['sprint_id']
         kwargs['pk_proy'] = self.kwargs['pk_proy']
@@ -1669,19 +1674,28 @@ class ReasignarDesarrrolladorView(UpdateView):
 
     def form_valid(self, form):
         """
-        En esta función se guarda los cambios hechos.
+        En esta función se guarda los cambios hechos. Además se quitan los permisos por el user story del desarrollador anterior
+        y se los asigna al nuevo desarrollador.
         """
         encargado_anterior = form.initial['encargado']
         us = form.save()
         perm = Permission.objects.get(codename='us_manipular_userstory_dailys')
         user = ProyectUser.objects.get(pk=encargado_anterior)
+        proyecto = Proyecto.objects.get(pk=self.kwargs['pk_proy'])
+
         assign_perm(perm,us.encargado.usuario,us)
-        remove_perm(perm,user.usuario,us)
+        if user.usuario != proyecto.owner:
+                remove_perm(perm,user.usuario,us)
 
         return HttpResponseRedirect(reverse('proyecto:user-story-detail',kwargs={'pk_proy':self.kwargs['pk_proy'],'sprint_id':self.kwargs['sprint_id'], 'us_id':self.kwargs['us_id']}))
 
 
 class IntercambiarDevView(UpdateView):
+    """ 
+    Vista para intercambiar un desarrollador asociado a un sprint con otro desarollador que participa en el proyecto. El nuevo 
+    desarrollador será en el encargado de todos los user storys que fueron asignados al usuario anterior. También se conservan las horas diarias que trabajaba
+    el desarrollador anterior para no romper la planificación del sprint. 
+    """
     model = ProyectUser
     template_name = 'proyecto/intercambiar_sprintdev.html'
     form_class= IntercambiarDevForm
@@ -1689,7 +1703,8 @@ class IntercambiarDevView(UpdateView):
 
     def dispatch(self, request, *args, **kwargs):
         """ 
-        
+        Función que se ejecuta al inicio del request, se verifica que el proyecto esté activo y que el sprint esté activo. Si una de esas condiciones no
+        se cumple, se muestra un mensaje y vuelve a la ruta anterior.
         """
         proyecto = get_object_or_404(Proyecto,pk=self.kwargs['pk_proy'])
         sprint = get_object_or_404(Sprint,pk=self.kwargs['sprint_id'])
@@ -1714,7 +1729,7 @@ class IntercambiarDevView(UpdateView):
 
 
     def get_form_kwargs(self):
-        """ Función que inyecta el id del sprint que se usa en el Form. """
+        """ Función que inyecta el id del proyecto que se usa en el Form. """
         kwargs = super(IntercambiarDevView, self).get_form_kwargs()
         kwargs['pk_proy'] = self.kwargs['pk_proy']
         return kwargs
@@ -1734,14 +1749,17 @@ class IntercambiarDevView(UpdateView):
 
     def form_valid(self, form):
         """
-        En esta función se guarda los cambios hechos.
+        En esta función se guarda los cambios hechos. Se le agregan los permisos para cada user story al nuevo desarrollador y se los 
+        quita del desarrollador anterior.
         """
         en = form.save()
         encargado_anterior = form.initial['usuario']
         perm = Permission.objects.get(codename='us_manipular_userstory_dailys')
         user_stories = UserStory.objects.filter(encargado__pk=en.pk)
         user = User.objects.get(pk=encargado_anterior)
+        proyecto = Proyecto.objects.get(pk=self.kwargs['pk_proy'])
         for us in user_stories:
             assign_perm(perm,en.usuario,us)
-            remove_perm(perm,user,us)
+            if user != proyecto.owner:
+                remove_perm(perm,user,us)
         return HttpResponseRedirect(reverse('proyecto:sprint-team-edit',kwargs={'pk_proy':self.kwargs['pk_proy'],'pk':self.kwargs['sprint_id']}))
