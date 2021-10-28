@@ -76,33 +76,48 @@ mainmenu () {
 
     elif [ "$mainmenuinput" = "2" ]; then
         clear
+        echo -e "${green}\n>>> Producción${reset}"
         echo "Presione 1 para TAG v.0.0.1"
         echo "Presione 2 para TAG v.0.0.2"
         echo "Presione 3 para TAG v.0.0.3"
         echo "Presione 4 para TAG v.0.0.4"
         read -n 1 -p "Seleccione el Tag:" tag
+        echo -e "${green}\n>>> Producción TAG v.0.0.${tag}:${reset}"
+        echo
+        
+
         if [ "$tag" = "1" ];
         then
-            echo -e "${green}\n>>> Producción TAG v.0.0.${tag}:${reset}"
-            echo
-            
-            git checkout production
-            git pull
-
-            . docker-compose_up.sh
+            git switch --detach v.0.0.1
+        elif [ "$tag" = "2" ]; then
+            git switch --detach v.0.0.2
+        elif [ "$tag" = "3" ]; then
+            git switch --detach v.0.0.3
+        elif [ "$tag" = "4" ]; then
+            git switch --detach v.0.0.4
+        elif [ "$tag" = "5" ]; then
+            ggit switch --detach v.0.0.5
+        else 
+            echo -e "${red}\n<<< Esa versión no existe >>>${reset}"
             sleep 2
-            echo
-
-            sudo docker cp db.dump pg_container:/
-            echo -e "${green}\n>>> Copiando backup a la BD${reset}"
-            sudo docker exec -it pg_container dropdb -U ${db_user} --if-exists ${prod_db_name}
-            sudo docker exec -it pg_container createdb -U ${db_user} ${prod_db_name}
-            sudo docker exec -it pg_container psql -U ${db_user} -d ${prod_db_name} -c "DROP SCHEMA public CASCADE;"
-            sudo docker exec -it pg_container psql -U ${db_user} -d ${prod_db_name} -c "CREATE SCHEMA public;"
-            sudo docker exec -it pg_container pg_restore -U ${db_user} -d ${prod_db_name} --no-owner db.dump
-            echo
-            echo "${green}\n>>> Listo para trabajar${reset}"
+            exit
         fi
+
+        . docker-compose_up.sh
+        sleep 2
+        echo
+
+        sudo docker cp db.dump pg_container:/
+        echo -e "${green}\n>>> Copiando backup a la BD${reset}"
+        sudo docker exec -it pg_container dropdb -U ${db_user} --if-exists ${prod_db_name}
+        sudo docker exec -it pg_container createdb -U ${db_user} ${prod_db_name}
+        sudo docker exec -it pg_container psql -U ${db_user} -d ${prod_db_name} -c "DROP SCHEMA public CASCADE;"
+        sudo docker exec -it pg_container psql -U ${db_user} -d ${prod_db_name} -c "CREATE SCHEMA public;"
+        sudo docker exec -it pg_container pg_restore -U ${db_user} -d ${prod_db_name} --no-owner db.dump
+
+        echo
+        echo -e "${green}\n>>> Listo para trabajar${reset}"
+
     elif [ "$mainmenuinput" = "3" ]; then
         echo -e "${red}\n<<< Finalizar >>>${reset}"
         sleep 2
