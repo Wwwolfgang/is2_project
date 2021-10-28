@@ -968,7 +968,7 @@ class InspectUserStoryView(DetailView):
         context = super(InspectUserStoryView,self).get_context_data(**kwargs)
         context.update({
             'proyecto_id': self.kwargs['pk_proy'],
-            'historial' : HistorialUS.objects.filter(us_fk__pk = self.kwargs['us_id']).exclude(version = HistorialUS.objects.filter(us_fk__id=(self.kwargs['us_id'])).count()).order_by('-version'),
+            'historial' : HistorialUS.objects.filter(us_fk__pk = self.kwargs['us_id']).order_by('-version'),
         })
         return context
 
@@ -1075,6 +1075,10 @@ def mark_us_doing(request, pk_proy, sprint_id,us_id):
     us = get_object_or_404(UserStory, pk=us_id)
     us.estado_user_story = 'DG'
     us.save()
+    ver = HistorialUS.objects.filter(us_fk__id=us.pk).count()
+    ver += 1
+    HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=us.pk), version=ver, nombre=us.nombre,
+                               descripcion=us.descripcion, prioridad=us.prioridad_user_story, log="Paso a Doing")
     return HttpResponseRedirect(reverse('proyecto:sprint-kanban',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id}))
 
 
@@ -1088,6 +1092,10 @@ def mark_us_todo(request, pk_proy, sprint_id,us_id):
     us = get_object_or_404(UserStory, pk=us_id)
     us.estado_user_story = 'TD'
     us.save()
+    ver = HistorialUS.objects.filter(us_fk__id=us.pk).count()
+    ver += 1
+    HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=us.pk), version=ver, nombre=us.nombre,
+                               descripcion=us.descripcion, prioridad=us.prioridad_user_story, log="Paso a To Do")
     return HttpResponseRedirect(reverse('proyecto:sprint-kanban',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id}))
 
 
@@ -1102,6 +1110,11 @@ def mark_us_done(request, pk_proy, sprint_id,us_id):
     us = get_object_or_404(UserStory, pk=us_id)
     us.estado_user_story = 'QA'
     us.save()
+    ver = HistorialUS.objects.filter(us_fk__id=us.pk).count()
+    ver += 1
+    HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=us.pk), version=ver, nombre=us.nombre,
+                               descripcion=us.descripcion, prioridad=us.prioridad_user_story, log="Paso a QA")
+
     return HttpResponseRedirect(reverse('proyecto:sprint-kanban',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id}))
 
 

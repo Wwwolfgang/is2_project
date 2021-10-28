@@ -245,7 +245,7 @@ class HistorialUS(models.Model):
         default='B',
     )
     us_fk = models.ForeignKey(UserStory, on_delete=CASCADE, null=False)
-
+    log = models.TextField(verbose_name='Log en donde se almacenan los cambios de estado en el ciclo de vida del User Story', blank=True)
 
 class Daily(models.Model):
     """
@@ -267,3 +267,4 @@ class Daily(models.Model):
     user_story = models.ForeignKey('userstory',on_delete=CASCADE, blank=True, null=True)
     sprint = models.ForeignKey('sprint', on_delete=CASCADE, blank=True,null=True)
     fecha = models.DateField(null=True,blank=True)
+
