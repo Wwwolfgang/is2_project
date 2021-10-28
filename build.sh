@@ -88,7 +88,8 @@ mainmenu () {
 
         if [ "$tag" = "1" ];
         then
-            git switch --detach v.0.0.1
+            git switch --detach v.test
+            git checkout production db.dump
         elif [ "$tag" = "2" ]; then
             git switch --detach v.0.0.2
         elif [ "$tag" = "3" ]; then
@@ -107,13 +108,13 @@ mainmenu () {
         sleep 2
         echo
 
-        sudo docker cp db.dump pg_container:/
+        sudo docker cp db.dump is2_project_db_1:/
         echo -e "${green}\n>>> Copiando backup a la BD${reset}"
-        sudo docker exec -it pg_container dropdb -U ${db_user} --if-exists ${prod_db_name}
-        sudo docker exec -it pg_container createdb -U ${db_user} ${prod_db_name}
-        sudo docker exec -it pg_container psql -U ${db_user} -d ${prod_db_name} -c "DROP SCHEMA public CASCADE;"
-        sudo docker exec -it pg_container psql -U ${db_user} -d ${prod_db_name} -c "CREATE SCHEMA public;"
-        sudo docker exec -it pg_container pg_restore -U ${db_user} -d ${prod_db_name} --no-owner db.dump
+        sudo docker exec -it is2_project_db_1 dropdb -U ${db_user} --if-exists ${prod_db_name}
+        sudo docker exec -it is2_project_db_1 createdb -U ${db_user} ${prod_db_name}
+        sudo docker exec -it is2_project_db_1 psql -U ${db_user} -d ${prod_db_name} -c "DROP SCHEMA public CASCADE;"
+        sudo docker exec -it is2_project_db_1 psql -U ${db_user} -d ${prod_db_name} -c "CREATE SCHEMA public;"
+        sudo docker exec -it is2_project_db_1 pg_restore -U ${db_user} -d ${prod_db_name} --no-owner db.dump
 
         sleep 2
         echo -e "${green}\n>>> Juntar static files${reset}"
