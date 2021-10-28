@@ -115,6 +115,10 @@ mainmenu () {
         sudo docker exec -it pg_container psql -U ${db_user} -d ${prod_db_name} -c "CREATE SCHEMA public;"
         sudo docker exec -it pg_container pg_restore -U ${db_user} -d ${prod_db_name} --no-owner db.dump
 
+        sleep 2
+        echo -e "${green}\n>>> Juntar static files${reset}"
+        sudo docker-compose -f docker-compose.yml exec web python manage.py collectstatic --no-input --clear
+
         echo
         echo -e "${green}\n>>> Listo para trabajar${reset}"
 
