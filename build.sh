@@ -84,8 +84,9 @@ mainmenu () {
         pip install -r requirements.txt
         python manage.py makemigrations
         python manage.py migrate
-        git checkout cesar datos.json
-        git checkout cesar datos.py
+        git fetch
+        git checkout origin/cesar datos.json
+        git checkout origin/cesar datos.py
         python manage.py loaddata datos.json
         python manage.py shell -c "exec(open('datos.py').read())"
         echo -e "${green}\n>>> Listo para trabajar${reset}"
@@ -147,8 +148,9 @@ mainmenu () {
         sudo docker-compose -f docker-compose.yml exec web python manage.py collectstatic --no-input --clear
         python manage.py makemigrations
         python manage.py migrate
-        git checkout cesar datos.json
-        git checkout cesar datos.py
+        git fetch
+        git checkout origin/cesar datos.json
+        git checkout origin/cesar datos.py
         python manage.py loaddata datos.json
         python manage.py shell -c "exec(open('datos.py').read())"
         echo
