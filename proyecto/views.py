@@ -33,6 +33,7 @@ from datetime import datetime, timedelta, date
 from django.core.serializers import serialize
 from decimal import Decimal
 from workalendar.america import Paraguay
+from django.conf import settings
 
 
 class EliminarRolProyectoView(DeleteView):
@@ -1178,6 +1179,12 @@ def mark_us_done(request, pk_proy, sprint_id,us_id):
     us = get_object_or_404(UserStory, pk=us_id)
     us.estado_user_story = 'QA'
     us.save()
+    send_mail(
+        subject='El user story ' + us.nombre + ' fue enviado a QA',
+        message='El user story' + us.nombre + 'fue enviado a QA. Porfavor revísalo lo antes posible.',
+        from_email=settings.EMAIL_HOST_USER,
+        recipient_list=[proyecto.owner.email]
+    )
     ver = HistorialUS.objects.filter(us_fk__id=us.pk).count()
     ver += 1
     HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=us.pk), version=ver, nombre=us.nombre,
