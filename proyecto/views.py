@@ -11,7 +11,7 @@ from django.forms.models import model_to_dict
 #Mixin de django por defecto
 #from django.contrib.auth.mixins import PermissionRequiredMixin,LoginRequiredMixin
 #Usamos el mixin de Django Guardian
-from guardian.mixins import PermissionRequiredMixin 
+from guardian.mixins import LoginRequiredMixin, PermissionRequiredMixin 
 from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView
@@ -32,11 +32,12 @@ from django.core.mail import send_mail
 from datetime import datetime, timedelta, date
 from django.core.serializers import serialize
 from decimal import Decimal
+from django.contrib.auth.decorators import login_required
 from workalendar.america import Paraguay
 from django.conf import settings
 
 
-class EliminarRolProyectoView(DeleteView):
+class EliminarRolProyectoView(PermissionRequiredMixin,LoginRequiredMixin,DeleteView):
     """
     Vista para eliminar un rol de proyecto.
     Se selecciona un rol, se confirma la eliminación, y se retorna a la
@@ -44,8 +45,11 @@ class EliminarRolProyectoView(DeleteView):
     """
     model = RolProyecto
     template_name = 'proyecto/eliminar_rol_proyecto.html'
-    # permission_required = ('proyecto.p_administrar_roles')
     raise_exception = True
+    permission_required = ('proyecto.p_administrar_roles','proyecto.p_acceder_proyecto')
+
+    def get_permission_object(self):
+        return get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
 
     def get_object(self, queryset=None):
         """ Función que retorna el rol que vamos asignar a los usuarios. """
@@ -84,7 +88,7 @@ class EliminarRolProyectoView(DeleteView):
         return reverse_lazy('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']})
     
 
-class ListaRolProyectoView(ListView):
+class ListaRolProyectoView(PermissionRequiredMixin,LoginRequiredMixin,ListView):
     """
     Vista para listar los roles y participantes asociados a un proyecto.
     Se presiona el botón de "Roles" y se despliega la lista de roles y participantes. Desde esta pantalla se puede agregar, importar, modificar, eliminar y
@@ -92,6 +96,11 @@ class ListaRolProyectoView(ListView):
     """
     model = RolProyecto
     template_name = 'proyecto/lista_rol_proyecto.html'
+    raise_exception = True
+    permission_required = ('proyecto.p_acceder_proyecto')
+
+    def get_permission_object(self):
+        return get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
 
     def get_permission_object(self):
         """ Función que devuelve el proyecto sobre el cual se controlan si el usuario tiene permisos adecuados para este view """
@@ -110,8 +119,21 @@ class ListaRolProyectoView(ListView):
         return context
 
 
+class DetallesRolProyectoView(PermissionRequiredMixin,LoginRequiredMixin,DetailView):
+    model = RolProyecto
+    permission_required = ('proyecto.p_administrar_roles','proyecto.p_acceder_proyecto')
+    template_name = 'proyecto/detalles_rol_proyecto.html'
+
+    def get_permission_object(self):
+        return get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
+
+    def get_permission_object(self):
+        return get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
+
+@login_required
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
 @permission_required_or_403('proyecto.p_administrar_roles',(Proyecto,'pk','pk_proy'))
+@permission_required_or_403('proyecto.p_acceder_proyecto',(Proyecto,'pk','pk_proy'))
 def agregar_rol_proyecto_view(request, pk_proy):
     """
     Vista para agregar un rol de proyecto al proyecto.
@@ -137,9 +159,10 @@ def agregar_rol_proyecto_view(request, pk_proy):
         contexto['form'] = form
         return render(request, 'proyecto/nuevo_rol_proyecto_view.html', context=contexto)
 
-
+@login_required
 @permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
 @permission_required_or_403('proyecto.p_administrar_roles',(Proyecto,'pk','pk_proy'))
+@permission_required_or_403('proyecto.p_acceder_proyecto',(Proyecto,'pk','pk_proy'))
 def editar_rol_proyecto_view(request, pk_proy, id_rol):
     """
     Vista para editar el rol de un proyecto.
@@ -180,14 +203,16 @@ def editar_rol_proyecto_view(request, pk_proy, id_rol):
         contexto['form'] = form
         return render(request, 'proyecto/editar_rol_proyecto.html', contexto)
 
-
-class ImportarRolView(PermissionRequiredMixin, FormView):
+class ImportarRolView(PermissionRequiredMixin,LoginRequiredMixin,FormView):
     """ Vista para la importación de roles de otros proyectos. Da la lista de todos los roles que no están
     asociados al proyecto, de los cuales se puede importar los roles al proyecto. """
     template_name = 'proyecto/importar_rol.html'
-    permission_required = ('proyecto.p_administrar_roles')
+    permission_required = ('proyecto.p_administrar_roles','proyecto.p_acceder_proyecto')
     form_class= ImportarRolProyectoForm
     raise_exception = True
+
+    def get_permission_object(self):
+        return get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
 
     def get_object(self):
         """ Retorna el Proyecto al cual se importa el nuevo rol"""
@@ -231,7 +256,7 @@ class AssignUserRolProyecto(PermissionRequiredMixin,UpdateView):
     """
     model = RolProyecto
     #permission_required = ('proyecto.p_administrar_roles')
-    permission_required = ('proyecto.p_administrar_roles')
+    permission_required = ('proyecto.p_administrar_roles','proyecto.p_acceder_proyecto')
     template_name = 'proyecto/user_assign_rol.html'
     form_class= UserAssignRolForm
     raise_exception = True
@@ -285,13 +310,16 @@ class AssignUserRolProyecto(PermissionRequiredMixin,UpdateView):
         return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']}))
 #Views de proyecto
 
-class ListaProyectos(PermissionRequiredMixin, ListView):
+class ListaProyectos(LoginRequiredMixin,ListView):
     """ Listado de todos los proyectos a los cuales el usuario tiene acceso. Puede hacer algunas acciones como editar, eliminar, etc. o entrar en el proyecto. """
-    permission_required = ('sso.pg_puede_acceder_proyecto','sso.pg_is_user')
+    permission_required = ('proyecto.p_acceder_proyecto')
     raise_exception = True
     model = Proyecto
     template_name = 'proyecto/index.html'
     context_object_name = 'proyecto_list'
+
+    def get_permission_object(self):
+        return get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
 
     def get_queryset(self):
         proyectos = User.objects.get(id=self.request.user.id).proyecto_set.exclude(estado_de_proyecto='C') | Proyecto.objects.filter(owner_id=self.request.user.id).exclude(estado_de_proyecto='C')
@@ -311,13 +339,17 @@ class ListaProyectosCancelados(PermissionRequiredMixin, ListView):
         return User.objects.get(id=self.request.user.id).proyecto_set.all().filter(estado_de_proyecto='C') | Proyecto.objects.filter(owner_id=self.request.user.id).filter(estado_de_proyecto='C')
 
 
-class ProyectoDetailView(PermissionRequiredMixin, DetailView):
+class ProyectoDetailView(PermissionRequiredMixin, LoginRequiredMixin, DetailView):
     """ Vista global del proyecto, se ven los sprints, los user storys,etc. También se inicializa un barra global del proyecto para poder acceder rapidamente
         a controles del proyecto.
     """
     model = Proyecto
     template_name = 'proyecto/proyecto-detalle.html'
-    permission_required = ('sso.pg_is_user','sso.pg_puede_acceder_proyecto')
+    raise_exception = True
+    permission_required = ('proyecto.p_acceder_proyecto')
+
+    def get_permission_object(self):
+        return get_object_or_404(Proyecto, pk = self.kwargs['pk'])
 
     def get_object(self, queryset=None):
         """ Función que devuelve el proyecto """
@@ -338,7 +370,7 @@ class ProyectoDetailView(PermissionRequiredMixin, DetailView):
         return context
 
 
-class CreateProyectoView(PermissionRequiredMixin,CreateView):
+class CreateProyectoView(PermissionRequiredMixin,LoginRequiredMixin,CreateView):
     """ Vista para crear proyectos. En esta vista por el momento solo se llenan la duracion del sprint y la fecha de finalización. 
         Hay que evaluar que más campos se van a tratar aqui.
     """
@@ -364,6 +396,7 @@ class CreateProyectoView(PermissionRequiredMixin,CreateView):
         for p in Permission.objects.all():
             if (p.codename.startswith('p_') and not p.codename.startswith('pg_')):
                     if p.content_type.model == 'proyecto':
+                        print(p)
                         assign_perm(p,user,proyecto)
         return HttpResponseRedirect(reverse('proyecto:index'))
 
@@ -377,15 +410,18 @@ class CreateProyectoView(PermissionRequiredMixin,CreateView):
         return None
 
 
-class AgregarParticipanteProyecto(PermissionRequiredMixin, UpdateView):
+class AgregarParticipanteProyecto(PermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     """ Vista para agregar o invitar nuevos participantes al proyecto. Solo se muestran usuarios
     con el permiso mínimo, que todavía no fueron agregados y con no son el owner del proyecto.
     """
     model = Proyecto
-    permission_required = ('proyecto.p_administrar_participantes')
+    permission_required = ('proyecto.p_administrar_participantes','proyecto.p_acceder_proyecto')
     template_name = 'proyecto/agregar_participantes.html'
     form_class= AgregarParticipanteForm
     raise_exception = True
+
+    def get_permission_object(self):
+        return get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
 
     def get_object(self, queryset=None):
         """ Función que retorna el proyecto cuyo equipo va ser modificado """
@@ -402,10 +438,13 @@ class AgregarParticipanteProyecto(PermissionRequiredMixin, UpdateView):
         for usuario in equipo:
             user = User.objects.get(pk=usuario)
             proyecto.equipo.add(user)
+            perm = Permission.objects.get(codename='p_acceder_proyecto')
+            assign_perm(perm,self.user,self.proyecto)
         return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']}))
 
-
-@permission_required_or_403('proyecto.p_administrar_participantes',(Proyecto,'pk','pk_proy'))
+@login_required
+@permission_required_or_403('proyecto.p_administrar_participantes',(Proyecto,'pk','pk'))
+@permission_required_or_403('proyecto.p_acceder_proyecto',(Proyecto,'pk','pk_proy'))
 def eliminarParticipanteView(request, pk_proy, pk, template_name='proyecto/delete_confirm_participante.html'):
     """ View para eliminar participantes de equipo de un proyecto. Es una vista de confirmación
         , si el usuario elige "Eliminar" se elimina el usuario del proyecto.
@@ -429,6 +468,9 @@ def eliminarParticipanteView(request, pk_proy, pk, template_name='proyecto/delet
     return render(request, template_name, {'object':proyecto, 'usuario':user})
 
 
+@login_required
+@permission_required('sso.pg_puede_crear_proyecto', return_403=True, accept_global_perms=True)
+@permission_required_or_403('proyecto.p_acceder_proyecto',(Proyecto,'pk','pk'))
 @permission_required_or_403('proyecto.p_editar_proyectos',(Proyecto,'pk','pk'))
 def edit(request, pk, template_name='proyecto/edit.html'):
     """ Vista para editar algunos atributos del proyecto como la duracion del sprint y la fecha de finalizacion. """
@@ -445,7 +487,8 @@ def edit(request, pk, template_name='proyecto/edit.html'):
     return render(request, template_name, context=contexto)
 
 
-@permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
+@login_required
+@permission_required_or_403('proyecto.p_acceder_proyecto',(Proyecto,'pk','pk'))
 @permission_required_or_403('proyecto.p_cancelar_proyectos',(Proyecto,'pk','pk'))
 def cancelar(request, pk, template_name='proyecto/confirm-cancel.html'):
     """ View para cancelar un proyecto. TODO se debería hacer cierto control cuando se puede cancelar un proyecto"""
@@ -495,7 +538,7 @@ class SolicitarPermisosView(FormView):
         return HttpResponseRedirect(reverse('proyecto:detail',kwargs={'pk':self.kwargs['pk_proy']}))
 
 
-class AgregarSprintView(PermissionRequiredMixin, CreateView):
+class AgregarSprintView(PermissionRequiredMixin, LoginRequiredMixin, CreateView):
     """ View para agregar nuevos sprints. 
     En el form solo se puede indicar el tiempo de duración en días del sprint.
     """
@@ -503,7 +546,10 @@ class AgregarSprintView(PermissionRequiredMixin, CreateView):
     template_name = "proyecto/agregar_sprint.html"
     form_class = SprintCrearForm
     raise_exception = True
-    permission_required = ('proyecto.p_administrar_sprint')
+    permission_required = ('proyecto.p_administrar_sprint','proyecto.p_acceder_proyecto')
+
+    def get_permission_object(self):
+        return get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
 
     def get_object(self):
         """Función que retorna el proyecto con el cual vamos a comprobar el permiso"""
@@ -564,7 +610,7 @@ class EquipoSprintUpdateView(PermissionRequiredMixin,SingleObjectMixin,FormView)
     model = Sprint
     template_name = 'proyecto/sprint_equipo_edit.html'
     raise_exception = True
-    permission_required = ('proyecto.p_administrar_devs')
+    permission_required = ('proyecto.p_administrar_devs','proyecto.p_acceder_proyecto')
     
     def get_permission_object(self):
         """ Función que devuelve el proyecto sobre el cual se controlan si el usuario tiene permisos adecuados para este view """
@@ -615,14 +661,14 @@ class EquipoSprintUpdateView(PermissionRequiredMixin,SingleObjectMixin,FormView)
         return reverse('proyecto:sprint-detail', kwargs={'pk_proy': self.kwargs['pk_proy'],'sprint_id':self.kwargs['pk']})
 
 
-class SprintUpdateView(PermissionRequiredMixin,UpdateView):
+class SprintUpdateView(PermissionRequiredMixin,LoginRequiredMixin,UpdateView):
     """ View para modificar un Sprint. Se puede modificar la duración en días del sprint.
     Sólo será posible modificar el sprint si el sprint está en estado de inicialización o planificación.
     """
     model = Sprint
     form_class= SprintModificarForm
     template_name = 'proyecto/sprint_modificar.html'
-    permission_required = ('proyecto.p_administrar_sprint')
+    permission_required = ('proyecto.p_administrar_sprint','proyecto.p_acceder_proyecto')
     raise_exception = True
 
     def dispatch(self, request, *args, **kwargs):
@@ -664,7 +710,8 @@ class SprintUpdateView(PermissionRequiredMixin,UpdateView):
 
 
 #Views de user story
-@permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
+@login_required
+@permission_required_or_403('proyecto.p_acceder_proyecto',(Proyecto,'pk','pk_proy'))
 @permission_required_or_403('proyecto.p_aprobar_us',(Proyecto,'pk','pk_proy'))
 def agregar_user_story_view(request, pk_proy):
     """
@@ -707,13 +754,13 @@ def agregar_user_story_view(request, pk_proy):
         return render(request, 'proyecto/nuevo_user_story_view.html', context=contexto)
 
 
-class UserStoryUdateView(PermissionRequiredMixin,UpdateView):
+class UserStoryUdateView(PermissionRequiredMixin,LoginRequiredMixin,UpdateView):
     """ View para modificar user storys no aprobados. """
     model = UserStory
     form_class= AgregarUserStoryForm
     template_name = 'proyecto/nuevo_user_story_view.html'
     raise_exception = True
-    permission_required = ('proyecto.p_aprobar_us')
+    permission_required = ('proyecto.p_aprobar_us','proyecto.p_acceder_proyecto')
     raise_exception = True
 
     def get_permission_object(self):
@@ -775,7 +822,11 @@ class ProductBacklogView(PermissionRequiredMixin, ListView):
     """ View de todos los user storys del proyecto. A la izquierda se ven los user storys temporales, a la derecha los aprobados que ya se encuentran el backlog. """
     model = UserStory
     template_name = 'proyecto/product_backlog.html'
-    permission_required = ('sso.pg_is_user','sso.pg_puede_acceder_proyecto')
+    permission_required = ('proyecto.p_acceder_proyecto')
+    raise_exception = True
+
+    def get_permission_object(self):
+        return get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
 
     def get_context_data(self, **kwargs):
         """ Función para inyectar variables de contexto que serán utilizados en el template."""
@@ -788,7 +839,7 @@ class ProductBacklogView(PermissionRequiredMixin, ListView):
         return context
 
 
-class AprobarUserStoryView(PermissionRequiredMixin,UpdateView):
+class AprobarUserStoryView(PermissionRequiredMixin,LoginRequiredMixin,UpdateView):
     """ View de aprobación del user story.
     Al inicio cuando el user story es agregado al backlog, tiene estado temporal, en estado temporal se puede modificar el user story.
     Una vez que no se quiere modificar el user story, se lo aprueba y apartir de ahí no es editable.
@@ -798,7 +849,7 @@ class AprobarUserStoryView(PermissionRequiredMixin,UpdateView):
     template_name = 'proyecto/userstory_aprobar_confirm.html'
     form_class= UserstoryAprobarForm
     raise_exception = True
-    permission_required = ('proyecto.p_aprobar_us')
+    permission_required = ('proyecto.p_aprobar_us','proyecto.p_acceder_proyecto')
 
     def get_permission_object(self):
         """ Función que devuelve el user proyecto sobre el cual se controlan si el usuario tiene permisos adecuados para este view """
@@ -839,12 +890,17 @@ class AprobarUserStoryView(PermissionRequiredMixin,UpdateView):
         return reverse('proyecto:product-backlog', kwargs={'pk_proy': self.kwargs['pk_proy']})
 
 
-class SprintView(TemplateView):
+class SprintView(PermissionRequiredMixin,LoginRequiredMixin,TemplateView):
     """ View para ver el Sprint. Dependiendo del estado del sprint, el owner puede ver los user storys del backlog y los puede asignar.
         Los encargados y participantes del proyecto pueden ver los user storys asignados al sprint.
     """
     model = Sprint
     template_name = 'proyecto/sprint_detail.html'
+    raise_exception = True
+    permission_required = ('proyecto.p_acceder_proyecto')
+
+    def get_permission_object(self):
+        return get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
 
     def get_context_data(self, **kwargs):
         """ Función para inyectar variables de contexto que serán utilizados en el template."""
@@ -875,7 +931,7 @@ class SprintView(TemplateView):
         return context
 
 
-class UserStoryDetailView(UpdateView):
+class UserStoryDetailView(LoginRequiredMixin,UpdateView):
     """ 
     Vista para ver en detalle el user story. Es un updateview que será usado por el scrum master del proyecto y por el encargado asignado.
     Dependiendo de la persona que abre el link, se muestran los campos del form.
@@ -988,7 +1044,7 @@ class UserStoryDetailView(UpdateView):
         return reverse('proyecto:sprint-detail', kwargs={'pk_proy': self.kwargs['pk_proy'],'sprint_id':self.kwargs['sprint_id']})
 
 
-class InspectUserStoryView(DetailView):
+class InspectUserStoryView(PermissionRequiredMixin,LoginRequiredMixin,DetailView):
     """  
     View para ver el user story en detalle. Esta vista será usada por personas que no sean el owner del proyecto.
     Se hizo esa división para manejar mejor los forms. Pero ambas vistas se van al mismo template.
@@ -996,6 +1052,10 @@ class InspectUserStoryView(DetailView):
     model = UserStory
     template_name = 'proyecto/userstory_detail_update.html'
     raise_exception = True
+    permission_required = ('proyecto.p_aprobar_us','proyecto.p_acceder_proyecto')
+
+    def get_permission_object(self):
+        return get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
 
     def get_object(self, queryset=None):
         """ Función que retorna el proyecto cuyo equipo va ser modificado """
@@ -1012,8 +1072,10 @@ class InspectUserStoryView(DetailView):
         return context
 
 
+@login_required
 @permission_required_or_403('proyecto.p_administrar_us',(Proyecto,'pk','pk_proy'))
 @permission_required_or_403('proyecto.p_administrar_sprint',(Proyecto,'pk','pk_proy'))
+@permission_required_or_403('proyecto.p_acceder_proyecto',(Proyecto,'pk','pk_proy'))
 def quitar_user_story_view(request, pk_proy, sprint_id, us_id, template_name='proyecto/quitar_userstory_sprint.html'):
     """ 
     View para desasignar un user story del sprint. 
@@ -1050,6 +1112,8 @@ def quitar_user_story_view(request, pk_proy, sprint_id, us_id, template_name='pr
     return render(request, template_name, {'proyecto_id':pk_proy, 'sprint_id':sprint_id, 'us_id': us_id})
 
 
+@login_required
+@permission_required_or_403('proyecto.p_acceder_proyecto',(Proyecto,'pk','pk_proy'))
 @permission_required_or_403('proyecto.p_administrar_sprint',(Proyecto,'pk','pk_proy'))
 def iniciar_sprint_view(request, pk_proy, sprint_id, template_name='proyecto/iniciar_sprint.html'):
     """ 
@@ -1075,7 +1139,7 @@ def iniciar_sprint_view(request, pk_proy, sprint_id, template_name='proyecto/ini
     return render(request, template_name, {'proyecto_id':pk_proy, 'sprint_id':sprint_id})
 
 
-class SprintKanbanView(TemplateView):
+class SprintKanbanView(PermissionRequiredMixin,LoginRequiredMixin,TemplateView):
     """ 
     Vista del Tablero Kanban de un Sprint.
     Se muestran por el momento las tres columnas de Todo, Doing y Done.
@@ -1086,6 +1150,11 @@ class SprintKanbanView(TemplateView):
     """
     model = Sprint
     template_name = 'proyecto/sprint_kanban.html'
+    raise_exception = True
+    permission_required = ('proyecto.p_aprobar_us','proyecto.p_acceder_proyecto')
+
+    def get_permission_object(self):
+        return get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
 
     def get_context_data(self, **kwargs):
         context = super(SprintKanbanView,self).get_context_data(**kwargs)
@@ -1108,6 +1177,9 @@ class SprintKanbanView(TemplateView):
         return context
 
 
+@login_required
+@permission_required_or_403('proyecto.p_acceder_proyecto',(Proyecto,'pk','pk_proy'))
+@permission_required_or_403('proyecto.p_administrar_us',(Proyecto,'pk','pk_proy'))
 @permission_required_or_403('proyecto.us_manipular_userstory_dailys',(UserStory,'pk','us_id'))
 def mark_us_doing(request, pk_proy, sprint_id,us_id):
     """ 
@@ -1137,6 +1209,9 @@ def mark_us_doing(request, pk_proy, sprint_id,us_id):
     return HttpResponseRedirect(reverse('proyecto:sprint-kanban',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id}))
 
 
+@login_required
+@permission_required_or_403('proyecto.p_acceder_proyecto',(Proyecto,'pk','pk_proy'))
+@permission_required_or_403('proyecto.p_administrar_us',(Proyecto,'pk','pk_proy'))
 @permission_required_or_403('proyecto.us_manipular_userstory_dailys',(UserStory,'pk','us_id'))
 def mark_us_todo(request, pk_proy, sprint_id,us_id):
     """ 
@@ -1166,6 +1241,9 @@ def mark_us_todo(request, pk_proy, sprint_id,us_id):
     return HttpResponseRedirect(reverse('proyecto:sprint-kanban',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id}))
 
 
+@login_required
+@permission_required_or_403('proyecto.p_acceder_proyecto',(Proyecto,'pk','pk_proy'))
+@permission_required_or_403('proyecto.p_administrar_us',(Proyecto,'pk','pk_proy'))
 @permission_required_or_403('proyecto.us_manipular_userstory_dailys',(UserStory,'pk','us_id'))
 def mark_us_done(request, pk_proy, sprint_id,us_id):
     """ 
@@ -1203,7 +1281,7 @@ def mark_us_done(request, pk_proy, sprint_id,us_id):
     return HttpResponseRedirect(reverse('proyecto:sprint-kanban',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id}))
 
 
-class FinalizarSprintView(PermissionRequiredMixin,UpdateView):
+class FinalizarSprintView(PermissionRequiredMixin,LoginRequiredMixin,UpdateView):
     """ 
     Este view se usa para finalizar un sprint. Se controla que el Sprint esté en estado Activo y que el proyecto esté activo.
     El view devuelve un template que se usa para pedir una confirmación de finalización del usuario.
@@ -1214,7 +1292,7 @@ class FinalizarSprintView(PermissionRequiredMixin,UpdateView):
     template_name = 'proyecto/sprint_finalizar_confirm.html'
     form_class=SprintFinalizarForm
     raise_exception = True
-    permission_required = ('proyecto.p_administrar_sprint')
+    permission_required = ('proyecto.p_administrar_sprint','proyecto.p_acceder_proyecto')
 
     def get_permission_object(self):
         """ Función que devuelve el proyecto sobre el cual se controlan si el usuario tiene permisos adecuados para este view """
@@ -1303,7 +1381,7 @@ class FinalizarSprintView(PermissionRequiredMixin,UpdateView):
         return reverse('proyecto:sprint-kanban', kwargs={'pk_proy': self.kwargs['pk_proy'],'sprint_id':self.kwargs['sprint_id'],})
 
 
-class QaView(PermissionRequiredMixin,FormView):
+class QaView(PermissionRequiredMixin,LoginRequiredMixin,FormView):
     """ 
     Vista de QA.
     Esta vista devuelve un form donde la persona con los permisos necesarios puede ver el user story en cuestión, puede llenar un comentario,
@@ -1312,7 +1390,7 @@ class QaView(PermissionRequiredMixin,FormView):
     """
     form_class=QaForm
     template_name = 'proyecto/qa_form.html'
-    permission_required = ('proyecto.p_administrar_us_qa')
+    permission_required = ('proyecto.p_administrar_us_qa','proyecto.p_acceder_proyecto')
     raise_exception = True
 
     def get_permission_object(self):
@@ -1389,7 +1467,7 @@ class QaView(PermissionRequiredMixin,FormView):
         return reverse('proyecto:sprint-kanban', kwargs={'pk_proy': self.kwargs['pk_proy'],'sprint_id':self.kwargs['sprint_id']})
 
 
-class FinalizarProyectoView(PermissionRequiredMixin,UpdateView):
+class FinalizarProyectoView(PermissionRequiredMixin,LoginRequiredMixin,UpdateView):
     """ 
     View para finalizar un proyecto.
     De antemano se controla que el estado del proyecto es Activo, se controla que todos los sprints fueron finalizados y que no haya user storys
@@ -1400,7 +1478,7 @@ class FinalizarProyectoView(PermissionRequiredMixin,UpdateView):
     template_name = 'proyecto/proyecto_finalizar_confirm.html'
     form_class=ProyectoFinalizarForm
     raise_exception = True
-    permission_required = ('proyecto.p_finalizar_proyectos')
+    permission_required = ('proyecto.p_finalizar_proyectos','proyecto.p_acceder_proyecto')
 
     def get_permission_object(self):
         """ Función que devuelve el proyecto sobre el cual se controlan si el usuario tiene permisos adecuados para este view """
@@ -1450,7 +1528,7 @@ class FinalizarProyectoView(PermissionRequiredMixin,UpdateView):
         return reverse('proyecto:detail', kwargs={'pk': self.kwargs['pk_proy']})
 
 
-class SprintBurndownchartView(TemplateView):
+class SprintBurndownchartView(PermissionRequiredMixin,LoginRequiredMixin,TemplateView):
     """ 
     Vista del burndownchart de un sprint. Se usa la librería de chart.js en el template para graficar el user story.
     Calcula el trabajo restante por día en el sprint hasta la fecha actual.
@@ -1459,6 +1537,10 @@ class SprintBurndownchartView(TemplateView):
     """
     template_name='proyecto/sprint_burndownchart.html'
     raise_exception = True
+    permission_required = ('proyecto.p_acceder_proyecto')
+
+    def get_permission_object(self):
+        return get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
 
     def get_context_data(self, **kwargs):
         """ Función que inyecta los datos necesarios para el burndownchart.
@@ -1508,7 +1590,9 @@ class SprintBurndownchartView(TemplateView):
         return context
 
 
-@permission_required('sso.pg_is_user', return_403=True, accept_global_perms=True)
+@login_required
+@permission_required_or_403('proyecto.p_administrar_us',(Proyecto,'pk','pk_proy'))
+@permission_required_or_403('proyecto.p_acceder_proyecto',(Proyecto,'pk','pk_proy'))
 def userstory_cancelar(request, pk_proy, us_id, template_name='proyecto/userstory_cancelar.html'):
     """
     Este view se usa para quitar user storys del Backlog.
@@ -1528,6 +1612,9 @@ def userstory_cancelar(request, pk_proy, us_id, template_name='proyecto/userstor
     return render(request, template_name, {'object': userstory, 'proyecto_id':pk_proy})
 
 
+@login_required
+@permission_required_or_403('proyecto.p_administrar_us',(Proyecto,'pk','pk_proy'))
+@permission_required_or_403('proyecto.p_acceder_proyecto',(Proyecto,'pk','pk_proy'))
 @permission_required_or_403('proyecto.us_manipular_userstory_dailys',(UserStory,'pk','us_id'))
 def agregar_daily_view(request, pk_proy, sprint_id, us_id):
     """
@@ -1579,13 +1666,13 @@ def agregar_daily_view(request, pk_proy, sprint_id, us_id):
         return render(request, 'proyecto/daily_view_form.html', context=contexto)
 
 
-class EditDailyView(PermissionRequiredMixin,UpdateView):
+class EditDailyView(PermissionRequiredMixin,LoginRequiredMixin,UpdateView):
     """
     Vista para editar un Daily
     Sierve un template de formulario donde el usuario puede modificar los campos del daily.
     """
     model = Daily
-    permission_required = ('proyecto.us_manipular_userstory_dailys')
+    permission_required = ('proyecto.p_administrar_us','proyecto.p_acceder_proyecto','proyecto.us_manipular_userstory_dailys')
     template_name = 'proyecto/daily_view_form.html'
     form_class= DailyForm
     raise_exception = True
@@ -1634,7 +1721,7 @@ class EditDailyView(PermissionRequiredMixin,UpdateView):
         return HttpResponseRedirect(reverse('proyecto:user-story-detail',kwargs={'pk_proy':self.kwargs['pk_proy'],'sprint_id':self.kwargs['sprint_id'], 'us_id':self.kwargs['us_id']}))
 
 
-class EliminarDailyView(PermissionRequiredMixin,DeleteView):
+class EliminarDailyView(PermissionRequiredMixin,LoginRequiredMixin,DeleteView):
     """
     Este View es un DeleteView para facilitar la eliminación de un registro de Daily.
     Este View requiere el permiso de manipular dailys de este user story.
