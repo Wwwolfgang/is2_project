@@ -82,7 +82,8 @@ mainmenu () {
         sleep 2
         echo "${green}>>> Instalando dependencias${reset}"
         pip install -r requirements.txt
-        python manage.py makemigrations
+        python manage.py makemigrations sso --empty
+        python manage.py makemigrations proyecto --empty
         python manage.py migrate
         git fetch
         git checkout origin/cesar datos.json
@@ -146,7 +147,8 @@ mainmenu () {
         sleep 2
         echo -e "${green}\n>>> Juntar static files${reset}"
         sudo docker-compose -f docker-compose.yml exec web python manage.py collectstatic --no-input --clear
-        python manage.py makemigrations
+        python manage.py makemigrations sso --empty
+        python manage.py makemigrations proyecto --empty
         python manage.py migrate
         git fetch
         git checkout origin/cesar datos.json
