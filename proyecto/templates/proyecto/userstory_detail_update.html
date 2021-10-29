@@ -10,14 +10,14 @@
         <div class="card-header">
             <ul class="nav nav-pills card-header-pills">
               <a class="navbar-brand text-black" href="{% url 'proyecto:sprint-detail' proyecto_id sprint_id %}">{{object.sprint.identificador}}
-                  {% if sprint.estado_de_sprint == 'I' %}
-                      <span class="badge bg-warning text-dark">{{sprint.get_estado_de_sprint_display}}</span>
-                  {% elif sprint.estado_de_sprint == 'F'%}
-                      <span class="badge bg-success text-right">{{sprint.get_estado_de_sprint_display}}</span>
-                  {% elif sprint.estado_de_sprint == 'A'%}
-                      <span class="badge bg-primary text-right">{{sprint.get_estado_de_sprint_display}}</span>
-                  {% elif sprint.estado_de_sprint == 'C'%}
-                      <span class="badge bg-danger text-right">{{sprint.get_estado_de_sprint_display}}</span>
+                  {% if object.sprint.estado_de_sprint == 'I' %}
+                      <span class="badge bg-warning text-dark">{{object.sprint.get_estado_de_sprint_display}}</span>
+                  {% elif object.sprint.estado_de_sprint == 'F'%}
+                      <span class="badge bg-success text-right">{{object.sprint.get_estado_de_sprint_display}}</span>
+                  {% elif object.sprint.estado_de_sprint == 'A'%}
+                      <span class="badge bg-primary text-right">{{object.sprint.get_estado_de_sprint_display}}</span>
+                  {% elif object.sprint.estado_de_sprint == 'C'%}
+                      <span class="badge bg-danger text-right">{{object.sprint.get_estado_de_sprint_display}}</span>
                   {% endif %}
               </a>
               
@@ -25,34 +25,35 @@
                   <a href="{% url 'proyecto:sprint-team-edit' proyecto_id sprint_id%}" class="nav-link"><i class="fas fa-users me-2"></i>Team</a>
               </li>
 
-              {% if sprint.estado_de_sprint != 'A' %}
-              <li class="nav-item">
-                  <a href="{% url 'proyecto:sprint-edit' proyecto_id sprint_id%}?next={{request.path}}" class="nav-link"><i class="fas fa-pen me-2"></i>Modificar</a>
-              </li>
+              {% if object.sprint.estado_de_sprint != 'A' %}
+                <li class="nav-item">
+                    <a href="{% url 'proyecto:sprint-edit' proyecto_id sprint_id%}?next={{request.path}}" class="nav-link"><i class="fas fa-pen me-2"></i>Modificar</a>
+                </li>
               {% endif %}
               <li class="nav-item">
                   <a class="nav-link" href="{% url 'proyecto:sprint-kanban' proyecto_id sprint_id %}"><i class="fas fa-map-marked me-2"></i>Kanban</a>
               </li>
-              {% if ready_inicio == True and sprint.estado_de_sprint == 'I' %}
-              <a class="btn btn-outline-success" role="button" href="{% url 'proyecto:sprint-iniciar' proyecto_id sprint_id %}">
-                  Iniciar Sprint
-              </a>
-              {% elif sprint.estado_de_sprint == 'A'%}
-              <li class="nav-item">
-                  <a class="nav-link" href="{% url 'proyecto:sprint-burndownchart' proyecto_id sprint_id %}"><i class="fas fa-chart-line me-2"></i>Burndown-chart</a>
-              </li>
-
-              <li class="nav-item">
-                  <a class="nav-link" href="{% url 'proyecto:sprint-finalizar' proyecto_id sprint_id %}"><i class="fas fa-flag-checkered me-2"></i>Finalizar</a>
-              </li>
-              
+              {% if ready_inicio == True and object.sprint.estado_de_sprint == 'I' %}
+                <a class="btn btn-outline-success" role="button" href="{% url 'proyecto:sprint-iniciar' proyecto_id sprint_id %}">
+                    Iniciar Sprint
+                </a>
+                {% elif object.sprint.estado_de_sprint != 'I'%}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'proyecto:sprint-burndownchart' proyecto_id sprint_id %}"><i class="fas fa-chart-line me-2"></i>Burndown-chart</a>
+                    </li>
+                    {% if object.sprint.estado_de_sprint == 'A'%}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'proyecto:sprint-finalizar' proyecto_id sprint_id %}"><i class="fas fa-flag-checkered me-2"></i>Finalizar</a>
+                    </li>
+                    {% endif %}
               {% endif %}
             </ul>
-          </div>
+        </div>
         {% endif %}
         
         <div class="card-header">
-            User story: {{object.nombre}}
+            <a href="{% url 'proyecto:product-backlog' proyecto_id %}"  class="btn btn-outline-success"><i class="fas fa-chevron-left me-2"></i>Product Backlog</a>
+            <span class="navbar-brand class mx-2"> User story: {{object.nombre}}</span>
             {% if object.prioridad_user_story == 'A' %}
                 <span class="badge  bg-warning text-dark">{{object.get_prioridad_user_story_display}}</span>
             {% elif object.prioridad_user_story == 'B'%}
@@ -69,10 +70,11 @@
             {{object.descripcion}}
         </div>
 
-        {% if sprint_activo == False %}
+        {% if sprint_activo == False and object.sprint.estado_de_sprint != 'F' %}
         <div class="card-body">
             {% if object.last_estimated != None %}
                 <strong>Duración estimada anteriormente: </strong>{{object.last_estimated}} hs.
+                <div class="class mb-3"><strong>Horas trabajadas anteriormente: </strong>{{horas_trabajadas|default_if_none:"0"}} hs.</div>
             {% endif %}
             <form action="" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
@@ -120,10 +122,10 @@
                         Atrás
                     </a>
                 {% else %}
-                    <a class="btn btn-warning" role="button" href="{% url 'proyecto:sprint-detail' proyecto_id sprint_id %}">
-                        Cancelar
-                    </a>
                     {% if user == scrum_master or user == object.encargado.usuario %}
+                        <a class="btn btn-warning" role="button" href="{% url 'proyecto:sprint-detail' proyecto_id sprint_id %}">
+                            Cancelar
+                        </a>
                         {% if object.sprint == None %}
                             <button type="submit" class="my-2 btn btn-success">Agregar al sprint</button>
                         {% else %}
@@ -139,7 +141,8 @@
             <div class="card-body">
                 <p><strong>Desarrollador asignado: </strong>
                     {% if object.encargado %}
-                        {{object.encargado}}</p>
+                        {{object.encargado}} 
+                        {% if sprint_id and object.sprint.estado_de_sprint != 'F' %}<a href="{% url 'proyecto:user-story-reasignar' proyecto_id sprint_id object.pk %}?next={{request.path}}"><i class="fas fa-user-edit me-2"></i></a>{% endif %}</p>
                     {% else %}
                         No asignado
                     {% endif %}
@@ -151,57 +154,73 @@
                     {% endif %}
             </div>
         {% endif %}
-        {% if sprint_id and object.sprint %}
-            <a class="nav-link" href="{% url 'proyecto:userstory-add-daily' proyecto_id sprint_id object.pk %}"><i class="fas fa-stopwatch me-2"></i>Agregar Daily</a>
-            {% if daily_list %}
-                {% for daily in daily_list %}
-                <div class="container">
-                    <div class="card mb-2">
-                        <div class="card-header">
-                            <ul class="nav nav-pills card-header-pills">
-                                <li class="navbar-brand text-black">Daily</li>
-                                <li class="navbar-brand text-black">{{daily.fecha|default_if_none:""}}</li>
-                                <li class="nav-item">
-                                    <a href="{% url 'proyecto:editar-daily' proyecto_id sprint_id object.pk daily.pk %}?next={{request.path}}" class="nav-link"><i class="fas fa-pen me-2"></i>Modificar</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a href="{% url 'proyecto:eliminar-daily' proyecto_id sprint_id object.pk daily.pk %}?next={{request.path}}" class="nav-link" style="color: red;"><i class="fas fa-trash me-2"></i>Eliminar</a>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="card-body">
-                            <strong>Duración: </strong>{{daily.duracion}} hs.<br/>
-                            <strong>Impedimientos: </strong>{{daily.impedimiento_comentario}}<br/>
-                            <strong>Progresos: </strong>{{daily.progreso_comentario}}<br/>
-                        </div>
+        <div class="row class py-3">
+            <div class="col-6 class mx-3">
+                <div x-data="{ open: false }">
+                    <button class="me-2 btn btn-outline-success" @click="open = !open">Dailys</button>
+                    {% if object.estado_user_story == 'DG' and sprint_id and object.sprint and object.sprint.estado_de_sprint != 'F' %}
+                        <a class="btn btn-primary" href="{% url 'proyecto:userstory-add-daily' proyecto_id sprint_id object.pk %}?next={{request.path}}"><i class="fas fa-stopwatch me-2"></i>Agregar Daily</a>
+                    {% endif %}
+                    <div x-show="open">
+                        {% if daily_list %}
+                            {% for daily in daily_list %}
+                                <div class="card mt-2">
+                                    <div class="card-header">
+                                        <ul class="nav nav-pills card-header-pills">
+                                            <li class="navbar-brand text-black">Daily</li>
+                                            <li class="navbar-brand text-black">{{daily.fecha|default_if_none:""}}</li>
+                                            {% if object.estado_user_story == 'DG' and sprint_id and object.sprint %}
+                                            <li class="nav-item">
+                                                <a href="{% url 'proyecto:editar-daily' proyecto_id sprint_id object.pk daily.pk %}?next={{request.path}}" class="nav-link"><i class="fas fa-pen me-2"></i>Modificar</a>
+                                            </li>
+                                            <li class="nav-item">
+                                                <a href="{% url 'proyecto:eliminar-daily' proyecto_id sprint_id object.pk daily.pk %}?next={{request.path}}" class="nav-link" style="color: red;"><i class="fas fa-trash me-2"></i>Eliminar</a>
+                                            </li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                    <div class="card-body">
+                                        <strong>Duración: </strong>{{daily.duracion}} hs.<br/>
+                                        <strong>Impedimientos: </strong>{{daily.impedimiento_comentario}}<br/>
+                                        <strong>Progresos: </strong>{{daily.progreso_comentario}}<br/>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
                     </div>
                 </div>
-                {% endfor %}
-            {% endif %}
-        {% endif %}
+            </div>
 
-
-        {% for historial in historial %}
-            <br/>
-            <div class="card ">
-                <div class="card-header">
-                    <strong>Version: </strong>{{historial.version}} User story: {{historial.nombre}}
-                    {% if historial.prioridad == 'A' %}
-                        <span class="badge  bg-warning text-dark">Alta</span>
-                    {% elif historial.prioridad == 'B'%}
-                        <span class="badge  bg-success text-right">Baja</span>
-                    {% elif historial.prioridad == 'M'%}
-                        <span class="badge  bg-primary text-right">Media</span>
-                    {% elif historial.prioridad == 'E'%}
-                        <span class="badge  bg-danger text-right">Emergencia</span>
-                    {% endif %}
-                </div>
-                <div class="card-body">
-                    <h5 class="card-title">Descripción:</h5>
-                    {{historial.descripcion}}
+            <div class="col-5 class mx-3">
+                <div x-data="{ openH: false }">
+                    <button class="me-2 mb-3 btn btn-outline-success" @click="openH = !openH"><i class="fas fa-history me-2"></i>Historial</button>
+                    <div x-show="openH">
+                        {% for historial in historial %}
+                            <br/>
+                            <div class="card ">
+                                <div class="card-header">
+                                    <strong>Version: </strong>{{historial.version}} User story: {{historial.nombre}}
+                                    {% if historial.prioridad == 'A' %}
+                                        <span class="badge  bg-warning text-dark">Alta</span>
+                                    {% elif historial.prioridad == 'B'%}
+                                        <span class="badge  bg-success text-right">Baja</span>
+                                    {% elif historial.prioridad == 'M'%}
+                                        <span class="badge  bg-primary text-right">Media</span>
+                                    {% elif historial.prioridad == 'E'%}
+                                        <span class="badge  bg-danger text-right">Emergencia</span>
+                                    {% endif %}
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title">Descripción:</h5>
+                                    {{historial.descripcion}} </br>
+                                    <p> Cambios: {{historial.log}}</p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
-        {% endfor %}
+        </div>
     </div>
 </div>
 
