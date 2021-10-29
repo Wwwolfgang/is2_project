@@ -144,7 +144,9 @@
                     </div>
                     {% else %}
                     <h6 class="card-title"><strong>Fecha de finalización: </strong>{{sprint.fechaFin}}</h6>
-
+                    {% if alerta_fin %}
+                        <h6 class="card-title" style="color:red"><strong>¡El sprint está por terminarse dentro de pocos días!</strong></h6>
+                    {% endif %}
                     <div class="row class py-5">
                             <h6>Sprint Backlog</h6>
                             {% for us in sprint_backlog %}

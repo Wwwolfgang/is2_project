@@ -169,7 +169,8 @@ def editar_rol_proyecto_view(request, pk_proy, id_rol):
                 for participante in rol.participantes.all():
                     if str(past_part.pk) not in form.cleaned_data['permisos']:
                         if past_part.content_type.model == 'proyecto':
-                            remove_perm(past_part,participante,proyecto)
+                            if proyecto.owner != participante:
+                                remove_perm(past_part,participante,proyecto)
             messages.success(request, 'Rol de proyecto actualizado exitosamente')
             return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':pk_proy}))
         contexto['form'] = form
@@ -276,9 +277,8 @@ class AssignUserRolProyecto(PermissionRequiredMixin,UpdateView):
             for past_part in form.initial['participantes']:
                 if per.content_type.model == 'proyecto':
                     if past_part not in form.cleaned_data['participantes']:
-                        remove_perm(per,past_part,proyecto)
-
-
+                        if proyecto.owner != participante:
+                            remove_perm(per,past_part,proyecto)
         # else:   
         #     messages.error(self.request, 'Rol de proyecto no pudo ser assignado porque el proyecto no está activo')
 
@@ -421,7 +421,9 @@ def eliminarParticipanteView(request, pk_proy, pk, template_name='proyecto/delet
 
         permisos = get_user_perms(user,proyecto)
         for per in permisos:
-            remove_perm(per,user,proyecto)
+            if proyecto.owner != user:
+                remove_perm(per,user,proyecto)
+            
         proyecto.equipo.remove(user)
         return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':pk_proy}))
     return render(request, template_name, {'object':proyecto, 'usuario':user})
@@ -857,6 +859,11 @@ class SprintView(TemplateView):
                 'ready_inicio': True
             })
 
+        if sprint.fechaFin != None and datetime.today().date() >= sprint.fechaFin - timedelta(5):
+            context.update({
+                'alerta_fin': True
+            })
+
         context.update({
             'proyecto_id': self.kwargs['pk_proy'],
             'sprint': sprint,
@@ -1058,8 +1065,11 @@ def iniciar_sprint_view(request, pk_proy, sprint_id, template_name='proyecto/ini
             messages.warning(request, 'Hay un sprint corriendo, no se puede iniciar un nuevo sprint.')
         else:
             sprint.estado_de_sprint = 'A'
-            sprint.fechaInicio = datetime.now()
-            sprint.fechaFin = cal.add_working_days(datetime.now(), sprint.duracionSprint)
+            hoy = datetime.now()
+            if not cal.is_working_day(hoy):
+                hoy = cal.add_working_days(hoy, 1)
+                sprint.fechaInicio = hoy
+            sprint.fechaFin = cal.add_working_days(hoy, sprint.duracionSprint)
             sprint.save()
         return HttpResponseRedirect(reverse('proyecto:sprint-detail',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id}))
     return render(request, template_name, {'proyecto_id':pk_proy, 'sprint_id':sprint_id})
@@ -1461,6 +1471,7 @@ class SprintBurndownchartView(TemplateView):
         hours = sprint.carga_horaria
         today = datetime.now()
         proceed = True
+        cal = Paraguay()
 
         while proceed == True:
             hours_worked = Daily.objects.filter(sprint__pk=self.kwargs['sprint_id']).filter(fecha=fecha).aggregate(Sum('duracion')).get('duracion__sum',0.00) 
@@ -1472,13 +1483,18 @@ class SprintBurndownchartView(TemplateView):
             else:
                 work_left.append(str(0))
 
-            # if fecha == datetime.today().date():
+            if sprint.fechaFinalizacion != None and fecha < sprint.fechaFinalizacion:
+                proceed = True
+            elif sprint.fechaFinalizacion == None and fecha < datetime.now().date():
+                proceed = True
+            elif fecha < sprint.fechaFin:
+                proceed = True
+            else:
+                proceed = False
+            # elif fecha == sprint.fechaFin:
             #     proceed = False
 
-            if fecha == sprint.fechaFin:
-                proceed = False
-
-            fecha += timedelta(days=1)
+            fecha = cal.add_working_days(fecha, 1)
             
 
         context.update({
@@ -1743,7 +1759,7 @@ class ReasignarDesarrrolladorView(UpdateView):
 
         assign_perm(perm,us.encargado.usuario,us)
         if user.usuario != proyecto.owner:
-                remove_perm(perm,user.usuario,us)
+            remove_perm(perm,user.usuario,us)
 
         return HttpResponseRedirect(reverse('proyecto:user-story-detail',kwargs={'pk_proy':self.kwargs['pk_proy'],'sprint_id':self.kwargs['sprint_id'], 'us_id':self.kwargs['us_id']}))
 
