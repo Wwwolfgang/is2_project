@@ -689,7 +689,7 @@ def agregar_user_story_view(request, pk_proy):
             u_story.product_backlog = backlog
             u_story.creador = request.user
             u_story.save()
-            HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=u_story.pk), version=1, nombre=u_story.nombre, descripcion=u_story.descripcion, prioridad = u_story.prioridad_user_story)
+            HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=u_story.pk), version=1, nombre=u_story.nombre, descripcion=u_story.descripcion, prioridad = u_story.prioridad_user_story, log="User Story Creado")
             #Redirigimos al product backlog
             return redirect('proyecto:product-backlog', pk_proy)  
         contexto['form'] = form
@@ -734,10 +734,33 @@ class UserStoryUdateView(PermissionRequiredMixin,UpdateView):
 
     def form_valid(self, form):
         """ Función que guarda los nuevos casos y guarda una nueva versión en el historial. """
+        nombre = form.initial['nombre']
+        desc = form.initial['descripcion']
+        prio = form.initial['prioridad_user_story']
         us = form.save()
+        logger = ""
+        concat = False
+        if ( nombre != us.nombre ):
+            logger = logger + "Cambio de nombre"
+            concat = True
+
+        if ( desc != us.descripcion ):
+            if (concat):
+                logger = logger + ", "
+
+            logger = logger + "Cambio de descripcion"
+            concat = True
+
+        if(prio != us.prioridad_user_story):
+            if(concat):
+                logger = logger + ", "
+
+            logger = logger + "Cambio de prioridad"
+
+
         ver = HistorialUS.objects.filter(us_fk__id=us.pk).count()
         ver += 1
-        HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=us.pk), version=ver, nombre=us.nombre, descripcion=us.descripcion, prioridad = us.prioridad_user_story)
+        HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=us.pk), version=ver, nombre=us.nombre, descripcion=us.descripcion, prioridad = us.prioridad_user_story, log = logger)
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -1177,6 +1200,11 @@ class FinalizarSprintView(PermissionRequiredMixin,UpdateView):
             if story.estado_user_story != 'DN':
                 story.estado_user_story = 'TD'
                 story.prioridad_user_story = 'E'
+                ver = HistorialUS.objects.filter(us_fk__pk=story.pk).count()
+                ver += 1
+                HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=story.pk), version=ver, nombre=story.nombre,
+                                           descripcion=story.descripcion, prioridad=story.prioridad_user_story,
+                                           log="Sprint finalizado. US sin finalizar")
                 story.tiempo_estimado_scrum_master = None
                 story.tiempo_estimado_dev = None
                 story.encargado = None
@@ -1246,6 +1274,11 @@ class QaView(PermissionRequiredMixin,FormView):
             if self.request.POST['aprove'] == 'aproved':
                 us.estado_user_story = 'DN'
                 us.save()
+                ver = HistorialUS.objects.filter(us_fk__id=us.pk).count()
+                ver += 1
+                HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=us.pk), version=ver, nombre=us.nombre,
+                                           descripcion=us.descripcion, prioridad=us.prioridad_user_story,
+                                           log="User Story finalizado")
                 send_mail(
                     subject='El user story ' + us.nombre + ' fue aprovado',
                     message=form.cleaned_data['comentario'],
@@ -1255,6 +1288,11 @@ class QaView(PermissionRequiredMixin,FormView):
             elif self.request.POST['aprove'] == 'denied':
                 us.estado_user_story = 'DG'
                 us.save()
+                ver = HistorialUS.objects.filter(us_fk__id=us.pk).count()
+                ver += 1
+                HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=us.pk), version=ver, nombre=us.nombre,
+                                           descripcion=us.descripcion, prioridad=us.prioridad_user_story,
+                                           log="Paso a Doing")
                 send_mail(
                     subject='El user story ' + us.nombre + ' no pasó el QA',
                     message=form.cleaned_data['comentario'],
