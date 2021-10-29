@@ -134,11 +134,11 @@ class SprintTest(TestCase):
         """ Test para probar si el view ProyectoDetailView es alcanzable con los correctos kwargs y permisos """
         kwargs = {'pk':self.proyecto.pk}
         url = reverse('proyecto:detail', kwargs=kwargs)
-        perm1 = Permission.objects.get(codename='p_acceder_proyecto')
+        perm = Permission.objects.get(codename='p_acceder_proyecto')
 
         request = self.factory.get(url)
         request.user = self.user
-        assign_perm(perm1,self.user,self.proyecto)
+        assign_perm(perm,self.user,self.proyecto)
 
         response = views.ProyectoDetailView.as_view()(request,**kwargs)
         self.assertEqual(response.status_code, 200)
@@ -422,17 +422,18 @@ class SprintTest(TestCase):
         kwargs = {'pk_proy': self.proyecto.pk, 'sprint_id': self.sprint.pk, 'us_id':self.userstory.pk, 'd_pk':self.daily.pk}
         url = reverse('proyecto:editar-daily', kwargs=kwargs)
 
-        perm = Permission.objects.get(codename='us_manipular_userstory_dailys')
-        assign_perm(perm,self.user,self.userstory)
-
-        perm = Permission.objects.get(codename='p_administrar_us')
-        assign_perm(perm,self.user,self.userstory)
-        
-        perm = Permission.objects.get(codename='p_acceder_proyecto')
-        assign_perm(perm,self.user,self.userstory)
-
         request = self.factory.get(url)
         request.user = self.user
+
+        perm = Permission.objects.get(codename='us_manipular_userstory_dailys')
+        assign_perm(perm,request.user,self.userstory)
+
+        perm = Permission.objects.get(codename='p_administrar_us')
+        assign_perm(perm,request.user,self.userstory)
+        
+        perm = Permission.objects.get(codename='p_acceder_proyecto')
+        assign_perm(perm,request.user,self.userstory)
+
         response = views.EditDailyView.as_view()(request,**kwargs)
         self.assertEqual(response.status_code, 200)
 

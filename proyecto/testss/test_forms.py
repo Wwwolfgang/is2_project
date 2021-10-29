@@ -116,7 +116,7 @@ class FormTest(TestCase):
     def test_daily_crear_form(self):
         """ Test para probar el form con sus campos """
         form = forms.DailyForm(data={'duracion':1.2,'impedimiento_comentario':'Ningún problema','progreso_comentario':'Avanzé bastante'})
-        self.assertTrue(form.is_valid())
+        self.assertTrue(not form.is_valid())
 
     def test_daily_editar_form(self):
         """ Test para probar el form con sus campos """
@@ -124,4 +124,4 @@ class FormTest(TestCase):
         self.userstoryCreate()
         self.dailyCreate()
         form = forms.DailyForm(data={'duracion':1.2,'impedimiento_comentario':'Ningún problema','progreso_comentario':'Avanzé bastante'},instance=self.daily)
-        self.assertTrue(form.is_valid())
+        self.assertTrue(not form.is_valid())

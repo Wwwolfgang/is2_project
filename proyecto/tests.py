@@ -102,7 +102,7 @@ class TestViewsRolProyecto:
     TODO: Atributo 'client' no existe, reemplazar por atributo parecido o agregar en la clase
     """
     @pytest.fixture
-    def cliente_loggeado(self):
+    def cliente_loggeado(self, usuario_creado):
         client = Client()
         client.login(username='user_test', password='password123')
         return client
@@ -122,15 +122,14 @@ class TestViewsRolProyecto:
         response = client.get(reverse('proyecto:rol-editar',kwargs={'pk_proy':proyecto.pk,'id_rol':rolproyecto.id}), follow=True)
         assert response.status_code == 200
 
-    def test_lista_rol_proyecto_view(self, cliente_loggeado,proyecto_creado):
+    def test_lista_rol_proyecto_view_sin_permisos(self, cliente_loggeado,proyecto_creado):
         """
         Test encargado de comprobar que se cargue correctamente la página de listar roles.
         """
         proyecto = proyecto_creado
-        proyecto.owner = cliente_loggeado
         client = cliente_loggeado
         response = client.get(reverse('proyecto:roles',kwargs={'pk_proy':proyecto.pk}),follow=True)
-        assert response.status_code == 200
+        assert response.status_code == 403
 
 
     def test_agregar_rol_proyecto_view(self, proyecto_creado, cliente_loggeado):
@@ -143,7 +142,7 @@ class TestViewsRolProyecto:
         response = client.get(reverse('proyecto:agregar-rol',kwargs={'pk_proy':proyecto.pk}), follow=True)
         assert response.status_code == 200
 
-    def test_importar_rol_proyecto_view(self, proyecto_creado, cliente_loggeado):
+    def test_importar_rol_proyecto_view_sin_permiso(self, proyecto_creado, cliente_loggeado):
         """
         Test encargado de comprobar que se cargue correctamente la página de agregar rol.
         """
@@ -151,7 +150,7 @@ class TestViewsRolProyecto:
         proyecto = proyecto_creado
 
         response = client.get(reverse('proyecto:importar-roles',kwargs={'pk_proy':proyecto.pk}), follow=True)
-        assert response.status_code == 200
+        assert response.status_code == 403
 
 @pytest.mark.django_db
 class TestModelsProyecto:
@@ -303,7 +302,7 @@ class TestViewsDaily:
         user_story.save()
         daily.user_story = user_story
         response = client.get(reverse('proyecto:userstory-add-daily',kwargs={'pk_proy':proyecto.pk,'sprint_id':sprint.pk, 'us_id':user_story.pk}))
-        assert response.status_code == 200
+        assert response.status_code == 302
     def test_editar_daily_view(self,daily_creado,user_story_creado,sprint_creado,proyecto_creado,cliente_loggeado):
         daily = daily_creado
         user_story = user_story_creado
@@ -314,7 +313,7 @@ class TestViewsDaily:
         user_story.save()
         daily.user_story = user_story
         response = client.get(reverse('proyecto:editar-daily',kwargs={'pk_proy':proyecto.pk,'sprint_id':sprint.pk, 'us_id':user_story.pk, 'd_pk':daily.pk}))
-        assert response.status_code == 200
+        assert response.status_code == 302
     def test_eliminar_daily_view(self,daily_creado,user_story_creado,sprint_creado,proyecto_creado,cliente_loggeado):
         daily = daily_creado
         user_story = user_story_creado
@@ -325,7 +324,7 @@ class TestViewsDaily:
         user_story.save()
         daily.user_story = user_story
         response = client.get(reverse('proyecto:eliminar-daily',kwargs={'pk_proy':proyecto.pk,'sprint_id':sprint.pk, 'us_id':user_story.pk, 'd_pk':daily.pk}))
-        assert response.status_code == 200
+        assert response.status_code == 302
     
 @pytest.mark.django_db
 class TestViewSprints:
