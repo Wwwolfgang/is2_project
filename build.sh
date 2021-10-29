@@ -37,6 +37,7 @@ mainmenu () {
         echo "Presione 2 para TAG v.0.0.2"
         echo "Presione 3 para TAG v.0.0.3"
         echo "Presione 4 para TAG v.0.0.4"
+        echo "Presione 5 para TAG v.0.0.5"
         read -n 1 -p "Seleccione el Tag:" tag
 
         echo -e "${green}\n>>> Desarrollo TAG v.0.0.${tag}:${reset}"
@@ -96,6 +97,7 @@ mainmenu () {
         echo "Presione 2 para TAG v.0.0.2"
         echo "Presione 3 para TAG v.0.0.3"
         echo "Presione 4 para TAG v.0.0.4"
+        echo "Presione 5 para TAG v.0.0.5"
         read -n 1 -p "Seleccione el Tag:" tag
         echo -e "${green}\n>>> Producción TAG v.0.0.${tag}:${reset}"
         echo
@@ -103,16 +105,20 @@ mainmenu () {
 
         if [ "$tag" = "1" ];
         then
-            git switch --detach v.test
+            git switch --detach vp.0.0.1
             git checkout production db.dump
         elif [ "$tag" = "2" ]; then
-            git switch --detach v.0.0.2
+            git switch --detach vp.0.0.2
+            git checkout production db.dump
         elif [ "$tag" = "3" ]; then
-            git switch --detach v.0.0.3
+            git switch --detach vp.0.0.3
+            git checkout production db.dump
         elif [ "$tag" = "4" ]; then
-            git switch --detach v.0.0.4
+            git switch --detach vp.0.0.4
+            git checkout production db.dump
         elif [ "$tag" = "5" ]; then
-            git switch --detach v.0.0.5
+            git switch --detach vp.0.0.5
+            git checkout production db.dump
         else 
             echo -e "${red}\n<<< Esa versión no existe >>>${reset}"
             sleep 2
