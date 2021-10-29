@@ -1582,7 +1582,7 @@ class SprintBurndownchartView(PermissionRequiredMixin,LoginRequiredMixin,Templat
             #     proceed = False
             # elif fecha == sprint.fechaFin:
             #     proceed = False
-            if var == daily_count or fecha == sprint.fechaFin:
+            if var == daily_count:
                 duracion_real = cal.get_working_days_delta(sprint.fechaInicio, fecha) +1
                 proceed = False
 
@@ -1664,6 +1664,8 @@ def agregar_daily_view(request, pk_proy, sprint_id, us_id):
             daily = form.save()
             if not cal.is_working_day(fecha):
                 daily.fecha = cal.add_working_days(fecha, 1)
+            if daily.fecha < sprint.fechaInicio:
+                daily.fecha = sprint.fechaInicio
             daily.user_story = userstory
             daily.sprint = sprint
             daily.save()
