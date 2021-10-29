@@ -122,10 +122,10 @@
                         Atrás
                     </a>
                 {% else %}
-                    <a class="btn btn-warning" role="button" href="{% url 'proyecto:sprint-detail' proyecto_id sprint_id %}">
-                        Cancelar
-                    </a>
                     {% if user == scrum_master or user == object.encargado.usuario %}
+                        <a class="btn btn-warning" role="button" href="{% url 'proyecto:sprint-detail' proyecto_id sprint_id %}">
+                            Cancelar
+                        </a>
                         {% if object.sprint == None %}
                             <button type="submit" class="my-2 btn btn-success">Agregar al sprint</button>
                         {% else %}
