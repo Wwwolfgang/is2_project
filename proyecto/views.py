@@ -439,11 +439,11 @@ class AgregarParticipanteProyecto(PermissionRequiredMixin, LoginRequiredMixin, U
             user = User.objects.get(pk=usuario)
             proyecto.equipo.add(user)
             perm = Permission.objects.get(codename='p_acceder_proyecto')
-            assign_perm(perm,self.user,self.proyecto)
+            assign_perm(perm,user,proyecto)
         return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']}))
 
 @login_required
-@permission_required_or_403('proyecto.p_administrar_participantes',(Proyecto,'pk','pk'))
+@permission_required_or_403('proyecto.p_administrar_participantes',(Proyecto,'pk','pk_proy'))
 @permission_required_or_403('proyecto.p_acceder_proyecto',(Proyecto,'pk','pk_proy'))
 def eliminarParticipanteView(request, pk_proy, pk, template_name='proyecto/delete_confirm_participante.html'):
     """ View para eliminar participantes de equipo de un proyecto. Es una vista de confirmación
