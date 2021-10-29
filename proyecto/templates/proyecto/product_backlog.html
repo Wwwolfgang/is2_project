@@ -99,6 +99,45 @@
             {% endfor %}
         </div>
     </div>
+    <div>
+        <h6>User storys cancelados</h6>
+        <div class="row align-items-center">
+            {% for us in cancelados %}
+                <div class="col-3">
+                    <div class="card w-51 mb-2" >
+                        <div class="card-header">
+                            <div class="row">
+                                <div class="col">
+                                    {{us.nombre}}
+                                    {% if us.prioridad_user_story == 'A' %}
+                                        <span class="badge rounded-pill bg-warning text-dark">{{us.get_prioridad_user_story_display}}</span>
+                                    {% elif us.prioridad_user_story == 'B'%}
+                                        <span class="badge rounded-pill bg-success text-right">{{us.get_prioridad_user_story_display}}</span>
+                                    {% elif us.prioridad_user_story == 'M'%}
+                                        <span class="badge rounded-pill bg-primary text-right">{{us.get_prioridad_user_story_display}}</span>
+                                    {% elif us.prioridad_user_story == 'E'%}
+                                        <span class="badge rounded-pill bg-danger text-right">{{us.get_prioridad_user_story_display}}</span>
+                                    {% endif %}
+                                </div>
+                                <div class="col d-flex justify-content-end">
+                                    <a href="{% url 'proyecto:user-story-detail-unassigned' proyecto_id us.id %}" class="btn btn-outline-primary btn-sm ">Abrir</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                        <h5 class="card-title">{{us.nombre}}</h5>
+                        <p class="card-text">{{us.descripcion | truncatechars_html:80}}</p>
+                        </div>
+                        <div class="card-footer text-muted">
+                            {% if us.creador %}
+                                {{us.creador}}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
     
 </div>
 {% endblock %}
