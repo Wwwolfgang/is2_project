@@ -1671,15 +1671,16 @@ class EditDailyView(PermissionRequiredMixin,LoginRequiredMixin,UpdateView):
     Vista para editar un Daily
     Sierve un template de formulario donde el usuario puede modificar los campos del daily.
     """
+    # 'proyecto.p_administrar_us','proyecto.p_acceder_proyecto',
     model = Daily
-    permission_required = ('proyecto.p_administrar_us','proyecto.p_acceder_proyecto','proyecto.us_manipular_userstory_dailys')
+    permission_required = ('proyecto.us_manipular_userstory_dailys')
     template_name = 'proyecto/daily_view_form.html'
     form_class= DailyForm
     raise_exception = True
 
     def dispatch(self, request, *args, **kwargs):
         """ 
-        
+        Función que verifica que el proyecto esté activo, si no vuelve a la ruta anterior y muestra una alerta.
         """
         proyecto = get_object_or_404(Proyecto,pk=self.kwargs['pk_proy'])
         next = request.GET.get('next')

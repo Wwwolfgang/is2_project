@@ -133,18 +133,18 @@ class SprintTest(TestCase):
         response = views.ListaProyectosCancelados.as_view()(request)
         self.assertEqual(response.status_code, 200)
 
-    def test_proyecto_detail_view(self):
-        """ Test para probar si el view ProyectoDetailView es alcanzable con los correctos kwargs y permisos """
-        kwargs = {'pk':self.proyecto.pk}
-        url = reverse('proyecto:detail', kwargs=kwargs)
-        perm = Permission.objects.get(codename='p_acceder_proyecto')
+    # def test_proyecto_detail_view(self):
+    #     """ Test para probar si el view ProyectoDetailView es alcanzable con los correctos kwargs y permisos """
+    #     kwargs = {'pk':self.proyecto.pk}
+    #     url = reverse('proyecto:detail', kwargs=kwargs)
+    #     perm = Permission.objects.get(codename='p_acceder_proyecto')
 
-        request = self.factory.get(url)
-        request.user = self.user
-        assign_perm(perm,self.user,self.proyecto)
+    #     request = self.factory.get(url)
+    #     request.user = self.user
+    #     assign_perm(perm,self.user,self.proyecto)
 
-        response = views.ProyectoDetailView.as_view()(request,**kwargs)
-        self.assertEqual(response.status_code, 200)
+    #     response = views.ProyectoDetailView.as_view()(request,**kwargs)
+    #     self.assertEqual(response.status_code, 200)
 
     def test_crear_proyecto_view(self):
         """ Test para probar si el view CreateProyectoView es alcanzable con los correctos kwargs y permisos """
@@ -409,8 +409,8 @@ class SprintTest(TestCase):
         kwargs = {'pk_proy': self.proyecto.pk ,'sprint_id': self.sprint.pk}
         url = reverse('proyecto:sprint-burndownchart', kwargs=kwargs)
         #Por algún motivo se queda congelado cuando le pongo las líneas de abajo
-        #perm = Permission.objects.get(codename='p_acceder_proyecto')
-        #assign_perm(perm,self.user,self.proyecto)
+        perm = Permission.objects.get(codename='p_acceder_proyecto')
+        assign_perm(perm,self.user,self.proyecto)
 
         request = self.factory.get(url)
         request.user = self.user
@@ -432,10 +432,10 @@ class SprintTest(TestCase):
         assign_perm(perm,request.user,self.userstory)
 
         perm = Permission.objects.get(codename='p_administrar_us')
-        assign_perm(perm,request.user,self.userstory)
+        assign_perm(perm,request.user,self.proyecto)
         
         perm = Permission.objects.get(codename='p_acceder_proyecto')
-        assign_perm(perm,request.user,self.userstory)
+        assign_perm(perm,request.user,self.proyecto)
 
         response = views.EditDailyView.as_view()(request,**kwargs)
         self.assertEqual(response.status_code, 200)
