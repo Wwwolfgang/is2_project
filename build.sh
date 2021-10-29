@@ -71,6 +71,8 @@ mainmenu () {
         pip install -r requirements.txt
         python manage.py makemigrations
         python manage.py migrate
+        git checkout cesar datos.json
+        git checkout cesar datos.py
         python manage.py loaddata datos.json
         python manage.py shell -c "exec(open('datos.py').read())"
         echo -e "${green}\n>>> Listo para trabajar${reset}"
@@ -119,6 +121,8 @@ mainmenu () {
         sudo docker exec -it pg_container pg_restore -U ${db_user} -d ${prod_db_name} --no-owner db.dump
         python manage.py makemigrations
         python manage.py migrate
+        git checkout cesar datos.json
+        git checkout cesar datos.py
         python manage.py loaddata datos.json
         python manage.py shell -c "exec(open('datos.py').read())"
         echo
