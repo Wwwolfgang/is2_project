@@ -7,11 +7,20 @@ mainmenu () {
     prod_db_name=is_prod
     db_user=root
 
+    username="Wwwolfgang"
+    password="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"
+
     red=`tput setaf 1`
     green=`tput setaf 2`
     reset=`tput sgr0`
+    repo=is2_project
     echo -e "${red}<<< Bienvenidos al Projecto de IS2 del equipo 15 >>>${reset}"
 
+    git clone "https://${username}:${password}@github.com/Wwwolfgang/is2_project.git"
+
+    cd "is2_project"
+
+    echo -e "${green}\n>>> Repository clonado${reset}"
     echo "Presione 1 para Desarrollo"
     echo "Presione 2 para Producción"
     echo "Presione 3 para salir"
@@ -21,6 +30,9 @@ mainmenu () {
     then
         clear
         echo -e "${green}\n>>> Desarrollo${reset}"
+        git checkout main
+        git branch
+        git pull origin main
         echo "Presione 1 para TAG v.0.0.1"
         echo "Presione 2 para TAG v.0.0.2"
         echo "Presione 3 para TAG v.0.0.3"
@@ -77,6 +89,9 @@ mainmenu () {
     elif [ "$mainmenuinput" = "2" ]; then
         clear
         echo -e "${green}\n>>> Producción${reset}"
+        git checkout production
+        git branch
+        git pull origin production
         echo "Presione 1 para TAG v.0.0.1"
         echo "Presione 2 para TAG v.0.0.2"
         echo "Presione 3 para TAG v.0.0.3"
@@ -136,6 +151,7 @@ mainmenu () {
         clear
         mainmenu
     fi
+    cd ..
 }
 
 # This builds the main menu and routs the user to the function selected.

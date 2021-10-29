@@ -5,6 +5,7 @@ from django import forms
 from .models import Proyecto, ProyectUser, RolProyecto, Sprint, UserStory, Daily
 from sso.models import User
 from django import forms
+from django.contrib.admin import widgets
 from django.forms.models import inlineformset_factory
 
 class AgregarRolProyectoForm(forms.ModelForm):
@@ -16,7 +17,7 @@ class AgregarRolProyectoForm(forms.ModelForm):
         super(AgregarRolProyectoForm, self).__init__(*args, **kwargs)
         self.fields['permisos'] = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple,
                                                             choices=[(p.id, p.name) for p in Permission.objects.all() if
-                                                                     p.codename.startswith('p_') and not p.codename.startswith('pg_')])
+                                                                     p.codename.startswith('p_') and not p.codename.startswith('pg_') and not p.codename.startswith('p_acceder_proyecto')])
     class Meta:
         model = RolProyecto
         fields = ['nombre','permisos']
@@ -34,9 +35,10 @@ class UserAssignRolForm(forms.ModelForm):
         proyecto_id = kwargs.pop('pk_proy',None)
         proyecto = Proyecto.objects.get(id=proyecto_id)
         super(UserAssignRolForm, self).__init__(*args, **kwargs)
-        self.fields['participantes'] = CustomUserMCF(queryset= proyecto.equipo.all() | User.objects.filter(pk=proyecto.owner.pk),
-        widget=forms.CheckboxSelectMultiple
-    )
+        self.fields['participantes'] = CustomUserMCF(queryset= proyecto.equipo.all(),
+            widget=forms.CheckboxSelectMultiple
+        )
+        self.fields['participantes'].required = False
 
 
 class CustomUserMCF(forms.ModelMultipleChoiceField):
@@ -73,6 +75,7 @@ class ProyectoCreateForm(forms.ModelForm):
         choices=[(p.id, "%s" % p.first_name + " " + p.last_name) for p in User.objects.exclude(first_name__isnull=True).exclude(first_name__exact='').exclude(pk=user.pk) if p.has_perm('sso.pg_is_user')],
         required=False
     )
+
 
 class ProyectoFinalizarForm(forms.ModelForm):
     """ Form para finalizar un Proyecto, no se muestran realmente campos pero el form es nescesario igual. """
@@ -234,4 +237,38 @@ class DailyForm(forms.ModelForm):
 
     class Meta:
         model = Daily
-        fields = ['duracion','impedimiento_comentario','progreso_comentario']
+        fields = ['fecha','duracion','impedimiento_comentario','progreso_comentario']
+
+
+class ReasignarForm(forms.ModelForm):
+    """ Form para reasignar un user story a otro dev del sprint. Solo se cambiará el campo encargado del user story. """
+    def __init__(self, *args, **kwargs):
+        sprint_id = kwargs.pop('sprint_id',None)
+        sprint = Sprint.objects.get(pk=sprint_id)
+        pk_proy = kwargs.pop('pk_proy',None)
+        proyecto = Proyecto.objects.get(pk=pk_proy)
+        user = User.objects.filter(pk=proyecto.owner.pk)
+        super().__init__(*args, **kwargs)
+        self.fields['encargado'] = forms.ModelChoiceField(
+            empty_label="Desarrollador",
+            queryset=sprint.sprint_team.all(),
+        )
+    class Meta:
+        model = UserStory
+        fields = ['encargado']
+
+
+class IntercambiarDevForm(forms.ModelForm):
+    """ Form para intercambiar un desarrollador de un sprint con otro asociado al proyecto. Solo se cambai el usuario para cambiar el ProyectUser. """
+    def __init__(self, *args, **kwargs):
+        pk_proy = kwargs.pop('pk_proy',None)
+        proyecto = Proyecto.objects.get(pk=pk_proy)
+        user = User.objects.filter(pk=proyecto.owner.pk)
+        super().__init__(*args, **kwargs)
+        self.fields['usuario'] = forms.ModelChoiceField(
+            empty_label="Desarrollador",
+            queryset=proyecto.equipo.all() | user,
+        )
+    class Meta:
+        model = ProyectUser
+        fields = ['usuario']

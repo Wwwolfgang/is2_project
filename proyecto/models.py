@@ -70,7 +70,7 @@ class Proyecto(models.Model):
     class Meta:
         permissions = (
             #Permisos de proyecto
-            ("p_acceder_proyectos","Permiso de acceder proyecto."),
+            ("p_acceder_proyecto","Permiso de acceder al proyecto."),
             ("p_cancelar_proyectos","Permiso de cancelar proyecto."),
             ("p_editar_proyectos","Permiso de editar proyecto."),
             ("p_finalizar_proyectos","Permiso de finalizar proyecto."),
@@ -128,7 +128,8 @@ class Sprint(models.Model):
     identificador = models.CharField(default='Sprint',max_length=50)
     fechaInicio = models.DateField(null=True)
     fechaFin = models.DateField(null=True,help_text='Fecha estimada de finalización del Sprint. Dependiendo de esta fecha se mostrarán alertas.')
-    duracionSprint = models.IntegerField(null=False, blank=False, default=14,validators=[MinValueValidator(1),MaxValueValidator(60)], help_text="Duración estimada en días")
+    fechaFinalizacion = models.DateField(null=True)
+    duracionSprint = models.IntegerField(null=False, blank=False, default=14,validators=[MinValueValidator(1),MaxValueValidator(60)], help_text="Duración estimada en días hábiles")
     ESTADO_DE_SPRINT_CHOICES = [
         ('A', 'Activo'),
         ('I', 'Inicializado'),
@@ -245,7 +246,9 @@ class HistorialUS(models.Model):
         default='B',
     )
     us_fk = models.ForeignKey(UserStory, on_delete=CASCADE, null=False)
-
+    sprint = models.ForeignKey('sprint', on_delete=CASCADE, blank=True,null=True)
+    fecha = models.DateField(null=True,blank=True)
+    log = models.TextField(verbose_name='Log en donde se almacenan los cambios de estado en el ciclo de vida del User Story', blank=True)
 
 class Daily(models.Model):
     """
@@ -266,4 +269,4 @@ class Daily(models.Model):
     progreso_comentario = models.TextField(verbose_name='Descripcion de los progresos encontrados durante el desarrollo', blank=True)
     user_story = models.ForeignKey('userstory',on_delete=CASCADE, blank=True, null=True)
     sprint = models.ForeignKey('sprint', on_delete=CASCADE, blank=True,null=True)
-    fecha = models.DateField(null=True,blank=True)
+    fecha = models.DateField(null=False,blank=False, default=datetime.now)
