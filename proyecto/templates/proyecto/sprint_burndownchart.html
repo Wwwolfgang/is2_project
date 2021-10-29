@@ -22,14 +22,16 @@
     function showBurnDown(elementId, burndownData, scopeChange = []) {
 
       var speedCanvas = document.getElementById(elementId);
-
+      console.log(burndownData)
       Chart.defaults.global.defaultFontFamily = "Arial";
       Chart.defaults.global.defaultFontSize = 14;
-
-      const totalHoursInSprint = burndownData[0];
-      const idealHoursPerDay = totalHoursInSprint / (burndownData.length -1)
-      i = 0;
+      
       let days = JSON.parse('{{dias|safe}}')
+      let total = Number(JSON.parse('{{total_horas|safe}}'))
+      console.log(total)
+      const totalHoursInSprint = total;
+      const idealHoursPerDay = totalHoursInSprint / days
+      i = 0;
 
       let labels = []
       let data = []
@@ -38,6 +40,7 @@
         labels[index] = `Día ${index +1}`
         data[index] = Math.round(totalHoursInSprint - (idealHoursPerDay * index) + sumArrayUpTo(scopeChange, index))
       }
+      console.log(data)
 
       var speedData = {
         labels: labels,
@@ -75,7 +78,7 @@
             yAxes: [{
                 ticks: {
                     min: 0,
-                    max: Math.round(burndownData[0] * 1.1)
+                    max: Math.round(total * 1.1)
                 }
             }]
         }
@@ -91,7 +94,6 @@
 </script>
 <script>
     let sprint = JSON.parse('{{sprint_json|safe}}')
-    console.log(sprint)
     for (let index = 0; index < sprint.length; index++) {
       sprint[index] = Number(sprint[index])
       

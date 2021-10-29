@@ -38,7 +38,7 @@
               <i class="fas fa-ellipsis-v"></i>
             </button>
             <ul class="dropdown-menu dropdown-menu-lg-end" aria-labelledby="dropdownMenuButton1">
-                <li><a class="dropdown-item" href="{% url 'proyecto:solicitud-permisos-proyecto' request.session.proyecto_id %}">Solicitar permisos</a></li>
+                <li><a class="dropdown-item" href="{% url 'proyecto:solicitud-permisos-proyecto' request.session.proyecto_id %}?next={{request.path}}">Solicitar permisos</a></li>
             </ul>
         </div>
         </div>
