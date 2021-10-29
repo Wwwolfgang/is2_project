@@ -12,6 +12,7 @@ from datetime import datetime
 import pytest
 from pytest_django.asserts import assertTemplateUsed
 from datetime import datetime
+from guardian.shortcuts import assign_perm
 # Create your tests here.
 @pytest.fixture
 def create_rol(self, name="Scrum Master"):
@@ -101,7 +102,7 @@ class TestViewsRolProyecto:
     TODO: Atributo 'client' no existe, reemplazar por atributo parecido o agregar en la clase
     """
     @pytest.fixture
-    def cliente_loggeado(self, usuario_creado):
+    def cliente_loggeado(self):
         client = Client()
         client.login(username='user_test', password='password123')
         return client
@@ -119,7 +120,7 @@ class TestViewsRolProyecto:
         client = cliente_loggeado
         proyecto = Proyecto.objects.create(nombreProyecto='proyectotest')
         response = client.get(reverse('proyecto:rol-editar',kwargs={'pk_proy':proyecto.pk,'id_rol':rolproyecto.id}), follow=True)
-        assert response.status_code == 403
+        assert response.status_code == 200
 
     def test_lista_rol_proyecto_view(self, cliente_loggeado,proyecto_creado):
         """
@@ -131,12 +132,14 @@ class TestViewsRolProyecto:
         response = client.get(reverse('proyecto:roles',kwargs={'pk_proy':proyecto.pk}),follow=True)
         assert response.status_code == 200
 
+
     def test_agregar_rol_proyecto_view(self, proyecto_creado, cliente_loggeado):
         """
         Test encargado de comprobar que se cargue correctamente la página de agregar rol.
         """
         client = cliente_loggeado
         proyecto = proyecto_creado
+
         response = client.get(reverse('proyecto:agregar-rol',kwargs={'pk_proy':proyecto.pk}), follow=True)
         assert response.status_code == 200
 
@@ -146,6 +149,7 @@ class TestViewsRolProyecto:
         """
         client = cliente_loggeado
         proyecto = proyecto_creado
+
         response = client.get(reverse('proyecto:importar-roles',kwargs={'pk_proy':proyecto.pk}), follow=True)
         assert response.status_code == 200
 

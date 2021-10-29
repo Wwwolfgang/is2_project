@@ -52,13 +52,16 @@ class SprintTest(TestCase):
         url = reverse('proyecto:rol-eliminar', kwargs=kwargs)
         request = self.factory.get(url)
         request.user = self.user
+
+        perm = Permission.objects.get(codename='p_administrar_roles')
+        assign_perm(perm,request.user,self.proyecto)
+
+        perm = Permission.objects.get(codename='p_acceder_proyecto')
+        assign_perm(perm,request.user,self.proyecto)
+
         response = views.EliminarRolProyectoView.as_view()(request,**kwargs)
         self.assertEqual(response.status_code, 200)
         
-        request = self.factory.post(url)
-        request.user = self.user
-        response = views.EliminarRolProyectoView.as_view()(request,**kwargs)
-        self.assertEqual(response.status_code, 302)
 
     def test_lista_rol_proyecto_view(self):
         """ Test para probar si el view ListaRolProyectoView es alcanzable con los correctos kwargs y permisos """
@@ -66,6 +69,10 @@ class SprintTest(TestCase):
         url = reverse('proyecto:roles', kwargs=kwargs)
         request = self.factory.get(url)
         request.user = self.user
+
+        perm = Permission.objects.get(codename='p_acceder_proyecto')
+        assign_perm(perm,request.user,self.proyecto)
+
         response = views.ListaRolProyectoView.as_view()(request,**kwargs)
         self.assertEqual(response.status_code, 200)
 
@@ -77,6 +84,10 @@ class SprintTest(TestCase):
         request = self.factory.get(url)
         request.user = self.user
         assign_perm(perm,request.user,self.proyecto)
+
+        perm = Permission.objects.get(codename='p_acceder_proyecto')
+        assign_perm(perm,request.user,self.proyecto)
+
         response = views.ImportarRolView.as_view()(request,**kwargs)
         self.assertEqual(response.status_code, 200)
 
@@ -87,6 +98,8 @@ class SprintTest(TestCase):
         perm = Permission.objects.get(codename='p_administrar_roles')
         request = self.factory.get(url)
         request.user = self.user
+        assign_perm(perm,request.user,self.proyecto)
+        perm = Permission.objects.get(codename='p_acceder_proyecto')
         assign_perm(perm,request.user,self.proyecto)
         response = views.AssignUserRolProyecto.as_view()(request,**kwargs)
         self.assertEqual(response.status_code, 200)
@@ -121,13 +134,11 @@ class SprintTest(TestCase):
         """ Test para probar si el view ProyectoDetailView es alcanzable con los correctos kwargs y permisos """
         kwargs = {'pk':self.proyecto.pk}
         url = reverse('proyecto:detail', kwargs=kwargs)
-        perm1 = Permission.objects.get(codename='pg_puede_acceder_proyecto')
-        perm2 = Permission.objects.get(codename='pg_is_user')
+        perm1 = Permission.objects.get(codename='p_acceder_proyecto')
 
         request = self.factory.get(url)
         request.user = self.user
-        assign_perm(perm1,request.user)
-        assign_perm(perm2,request.user)
+        assign_perm(perm1,self.user,self.proyecto)
 
         response = views.ProyectoDetailView.as_view()(request,**kwargs)
         self.assertEqual(response.status_code, 200)
@@ -150,6 +161,8 @@ class SprintTest(TestCase):
         request = self.factory.get(url)
         request.user = self.user
         assign_perm(perm,request.user,self.proyecto)
+        perm = Permission.objects.get(codename='p_acceder_proyecto')
+        assign_perm(perm,request.user,self.proyecto)
         response = views.AgregarParticipanteProyecto.as_view()(request,**kwargs)
         self.assertEqual(response.status_code, 200)
 
@@ -170,6 +183,8 @@ class SprintTest(TestCase):
         request.user = self.user
         perm = Permission.objects.get(codename='p_administrar_sprint')
         assign_perm(perm,request.user,self.proyecto)
+        perm = Permission.objects.get(codename='p_acceder_proyecto')
+        assign_perm(perm,request.user,self.proyecto)
         response = views.AgregarSprintView.as_view()(request,**kwargs)
         self.assertEqual(response.status_code, 200)
 
@@ -185,6 +200,8 @@ class SprintTest(TestCase):
         url = reverse('proyecto:sprint-team-edit', kwargs=kwargs)
 
         perm = Permission.objects.get(codename='p_administrar_devs')
+        assign_perm(perm,self.user,self.proyecto)
+        perm = Permission.objects.get(codename='p_acceder_proyecto')
         assign_perm(perm,self.user,self.proyecto)
         
         request = self.factory.get(url)
@@ -210,6 +227,8 @@ class SprintTest(TestCase):
 
         perm = Permission.objects.get(codename='p_administrar_sprint')
         assign_perm(perm,self.user,self.proyecto)
+        perm = Permission.objects.get(codename='p_acceder_proyecto')
+        assign_perm(perm,self.user,self.proyecto)
         request = self.factory.get(url)
         request.user = self.user
         response = views.SprintUpdateView.as_view()(request,**kwargs)
@@ -221,7 +240,7 @@ class SprintTest(TestCase):
         kwargs = {'pk_proy': self.proyecto.pk, 'sprint_id': self.sprint.pk}
         url = reverse('proyecto:sprint-detail', kwargs=kwargs)
 
-        perm = Permission.objects.get(codename='p_administrar_sprint')
+        perm = Permission.objects.get(codename='p_acceder_proyecto')
         assign_perm(perm,self.user,self.proyecto)
         request = self.factory.get(url)
         request.user = self.user
@@ -233,11 +252,9 @@ class SprintTest(TestCase):
         kwargs = {'pk_proy': self.proyecto.pk}
         url = reverse('proyecto:product-backlog', kwargs=kwargs)
 
-        perm1 = Permission.objects.get(codename='pg_is_user')
-        perm2 = Permission.objects.get(codename='pg_puede_acceder_proyecto')
+        perm = Permission.objects.get(codename='p_acceder_proyecto')
 
-        assign_perm(perm1,self.user)
-        assign_perm(perm2,self.user)
+        assign_perm(perm,self.user,self.proyecto)
 
         request = self.factory.get(url)
         request.user = self.user
@@ -252,6 +269,10 @@ class SprintTest(TestCase):
 
         perm = Permission.objects.get(codename='p_aprobar_us')
         assign_perm(perm,self.user,self.proyecto)
+
+        perm = Permission.objects.get(codename='p_acceder_proyecto')
+        assign_perm(perm,self.user,self.proyecto)
+
         request = self.factory.get(url)
         request.user = self.user
         response = views.AprobarUserStoryView.as_view()(request,**kwargs)
@@ -272,6 +293,12 @@ class SprintTest(TestCase):
         self.userstoryCreate()
         kwargs = {'pk_proy': self.proyecto.pk, 'us_id': self.userstory.pk}
         url = reverse('proyecto:user-story-detail-unassigned', kwargs=kwargs)
+
+        perm = Permission.objects.get(codename='p_acceder_proyecto')
+        assign_perm(perm,self.user,self.proyecto)
+
+        perm = Permission.objects.get(codename='p_aprobar_us')
+        assign_perm(perm,self.user,self.proyecto)
 
         request = self.factory.get(url)
         request.user = self.user
@@ -316,6 +343,11 @@ class SprintTest(TestCase):
         kwargs = {'pk_proy': self.proyecto.pk, 'sprint_id': self.sprint.pk}
         url = reverse('proyecto:sprint-kanban', kwargs=kwargs)
 
+        perm = Permission.objects.get(codename='p_acceder_proyecto')
+        assign_perm(perm,self.user,self.proyecto)
+        perm = Permission.objects.get(codename='p_aprobar_us')
+        assign_perm(perm,self.user,self.proyecto)
+
         request = self.factory.get(url)
         request.user = self.user
         response = views.SprintKanbanView.as_view()(request,**kwargs)
@@ -328,6 +360,8 @@ class SprintTest(TestCase):
         url = reverse('proyecto:sprint-finalizar', kwargs=kwargs)
 
         perm = Permission.objects.get(codename='p_administrar_sprint')
+        assign_perm(perm,self.user,self.proyecto)
+        perm = Permission.objects.get(codename='p_acceder_proyecto')
         assign_perm(perm,self.user,self.proyecto)
         request = self.factory.get(url)
         request.user = self.user
@@ -343,6 +377,8 @@ class SprintTest(TestCase):
 
         perm = Permission.objects.get(codename='p_administrar_us_qa')
         assign_perm(perm,self.user,self.proyecto)
+        perm = Permission.objects.get(codename='p_acceder_proyecto')
+        assign_perm(perm,self.user,self.proyecto)
         request = self.factory.get(url)
         request.user = self.user
         response = views.QaView.as_view()(request,**kwargs)
@@ -355,6 +391,10 @@ class SprintTest(TestCase):
 
         perm = Permission.objects.get(codename='p_finalizar_proyectos')
         assign_perm(perm,self.user,self.proyecto)
+
+        perm = Permission.objects.get(codename='p_acceder_proyecto')
+        assign_perm(perm,self.user,self.proyecto)
+
         request = self.factory.get(url)
         request.user = self.user
         response = views.FinalizarProyectoView.as_view()(request,**kwargs)
@@ -365,6 +405,9 @@ class SprintTest(TestCase):
         self.sprintCreate('A',13.5)
         kwargs = {'pk_proy': self.proyecto.pk ,'sprint_id': self.sprint.pk}
         url = reverse('proyecto:sprint-burndownchart', kwargs=kwargs)
+        #Por algún motivo se queda congelado cuando le pongo las líneas de abajo
+        #perm = Permission.objects.get(codename='p_acceder_proyecto')
+        #assign_perm(perm,self.user,self.proyecto)
 
         request = self.factory.get(url)
         request.user = self.user
@@ -381,6 +424,13 @@ class SprintTest(TestCase):
 
         perm = Permission.objects.get(codename='us_manipular_userstory_dailys')
         assign_perm(perm,self.user,self.userstory)
+
+        perm = Permission.objects.get(codename='p_administrar_us')
+        assign_perm(perm,self.user,self.userstory)
+        
+        perm = Permission.objects.get(codename='p_acceder_proyecto')
+        assign_perm(perm,self.user,self.userstory)
+
         request = self.factory.get(url)
         request.user = self.user
         response = views.EditDailyView.as_view()(request,**kwargs)
