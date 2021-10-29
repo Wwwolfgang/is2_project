@@ -7,11 +7,20 @@ mainmenu () {
     prod_db_name=is_prod
     db_user=root
 
+    username="Wwwolfgang"
+    password="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"
+
     red=`tput setaf 1`
     green=`tput setaf 2`
     reset=`tput sgr0`
+    repo=is2_project
     echo -e "${red}<<< Bienvenidos al Projecto de IS2 del equipo 15 >>>${reset}"
 
+    git clone "https://${username}:${password}@github.com/Wwwolfgang/is2_project.git"
+
+    cd "is2_project"
+
+    echo -e "${green}\n>>> Repository clonado${reset}"
     echo "Presione 1 para Desarrollo"
     echo "Presione 2 para Producción"
     echo "Presione 3 para salir"
@@ -21,6 +30,9 @@ mainmenu () {
     then
         clear
         echo -e "${green}\n>>> Desarrollo${reset}"
+        git checkout main
+        git branch
+        git pull origin main
         echo "Presione 1 para TAG v.0.0.1"
         echo "Presione 2 para TAG v.0.0.2"
         echo "Presione 3 para TAG v.0.0.3"
@@ -77,6 +89,9 @@ mainmenu () {
     elif [ "$mainmenuinput" = "2" ]; then
         clear
         echo -e "${green}\n>>> Producción${reset}"
+        git checkout production
+        git branch
+        git pull origin production
         echo "Presione 1 para TAG v.0.0.1"
         echo "Presione 2 para TAG v.0.0.2"
         echo "Presione 3 para TAG v.0.0.3"
@@ -88,7 +103,8 @@ mainmenu () {
 
         if [ "$tag" = "1" ];
         then
-            git switch --detach v.0.0.1
+            git switch --detach v.test
+            git checkout production db.dump
         elif [ "$tag" = "2" ]; then
             git switch --detach v.0.0.2
         elif [ "$tag" = "3" ]; then
@@ -107,13 +123,13 @@ mainmenu () {
         sleep 2
         echo
 
-        sudo docker cp db.dump pg_container:/
+        sudo docker cp db.dump is2_project_db_1:/
         echo -e "${green}\n>>> Copiando backup a la BD${reset}"
-        sudo docker exec -it pg_container dropdb -U ${db_user} --if-exists ${prod_db_name}
-        sudo docker exec -it pg_container createdb -U ${db_user} ${prod_db_name}
-        sudo docker exec -it pg_container psql -U ${db_user} -d ${prod_db_name} -c "DROP SCHEMA public CASCADE;"
-        sudo docker exec -it pg_container psql -U ${db_user} -d ${prod_db_name} -c "CREATE SCHEMA public;"
-        sudo docker exec -it pg_container pg_restore -U ${db_user} -d ${prod_db_name} --no-owner db.dump
+        sudo docker exec -it is2_project_db_1 dropdb -U ${db_user} --if-exists ${prod_db_name}
+        sudo docker exec -it is2_project_db_1 createdb -U ${db_user} ${prod_db_name}
+        sudo docker exec -it is2_project_db_1 psql -U ${db_user} -d ${prod_db_name} -c "DROP SCHEMA public CASCADE;"
+        sudo docker exec -it is2_project_db_1 psql -U ${db_user} -d ${prod_db_name} -c "CREATE SCHEMA public;"
+        sudo docker exec -it is2_project_db_1 pg_restore -U ${db_user} -d ${prod_db_name} --no-owner db.dump
 
         sleep 2
         echo -e "${green}\n>>> Juntar static files${reset}"
@@ -135,6 +151,7 @@ mainmenu () {
         clear
         mainmenu
     fi
+    cd ..
 }
 
 # This builds the main menu and routs the user to the function selected.
