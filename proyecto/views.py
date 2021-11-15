@@ -439,11 +439,11 @@ class AgregarParticipanteProyecto(PermissionRequiredMixin, LoginRequiredMixin, U
             user = User.objects.get(pk=usuario)
             proyecto.equipo.add(user)
             perm = Permission.objects.get(codename='p_acceder_proyecto')
-            assign_perm(perm,self.user,self.proyecto)
+            assign_perm(perm,user,proyecto)
         return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']}))
 
 @login_required
-@permission_required_or_403('proyecto.p_administrar_participantes',(Proyecto,'pk','pk'))
+@permission_required_or_403('proyecto.p_administrar_participantes',(Proyecto,'pk','pk_proy'))
 @permission_required_or_403('proyecto.p_acceder_proyecto',(Proyecto,'pk','pk_proy'))
 def eliminarParticipanteView(request, pk_proy, pk, template_name='proyecto/delete_confirm_participante.html'):
     """ View para eliminar participantes de equipo de un proyecto. Es una vista de confirmación
@@ -835,6 +835,7 @@ class ProductBacklogView(PermissionRequiredMixin, ListView):
             'proyecto_id': self.kwargs['pk_proy'],
             'user_storys_nuevos': ProductBacklog.objects.get(proyecto__pk = self.kwargs['pk_proy']).userstory_set.filter(estado_aprobacion='T').exclude(estado_aprobacion='C'),
             'product_backlog': ProductBacklog.objects.get(proyecto__pk = self.kwargs['pk_proy']).userstory_set.filter(estado_aprobacion='A'),
+            'cancelados': ProductBacklog.objects.get(proyecto__pk = self.kwargs['pk_proy']).userstory_set.filter(estado_aprobacion='C')
         })
         return context
 
@@ -1132,8 +1133,9 @@ def iniciar_sprint_view(request, pk_proy, sprint_id, template_name='proyecto/ini
             hoy = datetime.now()
             if not cal.is_working_day(hoy):
                 hoy = cal.add_working_days(hoy, 1)
-                sprint.fechaInicio = hoy
-            sprint.fechaFin = cal.add_working_days(hoy, sprint.duracionSprint)
+                
+            sprint.fechaInicio = hoy
+            sprint.fechaFin = cal.add_working_days(hoy, sprint.duracionSprint-1)
             sprint.save()
         return HttpResponseRedirect(reverse('proyecto:sprint-detail',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id}))
     return render(request, template_name, {'proyecto_id':pk_proy, 'sprint_id':sprint_id})
@@ -1148,10 +1150,11 @@ class SprintKanbanView(PermissionRequiredMixin,LoginRequiredMixin,TemplateView):
     De ahí el usuario con los permisoss de hacer QA puede selecionarlo y hacer los procedimientos de QA. 
     Si el user story está aprobado en QA, quedará en la columna de Done pero se muestra que ya está listo para release.
     """
+    # 'proyecto.p_aprobar_us',
     model = Sprint
     template_name = 'proyecto/sprint_kanban.html'
     raise_exception = True
-    permission_required = ('proyecto.p_aprobar_us','proyecto.p_acceder_proyecto')
+    permission_required = ('proyecto.p_acceder_proyecto')
 
     def get_permission_object(self):
         return get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
@@ -1177,9 +1180,9 @@ class SprintKanbanView(PermissionRequiredMixin,LoginRequiredMixin,TemplateView):
         return context
 
 
+# @permission_required_or_403('proyecto.p_administrar_us',(Proyecto,'pk','pk_proy'))
 @login_required
 @permission_required_or_403('proyecto.p_acceder_proyecto',(Proyecto,'pk','pk_proy'))
-@permission_required_or_403('proyecto.p_administrar_us',(Proyecto,'pk','pk_proy'))
 @permission_required_or_403('proyecto.us_manipular_userstory_dailys',(UserStory,'pk','us_id'))
 def mark_us_doing(request, pk_proy, sprint_id,us_id):
     """ 
@@ -1209,9 +1212,9 @@ def mark_us_doing(request, pk_proy, sprint_id,us_id):
     return HttpResponseRedirect(reverse('proyecto:sprint-kanban',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id}))
 
 
+# @permission_required_or_403('proyecto.p_administrar_us',(Proyecto,'pk','pk_proy'))
 @login_required
 @permission_required_or_403('proyecto.p_acceder_proyecto',(Proyecto,'pk','pk_proy'))
-@permission_required_or_403('proyecto.p_administrar_us',(Proyecto,'pk','pk_proy'))
 @permission_required_or_403('proyecto.us_manipular_userstory_dailys',(UserStory,'pk','us_id'))
 def mark_us_todo(request, pk_proy, sprint_id,us_id):
     """ 
@@ -1241,9 +1244,9 @@ def mark_us_todo(request, pk_proy, sprint_id,us_id):
     return HttpResponseRedirect(reverse('proyecto:sprint-kanban',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id}))
 
 
+# @permission_required_or_403('proyecto.p_administrar_us',(Proyecto,'pk','pk_proy'))
 @login_required
 @permission_required_or_403('proyecto.p_acceder_proyecto',(Proyecto,'pk','pk_proy'))
-@permission_required_or_403('proyecto.p_administrar_us',(Proyecto,'pk','pk_proy'))
 @permission_required_or_403('proyecto.us_manipular_userstory_dailys',(UserStory,'pk','us_id'))
 def mark_us_done(request, pk_proy, sprint_id,us_id):
     """ 
@@ -1554,9 +1557,15 @@ class SprintBurndownchartView(PermissionRequiredMixin,LoginRequiredMixin,Templat
         today = datetime.now()
         proceed = True
         cal = Paraguay()
+        daily_count = Daily.objects.filter(sprint__pk=self.kwargs['sprint_id']).count()
+        var = 0
+        duracion_real = 0
 
         while proceed == True:
-            hours_worked = Daily.objects.filter(sprint__pk=self.kwargs['sprint_id']).filter(fecha=fecha).aggregate(Sum('duracion')).get('duracion__sum',0.00) 
+            query = Daily.objects.filter(sprint__pk=self.kwargs['sprint_id']).filter(fecha=fecha)
+            query_count = query.count()
+            var += query_count
+            hours_worked = query.aggregate(Sum('duracion')).get('duracion__sum',0.00) 
             if hours_worked == None:
                 hours_worked = 0
             hours -= hours_worked
@@ -1565,16 +1574,17 @@ class SprintBurndownchartView(PermissionRequiredMixin,LoginRequiredMixin,Templat
             else:
                 work_left.append(str(0))
 
-            if sprint.fechaFinalizacion != None and fecha < sprint.fechaFinalizacion:
-                proceed = True
-            elif sprint.fechaFinalizacion == None and fecha < datetime.now().date():
-                proceed = True
-            elif fecha < sprint.fechaFin:
-                proceed = True
-            else:
-                proceed = False
+            # if sprint.fechaFinalizacion != None and fecha < sprint.fechaFinalizacion:
+            #     proceed = True
+            # elif sprint.fechaFinalizacion == None and fecha < datetime.now().date() or fecha < sprint.fechaFin:
+            #     proceed = True
+            # else:
+            #     proceed = False
             # elif fecha == sprint.fechaFin:
             #     proceed = False
+            if var == daily_count:
+                duracion_real = cal.get_working_days_delta(sprint.fechaInicio, fecha) +1
+                proceed = False
 
             fecha = cal.add_working_days(fecha, 1)
             
@@ -1585,7 +1595,8 @@ class SprintBurndownchartView(PermissionRequiredMixin,LoginRequiredMixin,Templat
             'sprint_id': self.kwargs['sprint_id'],
             'sprint_json': json.dumps(work_left),
             'dias': json.dumps(sprint.duracionSprint),
-            'total_horas': json.dumps(str(sprint.carga_horaria))
+            'total_horas': json.dumps(str(sprint.carga_horaria)),
+            'duracion_real': json.dumps(str(duracion_real))
         })
         return context
 
@@ -1612,8 +1623,8 @@ def userstory_cancelar(request, pk_proy, us_id, template_name='proyecto/userstor
     return render(request, template_name, {'object': userstory, 'proyecto_id':pk_proy})
 
 
+# @permission_required_or_403('proyecto.p_administrar_us',(Proyecto,'pk','pk_proy'))
 @login_required
-@permission_required_or_403('proyecto.p_administrar_us',(Proyecto,'pk','pk_proy'))
 @permission_required_or_403('proyecto.p_acceder_proyecto',(Proyecto,'pk','pk_proy'))
 @permission_required_or_403('proyecto.us_manipular_userstory_dailys',(UserStory,'pk','us_id'))
 def agregar_daily_view(request, pk_proy, sprint_id, us_id):
@@ -1653,6 +1664,8 @@ def agregar_daily_view(request, pk_proy, sprint_id, us_id):
             daily = form.save()
             if not cal.is_working_day(fecha):
                 daily.fecha = cal.add_working_days(fecha, 1)
+            if daily.fecha < sprint.fechaInicio:
+                daily.fecha = sprint.fechaInicio
             daily.user_story = userstory
             daily.sprint = sprint
             daily.save()
@@ -1671,7 +1684,7 @@ class EditDailyView(PermissionRequiredMixin,LoginRequiredMixin,UpdateView):
     Vista para editar un Daily
     Sierve un template de formulario donde el usuario puede modificar los campos del daily.
     """
-    # 'proyecto.p_administrar_us','proyecto.p_acceder_proyecto',
+    # 'proyecto.p_administrar_us',
     model = Daily
     permission_required = ('proyecto.us_manipular_userstory_dailys')
     template_name = 'proyecto/daily_view_form.html'
@@ -1683,9 +1696,13 @@ class EditDailyView(PermissionRequiredMixin,LoginRequiredMixin,UpdateView):
         Función que verifica que el proyecto esté activo, si no vuelve a la ruta anterior y muestra una alerta.
         """
         proyecto = get_object_or_404(Proyecto,pk=self.kwargs['pk_proy'])
+        sprint = get_object_or_404(Sprint,pk=self.kwargs['sprint_id'])
         next = request.GET.get('next')
         if proyecto.estado_de_proyecto != 'A':
             messages.warning(request, 'El proyecto fue finalizado, no se puede hacer cambios')
+            return HttpResponseRedirect(next)
+        if sprint.estado_de_sprint != 'A':
+            messages.warning(request, 'No se puede editar un daily de un sprint inactivo')
             return HttpResponseRedirect(next)
         return super().dispatch(request, *args, **kwargs)
 
@@ -1735,12 +1752,16 @@ class EliminarDailyView(PermissionRequiredMixin,LoginRequiredMixin,DeleteView):
 
     def dispatch(self, request, *args, **kwargs):
         """ 
-        
+        Función que verifica que el proyecto y el sprint están activos. Si no muestra una advertencia y vuelve a la ruta anterior.
         """
         proyecto = get_object_or_404(Proyecto,pk=self.kwargs['pk_proy'])
+        sprint = get_object_or_404(Sprint,pk=self.kwargs['sprint_id'])
         next = request.GET.get('next')
         if proyecto.estado_de_proyecto != 'A':
             messages.warning(request, 'El proyecto fue finalizado, no se puede hacer cambios')
+            return HttpResponseRedirect(next)
+        if sprint.estado_de_sprint != 'A':
+            messages.warning(request, 'No se puede eliminar un daily de un sprint inactivo')
             return HttpResponseRedirect(next)
         return super().dispatch(request, *args, **kwargs)
 

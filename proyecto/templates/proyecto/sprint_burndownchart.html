@@ -28,6 +28,7 @@
       
       let days = JSON.parse('{{dias|safe}}')
       let total = Number(JSON.parse('{{total_horas|safe}}'))
+      let dias_reales = Number(JSON.parse('{{duracion_real|safe}}'))
       console.log(total)
       const totalHoursInSprint = total;
       const idealHoursPerDay = totalHoursInSprint / days
@@ -35,10 +36,14 @@
 
       let labels = []
       let data = []
+      let longitud = 0
+      longitud = dias_reales > days ? dias_reales :days
 
-      for (let index = 0; index < days; index++) {
+      for (let index = 0; index < longitud; index++) {
         labels[index] = `Día ${index +1}`
-        data[index] = Math.round(totalHoursInSprint - (idealHoursPerDay * index) + sumArrayUpTo(scopeChange, index))
+        if(index +1 <= days){
+          data[index] = Math.round(totalHoursInSprint - (idealHoursPerDay * index) + sumArrayUpTo(scopeChange, index))
+        }
       }
       console.log(data)
 
