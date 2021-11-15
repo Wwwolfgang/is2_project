@@ -20,6 +20,9 @@
         <div class="col-3">
             <a href="{% url 'proyecto:agregar-us' proyecto_id %}"  class="btn btn-outline-success" type="button"><i class="fas fa-plus-circle me-2"></i>Agregar user story</a>
         </div>
+        <div class="col-3">
+            <a href="{% url 'proyecto:generar-pb-pdf' proyecto_id %}"  class="btn btn-outline-danger" type="button"><i class="fas fa-file-pdf me-2"></i>Generar PDF</a>
+        </div>
     </div>
     
     <div class="row class py-5">

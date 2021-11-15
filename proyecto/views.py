@@ -12,7 +12,7 @@ from django.forms.models import model_to_dict
 #from django.contrib.auth.mixins import PermissionRequiredMixin,LoginRequiredMixin
 #Usamos el mixin de Django Guardian
 from guardian.mixins import LoginRequiredMixin, PermissionRequiredMixin 
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponseRedirect, HttpResponse, response
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView
 from django.urls import reverse
@@ -35,6 +35,18 @@ from decimal import Decimal
 from django.contrib.auth.decorators import login_required
 from workalendar.america import Paraguay
 from django.conf import settings
+
+from io import BytesIO
+from django.db.models import F
+from django.http import HttpResponse
+from django.http import JsonResponse
+from reportlab.lib import colors
+from reportlab.lib.colors import HexColor
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import cm
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 
 
 class EliminarRolProyectoView(PermissionRequiredMixin,LoginRequiredMixin,DeleteView):
@@ -1946,3 +1958,52 @@ class IntercambiarDevView(UpdateView):
             if user != proyecto.owner:
                 remove_perm(perm,user,us)
         return HttpResponseRedirect(reverse('proyecto:sprint-team-edit',kwargs={'pk_proy':self.kwargs['pk_proy'],'pk':self.kwargs['sprint_id']}))
+
+
+def generar_pdf_view(request, pk_proy,): 
+    proyecto = get_object_or_404(Proyecto,pk=pk_proy)
+    product_backlog = ProductBacklog.objects.get(proyecto__pk = pk_proy).userstory_set.all()
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="Product Backlog.pdf"'
+
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(name='is-Heading0', parent=styles['Heading1'], alignment=TA_LEFT, fontSize=20))
+    styles.add(ParagraphStyle(name='is-Heading1', parent=styles['Heading1'], alignment=TA_CENTER, fontSize=20))
+    styles.add(ParagraphStyle(name='is-Heading2', parent=styles['Heading2'], alignment=TA_CENTER))
+    styles.add(ParagraphStyle(name='is-Heading4', parent=styles['Heading4'], alignment=TA_LEFT))
+    styles.add(ParagraphStyle(name='is-Heading5', parent=styles['Heading5'], alignment=TA_LEFT))
+
+
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, title='Product Backlog', pagesize=letter,
+                            rightMargin=25, leftMargin=25, topMargin=25, bottomMargin=25)
+    lista = []
+
+    lista.append(Paragraph('Product Backlog - '+proyecto.nombreProyecto, styles["is-Heading0"]))
+    col_widths = [None, 8*cm]
+    LIST_STYLE = TableStyle(
+        [
+        ('LINEABOVE', (0,1), (-1,-1), 0.25, colors.black),
+        ('BOX', (0,0), (-1,-1), 0.25, colors.black),
+        ('ALIGN', (1,1), (-1,-1), 'RIGHT')]
+    )
+    index = 0
+    for us in product_backlog:
+        index += 1
+        data = []
+        titulo = f'{str(index)}. {us.nombre}'
+        desc = us.descripcion
+        data.append((Paragraph(titulo, styles["is-Heading4"]), us.get_prioridad_user_story_display()))
+        data.append((Paragraph(desc,styles["Normal"]),""))
+        data.append(('Creador: '+us.creador.__str__(),'Estado: '+us.get_estado_user_story_display() + '     Estado aprob.: '+ us.get_estado_aprobacion_display()))
+        table = Table(data,colWidths=col_widths,rowHeights=[None,None,None])
+        table.setStyle(LIST_STYLE)
+        lista.append(table)
+        lista.append(Spacer(1, 12))
+
+    doc.build(lista)
+    pdf = buffer.getvalue()
+    buffer.close()
+    response.write(pdf)
+    return response

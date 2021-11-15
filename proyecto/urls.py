@@ -63,6 +63,6 @@ urlpatterns = [
     path('proyecto/<int:pk_proy>/sprint/<int:sprint_id>/user-story/<int:us_id>/eliminar-daily/<int:d_pk>/',views.EliminarDailyView.as_view(),name='eliminar-daily'),
 
 
-
+    path('proyecto/<int:pk_proy>/generar-pb-pdf/', views.generar_pdf_view,name='generar-pb-pdf')
 
 ]
