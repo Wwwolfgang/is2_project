@@ -54,7 +54,7 @@
                     {% endif %}
                     {% if sprint.horas_disponibles == 0 and user == owner %}
                         <h6 class="card-title"><strong>Parece que no configuró el equipo del sprint >> </strong><a href="{% url 'proyecto:sprint-team-edit' proyecto_id sprint.id%}" class=""><i class="fas fa-users me-2"></i>Team</a></h6>
-                    {% elif sprint.horas_disponibles != 0 and user == owner %}
+                    {% elif sprint.horas_disponibles != 0 and user == owner and sprint.estado_de_sprint == 'I' %}
                         <h6 class="card-title"><strong>Horas restantes: </strong>{{hours_remaining}} hs.</h6>
                     {% endif %}
                     {% if hours_remaining <= 0 and sprint.horas_disponibles != 0 and user == owner and sprint.estado_de_sprint == 'I'%}
@@ -148,7 +148,12 @@
                         <h6 class="card-title" style="color:red"><strong>¡El sprint está por terminarse dentro de pocos días!</strong></h6>
                     {% endif %}
                     <div class="row class py-5">
-                            <h6>Sprint Backlog</h6>
+                            <div class="row py-2 class align-content-center">
+                                <div class="col-2"><h6>Sprint Backlog</h6> </div>
+                                <div class="col"><a href="{% url 'proyecto:generar-sprint-pb-pdf' proyecto_id sprint.id%}"  class="btn btn-outline-danger" type="button"><i class="fas fa-file-pdf me-2"></i>Generar Reporte Sprint Backlog</a></div>
+                                <div class="col"><a href="{% url 'proyecto:generar-us-prioridad-pdf' proyecto_id sprint.id%}"  class="btn btn-outline-danger" type="button"><i class="fas fa-file-pdf me-2"></i>Generar Reporte US - Prioridad</a></div>
+                            </div>
+                            
                             {% for us in sprint_backlog %}
                                 <div class="card w-25 px-0 mb-2 mx-2" >
                                     <div class="card-header">

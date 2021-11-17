@@ -35,6 +35,7 @@ from decimal import Decimal
 from django.contrib.auth.decorators import login_required
 from workalendar.america import Paraguay
 from django.conf import settings
+from django.db.models import Case, When, Value
 
 from io import BytesIO
 from django.db.models import F
@@ -1960,7 +1961,11 @@ class IntercambiarDevView(UpdateView):
         return HttpResponseRedirect(reverse('proyecto:sprint-team-edit',kwargs={'pk_proy':self.kwargs['pk_proy'],'pk':self.kwargs['sprint_id']}))
 
 
-def generar_pdf_view(request, pk_proy,): 
+def generar_pdf_view(request, pk_proy,):
+    """ 
+    Vista para generar un reporte en PDF del product backlog. Se hace un listado de todos los user stories de un proyecto, 
+    mostrando la prioridad, el estado del user story, el creador del user story y la descripción del user story.
+    """
     proyecto = get_object_or_404(Proyecto,pk=pk_proy)
     product_backlog = ProductBacklog.objects.get(proyecto__pk = pk_proy).userstory_set.all()
     response = HttpResponse(content_type='application/pdf')
@@ -1994,13 +1999,273 @@ def generar_pdf_view(request, pk_proy,):
         data = []
         titulo = f'{str(index)}. {us.nombre}'
         desc = us.descripcion
-        data.append((Paragraph(titulo, styles["is-Heading4"]), us.get_prioridad_user_story_display()))
+        data.append((Paragraph(titulo, styles["is-Heading4"]), 'Prioridad: '+us.get_prioridad_user_story_display()))
         data.append((Paragraph(desc,styles["Normal"]),""))
         data.append(('Creador: '+us.creador.__str__(),'Estado: '+us.get_estado_user_story_display() + '     Estado aprob.: '+ us.get_estado_aprobacion_display()))
         table = Table(data,colWidths=col_widths,rowHeights=[None,None,None])
         table.setStyle(LIST_STYLE)
         lista.append(table)
         lista.append(Spacer(1, 12))
+
+    doc.build(lista)
+    pdf = buffer.getvalue()
+    buffer.close()
+    response.write(pdf)
+    return response
+
+
+def generar_sprint_backlog_pdf(request,pk_proy,sprint_id):
+    """ 
+    Vista para generar el reporte de un sprint backlog. Se separa el reporte en las
+    categorías TO-DO, DOING, QA y Release/DONE. Para cada categoría se muestran los 
+    respectivos user storys, y para cada user story se muestra el título, la prioridad,
+    la descripción, el encargado asociado, las horas planificadas y las horas trabajadas.
+    """
+    sprint = Sprint.objects.get(pk=sprint_id)
+    proyecto = Proyecto.objects.get(pk=pk_proy)
+    sprint_backlog = UserStory.objects.filter(sprint__pk = sprint_id)
+    us_todo = sprint_backlog.filter(estado_user_story='TD')
+    us_doing = sprint_backlog.filter(estado_user_story='DG')
+    us_done = sprint_backlog.filter(estado_user_story='DN')
+    us_qa = sprint_backlog.filter(estado_user_story='QA')
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="Sprint Backlog.pdf"'
+
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(name='is-Heading0', parent=styles['Heading1'], alignment=TA_LEFT, fontSize=20))
+    styles.add(ParagraphStyle(name='is-Heading1', parent=styles['Heading1'], alignment=TA_CENTER, fontSize=20))
+    styles.add(ParagraphStyle(name='is-Heading2', parent=styles['Heading2'], alignment=TA_CENTER))
+    styles.add(ParagraphStyle(name='is-Heading4', parent=styles['Heading4'], alignment=TA_LEFT))
+    styles.add(ParagraphStyle(name='is-Heading5', parent=styles['Heading5'], alignment=TA_LEFT))
+    styles.add(ParagraphStyle(name='is-Heading6', parent=styles['Heading4'], alignment=TA_CENTER))
+
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, title='Sprint Backlog', pagesize=letter,
+                            rightMargin=25, leftMargin=25, topMargin=25, bottomMargin=25)
+
+    lista = []
+
+    lista.append(Paragraph('Proyecto: '+proyecto.nombreProyecto, styles["is-Heading4"]))
+    lista.append(Paragraph(sprint.identificador + ' Backlog', styles["is-Heading1"]))
+    lista.append(Spacer(1, 12))
+
+    col_widths = [None, 8*cm]
+    LIST_STYLE = TableStyle(
+        [
+        ('LINEABOVE', (0,1), (-1,-1), 0.25, colors.black),
+        ('BOX', (0,0), (-1,-1), 0.25, colors.black),
+        ('ALIGN', (1,1), (-1,-1), 'RIGHT')]
+    )
+    index = 0
+    lista.append(Paragraph('User stories en TO-DO', styles["is-Heading2"]))
+    if us_todo.count() > 0:
+        for us in us_todo:
+            horas_trabajadas = Daily.objects.filter(sprint__pk=sprint_id).filter(user_story__pk=us.pk).aggregate(Sum('duracion')).get('duracion__sum',0.00) 
+            horas_calculadas = us.tiempo_promedio_calculado
+            if horas_trabajadas == None:
+                horas_trabajadas = Decimal(0)
+
+            if horas_calculadas == None:
+                horas_calculadas = Decimal(0)
+
+            horas_t = '{0:f}'.format(horas_trabajadas)
+            horas_p = '{0:f}'.format(horas_calculadas)
+
+            index += 1
+            data = []
+            titulo = f'{str(index)}. {us.nombre}'
+            desc = us.descripcion
+            data.append((Paragraph(titulo, styles["is-Heading4"]), 'Prioridad: '+us.get_prioridad_user_story_display()))
+            data.append((Paragraph(desc,styles["Normal"]),""))
+            data.append(('Encargado: '+us.encargado.usuario.__str__(),'Progreso: '+ horas_t+' de '+horas_p+' hrs.'))
+            
+            table = Table(data,colWidths=col_widths,rowHeights=[None,None,None])
+            table.setStyle(LIST_STYLE)
+            lista.append(table)
+            lista.append(Spacer(1, 12))
+    else:
+        lista.append(Paragraph('No hay user stories en está categoría', styles["is-Heading6"]))
+
+    lista.append(Spacer(1, 12))
+
+    index = 0
+    lista.append(Paragraph('User stories en DOING', styles["is-Heading2"]))
+    if us_doing.count() > 0:
+        for us in us_doing:
+            horas_trabajadas = Daily.objects.filter(sprint__pk=sprint_id).filter(user_story__pk=us.pk).aggregate(Sum('duracion')).get('duracion__sum',0.00) 
+            horas_calculadas = us.tiempo_promedio_calculado
+            if horas_trabajadas == None:
+                horas_trabajadas = Decimal(0)
+
+            if horas_calculadas == None:
+                horas_calculadas = Decimal(0)
+
+            horas_t = '{0:f}'.format(horas_trabajadas)
+            horas_p = '{0:f}'.format(horas_calculadas)
+
+            index += 1
+            data = []
+            titulo = f'{str(index)}. {us.nombre}'
+            desc = us.descripcion
+            data.append((Paragraph(titulo, styles["is-Heading4"]), 'Prioridad: '+us.get_prioridad_user_story_display()))
+            data.append((Paragraph(desc,styles["Normal"]),""))
+            data.append(('Encargado: '+us.encargado.usuario.__str__(),'Progreso: '+ horas_t +' de '+horas_p+' hrs.'))
+            
+            table = Table(data,colWidths=col_widths,rowHeights=[None,None,None])
+            table.setStyle(LIST_STYLE)
+            lista.append(table)
+            lista.append(Spacer(1, 12))
+    else:
+        lista.append(Paragraph('No hay user stories en está categoría', styles["is-Heading6"]))
+
+    lista.append(Spacer(1, 12))
+
+    index = 0
+    lista.append(Paragraph('User stories en QA', styles["is-Heading2"]))
+    if us_qa.count() > 0:
+        for us in us_qa:
+            horas_trabajadas = Daily.objects.filter(sprint__pk=sprint_id).filter(user_story__pk=us.pk).aggregate(Sum('duracion')).get('duracion__sum',0.00) 
+            horas_calculadas = us.tiempo_promedio_calculado
+            if horas_trabajadas == None:
+                horas_trabajadas = Decimal(0)
+
+            if horas_calculadas == None:
+                horas_calculadas = Decimal(0)
+
+            horas_t = '{0:f}'.format(horas_trabajadas)
+            horas_p = '{0:f}'.format(horas_calculadas)
+
+            index += 1
+            data = []
+            titulo = f'{str(index)}. {us.nombre}'
+            desc = us.descripcion
+            data.append((Paragraph(titulo, styles["is-Heading4"]), 'Prioridad: '+us.get_prioridad_user_story_display()))
+            data.append((Paragraph(desc,styles["Normal"]),""))
+            data.append(('Encargado: '+us.encargado.usuario.__str__(),'Progreso: '+ horas_t +' de '+horas_p+' hrs.'))
+            
+            table = Table(data,colWidths=col_widths,rowHeights=[None,None,None])
+            table.setStyle(LIST_STYLE)
+            lista.append(table)
+            lista.append(Spacer(1, 12))
+    else:
+        lista.append(Paragraph('No hay user stories en está categoría', styles["is-Heading6"]))
+
+    lista.append(Spacer(1, 12))
+
+    index = 0
+    lista.append(Paragraph('User stories en Release/DONE', styles["is-Heading2"]))
+    if us_done.count() > 0:
+        for us in us_done:
+            horas_trabajadas = Daily.objects.filter(sprint__pk=sprint_id).filter(user_story__pk=us.pk).aggregate(Sum('duracion')).get('duracion__sum',0.00) 
+            horas_calculadas = us.tiempo_promedio_calculado
+            if horas_trabajadas == None:
+                horas_trabajadas = Decimal(0)
+
+            if horas_calculadas == None:
+                horas_calculadas = Decimal(0)
+
+            horas_t = '{0:f}'.format(horas_trabajadas)
+            horas_p = '{0:f}'.format(horas_calculadas)
+            
+            index += 1
+            data = []
+            titulo = f'{str(index)}. {us.nombre}'
+            desc = us.descripcion
+            data.append((Paragraph(titulo, styles["is-Heading4"]), 'Prioridad: '+us.get_prioridad_user_story_display()))
+            data.append((Paragraph(desc,styles["Normal"]),""))
+            data.append(('Encargado: '+us.encargado.usuario.__str__(),'Progreso: '+ horas_t +' de '+horas_p+' hrs.'))
+            
+            table = Table(data,colWidths=col_widths,rowHeights=[None,None,None])
+            table.setStyle(LIST_STYLE)
+            lista.append(table)
+            lista.append(Spacer(1, 12))
+    else:
+        lista.append(Paragraph('No hay user stories en está categoría', styles["is-Heading6"]))
+
+    lista.append(Spacer(1, 12))
+
+    doc.build(lista)
+    pdf = buffer.getvalue()
+    buffer.close()
+    response.write(pdf)
+    return response
+
+
+def generar_reporte_prioridad_us_pdf(request,pk_proy,sprint_id):
+    """
+    View para la generación de un reporte, mostrando todos los user storys de un sprint, ordenados por su prioridad de mayor a menor.
+    Se muestra de cada user story el título, la prioridad, la descripción, el encargado, las horas trabajadas y las horas planificadas.
+    """
+    proyecto = get_object_or_404(Proyecto,pk=pk_proy)
+    sprint = get_object_or_404(Sprint,pk=sprint_id)
+    sprint_backlog = UserStory.objects.filter(sprint__pk = sprint_id).order_by( Case( 
+                       When ( prioridad_user_story="E", then=Value(0) ),
+                       When ( prioridad_user_story="A", then=Value(1) ),
+                       When ( prioridad_user_story="M", then=Value(2) ),
+                       default = Value(3)
+                          )
+                    )
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="US - Prioridad.pdf"'
+
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(name='is-Heading0', parent=styles['Heading1'], alignment=TA_LEFT, fontSize=20))
+    styles.add(ParagraphStyle(name='is-Heading1', parent=styles['Heading1'], alignment=TA_CENTER, fontSize=20))
+    styles.add(ParagraphStyle(name='is-Heading2', parent=styles['Heading2'], alignment=TA_CENTER))
+    styles.add(ParagraphStyle(name='is-Heading4', parent=styles['Heading4'], alignment=TA_LEFT))
+    styles.add(ParagraphStyle(name='is-Heading5', parent=styles['Heading5'], alignment=TA_LEFT))
+    styles.add(ParagraphStyle(name='is-Heading6', parent=styles['Heading4'], alignment=TA_CENTER))
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, title='US - Prioridad', pagesize=letter,
+                            rightMargin=25, leftMargin=25, topMargin=25, bottomMargin=25)
+    lista = []
+
+    lista.append(Paragraph('Proyecto: '+proyecto.nombreProyecto, styles["is-Heading4"]))
+    lista.append(Paragraph(sprint.identificador, styles["is-Heading1"]))
+    lista.append(Spacer(1, 12))
+
+    col_widths = [None, 8*cm]
+    LIST_STYLE = TableStyle(
+        [
+        ('LINEABOVE', (0,1), (-1,-1), 0.25, colors.black),
+        ('BOX', (0,0), (-1,-1), 0.25, colors.black),
+        ('ALIGN', (1,1), (-1,-1), 'RIGHT')]
+    )
+    index = 0
+    lista.append(Paragraph('User stories ordenados por prioridad', styles["is-Heading2"]))
+    if sprint_backlog.count() > 0:
+        for us in sprint_backlog:
+            horas_trabajadas = Daily.objects.filter(sprint__pk=sprint_id).filter(user_story__pk=us.pk).aggregate(Sum('duracion')).get('duracion__sum',0.00) 
+            horas_calculadas = us.tiempo_promedio_calculado
+            if horas_trabajadas == None:
+                horas_trabajadas = Decimal(0)
+
+            if horas_calculadas == None:
+                horas_calculadas = Decimal(0)
+
+            horas_t = '{0:f}'.format(horas_trabajadas)
+            horas_p = '{0:f}'.format(horas_calculadas)
+
+            index += 1
+            data = []
+            titulo = f'{str(index)}. {us.nombre}'
+            desc = us.descripcion
+            data.append((Paragraph(titulo, styles["is-Heading4"]), 'Prioridad: '+us.get_prioridad_user_story_display()))
+            data.append((Paragraph(desc,styles["Normal"]),""))
+            data.append(('Encargado: '+us.encargado.usuario.__str__(),'Progreso: '+ horas_t+' de '+horas_p+' hrs.'))
+            
+            table = Table(data,colWidths=col_widths,rowHeights=[None,None,None])
+            table.setStyle(LIST_STYLE)
+            lista.append(table)
+            lista.append(Spacer(1, 12))
+    else:
+        lista.append(Paragraph('No hay user stories agregados al sprint', styles["is-Heading6"]))
+
+    lista.append(Spacer(1, 12))
 
     doc.build(lista)
     pdf = buffer.getvalue()
