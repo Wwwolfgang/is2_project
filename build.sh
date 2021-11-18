@@ -40,6 +40,7 @@ mainmenu () {
         echo "Presione 3 para TAG v.0.0.3"
         echo "Presione 4 para TAG v.0.0.4"
         echo "Presione 5 para TAG v.0.0.5"
+        echo "Presione 6 para TAG v.0.0.6"
         read -n 1 -p "Seleccione el Tag:" tag
 
         echo -e "${green}\n>>> Desarrollo TAG v.0.0.${tag}:${reset}"
@@ -68,6 +69,8 @@ mainmenu () {
             git switch --detach v.0.0.4
         elif [ "$tag" = "5" ]; then
             git switch --detach v.0.0.5
+        elif [ "$tag" = "6" ]; then
+            git switch --detach v.0.0.6
         else 
             echo -e "${red}\n<<< Esa versión no existe >>>${reset}"
             sleep 2
