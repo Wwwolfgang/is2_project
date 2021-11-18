@@ -30,7 +30,13 @@
         <!-- Left links -->
   
         <div class="d-flex align-items-center">
-          <a class="nav-link" href="{% url 'proyecto:finalizar-proyecto' request.session.proyecto_id %}?next={{request.path}}"><i class="fas fa-flag-checkered me-2"></i>Finalizar proyecto</a>
+          {% if request.session.proyecto_estado != 'F' and request.session.proyecto_estado != 'C' %}
+            <a class="nav-link" href="{% url 'proyecto:finalizar-proyecto' request.session.proyecto_id %}?next={{request.path}}"><i class="fas fa-flag-checkered me-2"></i>Finalizar proyecto</a>
+          {% elif request.session.proyecto_estado == 'F' %}
+            <span class="badge bg-success me-2"><i class="fas fa-flag-checkered me-2"></i>Finalizado</span>
+          {% elif request.session.proyecto_estado == 'C'%}
+            <span class="badge bg-danger me-2"><i class="fas fa-flag-checkered me-2"></i>Cancelado</span>
+          {% endif %}
           <a href="{% url 'proyecto:roles' request.session.proyecto_id %}" class="btn btn-outline-primary px-3 me-2" type="button">Roles y Participantes</a>
           <a href="{% url 'proyecto:edit' request.session.proyecto_id %}" class="nav-link me-3"><i class="fas fa-cog"></i></a>
           <div class="dropdown d-flex">

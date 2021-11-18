@@ -16,6 +16,8 @@ mainmenu () {
     repo=is2_project
     echo -e "${red}<<< Bienvenidos al Projecto de IS2 del equipo 15 >>>${reset}"
 
+    rm -rf is2_project/
+
     git clone "https://${username}:${password}@github.com/Wwwolfgang/is2_project.git"
 
     cd "is2_project"

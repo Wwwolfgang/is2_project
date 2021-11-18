@@ -365,6 +365,8 @@ class ProyectoDetailView(PermissionRequiredMixin, LoginRequiredMixin, DetailView
         proyecto = self.model.objects.get(id=id)
         self.request.session['proyecto_id'] = id
         self.request.session['proyecto_nombre'] = proyecto.nombreProyecto
+        self.request.session['proyecto_estado'] = proyecto.estado_de_proyecto
+
         context.update({
             'proyecto': proyecto,
             'sprints': Sprints
@@ -483,6 +485,9 @@ def edit(request, pk, template_name='proyecto/edit.html'):
         'proyecto_id': pk,
         'form':form
     })
+    if proyecto.estado_de_proyecto != 'A':
+        messages.warning(request, 'El proyecto fue finalizado, no se puede hacer cambios')
+        return redirect('proyecto:detail', pk) 
     if form.is_valid():
         form.save()
         return HttpResponseRedirect(reverse('proyecto:index'))
@@ -495,6 +500,12 @@ def edit(request, pk, template_name='proyecto/edit.html'):
 def cancelar(request, pk, template_name='proyecto/confirm-cancel.html'):
     """ View para cancelar un proyecto. TODO se debería hacer cierto control cuando se puede cancelar un proyecto"""
     proyecto = get_object_or_404(Proyecto, pk=pk)
+    if proyecto.estado_de_proyecto != 'A':
+        messages.warning(request, '¡El proyecto fue finalizado, no es posible cancelarlo!')
+        return redirect('proyecto:detail', pk)
+    elif request.user != proyecto.owner:
+        messages.warning(request, '¡Usted no es el owner del proyecto, no puede cancelarlo!')
+        return redirect('proyecto:detail', pk)
     if request.method=='POST':
         proyecto.estado_de_proyecto = 'C'
         proyecto.save()
@@ -1522,6 +1533,7 @@ class FinalizarProyectoView(PermissionRequiredMixin,LoginRequiredMixin,UpdateVie
         proyecto = form.save()
         proyecto.estado_de_proyecto = 'F'
         proyecto.save()
+        self.request.session['proyecto_estado'] = proyecto.estado_de_proyecto
         return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
