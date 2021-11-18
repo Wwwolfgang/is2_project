@@ -17,6 +17,8 @@ from guardian.shortcuts import assign_perm, remove_perm, get_user_perms
 from pytest_django.asserts import assertTemplateUsed
 from decimal import Decimal
 from datetime import date, datetime, timedelta
+from django.http import HttpRequest
+
 
 
 from proyecto import views, models, forms
@@ -31,12 +33,13 @@ class FormTest(TestCase):
         self.factory = RequestFactory()
         self.user = models.User.objects.create(username=username, first_name=first_name,last_name=last_name,email=email)
         self.user2 = models.User.objects.create(username='is1', first_name='IS1',last_name='Testuser',email='is2equipo15cuenta1@gmail.com')
-        self.proyecto = models.Proyecto.objects.create(nombreProyecto='proyectotest',estado_de_proyecto='A')
+        self.proyecto = models.Proyecto.objects.create(nombreProyecto='proyectotest',estado_de_proyecto='A',owner=self.user)
         self.productBacklog = models.ProductBacklog.objects.create(proyecto=self.proyecto)
 
     def sprintCreate(self,estado = 'I',carga_horaria=0.0):
         """ Setup de un sprint de prueba """
         self.sprint = models.Sprint.objects.create(identificador='Sprint 1',estado_de_sprint=estado,proyecto=self.proyecto,duracionSprint=14,carga_horaria=carga_horaria,fechaInicio=datetime.now())
+        self.dev = models.ProyectUser.objects.create(usuario=self.user,horas_diarias=10,sprint=self.sprint)
     
     def userstoryCreate(self,estado_ap='T',estado_user_story='TD'):
         self.userstory = models.UserStory.objects.create(nombre='Prueba',descripcion='Prueba',prioridad_user_story='B',estado_aprobacion=estado_ap,creador=self.user2,product_backlog=self.productBacklog,estado_user_story=estado_user_story)
@@ -125,3 +128,23 @@ class FormTest(TestCase):
         self.dailyCreate()
         form = forms.DailyForm(data={'duracion':1.2,'impedimiento_comentario':'Ningún problema','progreso_comentario':'Avanzé bastante'},instance=self.daily)
         self.assertTrue(not form.is_valid())
+
+    # def test_reasignar_dev_form(self):
+    #     """ Test para probar el form con sus campos """
+    #     self.userstoryCreate()
+    #     self.sprintCreate()
+    #     form = forms.ReasignarForm(data={'encargado':self.user,},instance=self.userstory)
+    #     self.assertTrue(form.is_valid())
+
+    # def test_intercambiar_dev_form(self):
+    #     """ Test para probar el form con sus campos """
+    #     self.userstoryCreate()
+    #     self.sprintCreate()
+
+    #     request = HttpRequest()
+    #     request.POST = {
+    #         'pk_proy': self.proyecto.pk,
+    #     }
+    #     form = forms.IntercambiarDevForm(data={'usuario':self.user,'pk_proy':self.proyecto.pk},instance=self.dev)
+    #     self.assertTrue(form.is_valid())
+        

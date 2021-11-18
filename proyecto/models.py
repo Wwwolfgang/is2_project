@@ -1,14 +1,9 @@
 from django.contrib.auth.models import Permission
 from django.db import models
 from datetime import datetime
-from django.db.models.base import Model
-
 from django.db.models.deletion import CASCADE
-from django.db.models.expressions import Case
-from django.db.models.fields.related import ManyToManyField
 from sso.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
-# Create your models here.
 class RolProyecto(models.Model):
     """
     Model del rol de proyecto.
@@ -43,8 +38,7 @@ class Proyecto(models.Model):
     - El numero de Sprints
     - La duración por default de un Sprint
     - El estado del proyecto siendo inicialmente Inicializado y después Activo, Finalizado o Cancelado
-    - El equipo de participantes en el proyecto. 
-    - TODO equipo de desarrolladores,etc
+    - El equipo de participantes en el proyecto.
     
     También se definieron algunos permisos iniciales, cuya cantidad va aumentar. Estos permisos van a ser asignados al usuario por el proyecto.
 
@@ -98,7 +92,7 @@ class ProyectUser(models.Model):
         Se especifica el usuario y su carga horaria diaria y el sprint al cual fue asignado
     """
     usuario = models.ForeignKey(User,on_delete=CASCADE)
-    horas_diarias = models.DecimalField(blank=False,decimal_places=2,max_digits=4,null=False,help_text='La cantidad de horas que trabaja el desarrollador por día.')
+    horas_diarias = models.DecimalField(blank=False,decimal_places=2,max_digits=4,null=False,help_text='La cantidad de horas que trabaja el desarrollador por día.', validators=[MinValueValidator(1)])
     sprint = models.ForeignKey('sprint', related_name='sprint_team',on_delete=CASCADE)
 
     def __str__(self):
@@ -117,9 +111,6 @@ class Sprint(models.Model):
         Campos:
 
         - Identificador o Nombre
-        - Fecha inicio TODO falta asignar
-        - Fecha fin TODO falta asignar
-        - Duración del sprint en dias TODO falta hacer advertencias en la planificación
         - Estado del sprint
         - Carga horaria sumando los tiempos de los user storys
         - Proyecto al cual pertenece
@@ -167,14 +158,11 @@ class UserStory(models.Model):
     - Sprint, el sprint al cual el user story fue asignado
     - Product Backlog para hacer la relación al proyecto (Un campo un poco innecesario)
     - Un campo del último tiempo estimado. En caso de que el user story debe ser tratado en un sprint futuro.
-    TODO 
-
-    - agregar un campo que guarda las horas completadas en el sprint si es que el user story no fue terminado en un sprint.
     """
     nombre = models.CharField(verbose_name='Nombre del user story', max_length=100, blank=False,null=False)
     descripcion = models.TextField(verbose_name='Descripción del user story',blank=True)
-    tiempo_estimado_scrum_master = models.PositiveIntegerField(blank=True,null=True,help_text="Tiempo de duración estimado por el scrum master.",default=0)
-    tiempo_estimado_dev = models.PositiveIntegerField(blank=True,null=True,help_text="Tiempo de duración estimado por el desarrollador asignado.",default=0)
+    tiempo_estimado_scrum_master = models.PositiveIntegerField(blank=True,null=True,help_text="Tiempo de duración estimado por el scrum master.",default=0,validators=[MinValueValidator(1)])
+    tiempo_estimado_dev = models.PositiveIntegerField(blank=True,null=True,help_text="Tiempo de duración estimado por el desarrollador asignado.",default=0,validators=[MinValueValidator(1)])
     tiempo_promedio_calculado = models.DecimalField(blank=True,null=True,decimal_places=2,max_digits=4,help_text="Tiempo de duración promedio entre los dos tiempos estimados.")
     PRIORIDAD_DE_USER_STORY_CHOICES = [
         ('B', 'Baja'),
@@ -248,7 +236,7 @@ class HistorialUS(models.Model):
     us_fk = models.ForeignKey(UserStory, on_delete=CASCADE, null=False)
     sprint = models.ForeignKey('sprint', on_delete=CASCADE, blank=True,null=True)
     fecha = models.DateField(null=True,blank=True)
-
+    log = models.TextField(verbose_name='Log en donde se almacenan los cambios de estado en el ciclo de vida del User Story', blank=True)
 
 
 class Daily(models.Model):
@@ -265,7 +253,7 @@ class Daily(models.Model):
     - el sprint activo
     - la fecha de creación
     """
-    duracion = models.DecimalField(help_text='Trabajo realizado en horas.', decimal_places=2, max_digits=4)
+    duracion = models.DecimalField(help_text='Trabajo realizado en horas.', decimal_places=2, max_digits=4, validators=[MinValueValidator(1)])
     impedimiento_comentario = models.TextField(verbose_name='Descripcion de las dificultades encontradas durante el desarrollo', blank=True)
     progreso_comentario = models.TextField(verbose_name='Descripcion de los progresos encontrados durante el desarrollo', blank=True)
     user_story = models.ForeignKey('userstory',on_delete=CASCADE, blank=True, null=True)

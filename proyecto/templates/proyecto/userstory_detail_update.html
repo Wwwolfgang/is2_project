@@ -37,21 +37,26 @@
                 <a class="btn btn-outline-success" role="button" href="{% url 'proyecto:sprint-iniciar' proyecto_id sprint_id %}">
                     Iniciar Sprint
                 </a>
-              {% elif object.sprint.estado_de_sprint == 'A'%}
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'proyecto:sprint-burndownchart' proyecto_id sprint_id %}"><i class="fas fa-chart-line me-2"></i>Burndown-chart</a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'proyecto:sprint-finalizar' proyecto_id sprint_id %}"><i class="fas fa-flag-checkered me-2"></i>Finalizar</a>
-                </li>
+                {% elif object.sprint.estado_de_sprint != 'I'%}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'proyecto:sprint-burndownchart' proyecto_id sprint_id %}"><i class="fas fa-chart-line me-2"></i>Burndown-chart</a>
+                    </li>
+                    {% if object.sprint.estado_de_sprint == 'A'%}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'proyecto:sprint-finalizar' proyecto_id sprint_id %}"><i class="fas fa-flag-checkered me-2"></i>Finalizar</a>
+                    </li>
+                    {% endif %}
               {% endif %}
             </ul>
         </div>
         {% endif %}
         
         <div class="card-header">
+            {% if sprint_id %}
+            <a href="{% url 'proyecto:sprint-detail' proyecto_id sprint_id %}"  class="btn btn-outline-success"><i class="fas fa-chevron-left me-2"></i>{{sprint.identificador}}</a>
+            {% elif not sprint_id or not object.sprint %}
             <a href="{% url 'proyecto:product-backlog' proyecto_id %}"  class="btn btn-outline-success"><i class="fas fa-chevron-left me-2"></i>Product Backlog</a>
+            {% endif %}
             <span class="navbar-brand class mx-2"> User story: {{object.nombre}}</span>
             {% if object.prioridad_user_story == 'A' %}
                 <span class="badge  bg-warning text-dark">{{object.get_prioridad_user_story_display}}</span>
@@ -69,10 +74,11 @@
             {{object.descripcion}}
         </div>
 
-        {% if sprint_activo == False %}
+        {% if sprint_activo == False and object.sprint.estado_de_sprint != 'F' %}
         <div class="card-body">
             {% if object.last_estimated != None %}
                 <strong>Duración estimada anteriormente: </strong>{{object.last_estimated}} hs.
+                <div class="class mb-3"><strong>Horas trabajadas anteriormente: </strong>{{horas_trabajadas|default_if_none:"0"}} hs.</div>
             {% endif %}
             <form action="" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
@@ -82,6 +88,7 @@
                     {% if field.name == 'tiempo_estimado_scrum_master'%}
                         {% if user == scrum_master %}
                             Duración en horas
+                            {{field.errors}}
                             {% render_field field class="form-control" %}
                             {% if field.help_text %}
                             <small class="form-text text-muted">{{ field.help_text }}</small>
@@ -93,6 +100,7 @@
                     {% if field.name == 'encargado'%}
                         {% if user == scrum_master %}
                             Encargado
+                            {{field.errors}}
                             {% render_field field class="form-control" %}
                             {% if field.help_text %}
                             <small class="form-text text-muted">{{ field.help_text }}</small>
@@ -105,6 +113,7 @@
                     {% if is_assigned == True and user == object.encargado.usuario %}
                         {% if field.name == 'tiempo_estimado_dev'%}
                             Usted como Dev asignado, estime el tiempo en hs que toma para terminar el user story.
+                            {{field.errors}}
                             {% render_field field class="form-control" %}
                             {% if field.help_text %}
                             <small class="form-text text-muted">{{ field.help_text }}</small>
@@ -120,10 +129,10 @@
                         Atrás
                     </a>
                 {% else %}
-                    <a class="btn btn-warning" role="button" href="{% url 'proyecto:sprint-detail' proyecto_id sprint_id %}">
-                        Cancelar
-                    </a>
                     {% if user == scrum_master or user == object.encargado.usuario %}
+                        <a class="btn btn-warning" role="button" href="{% url 'proyecto:sprint-detail' proyecto_id sprint_id %}">
+                            Cancelar
+                        </a>
                         {% if object.sprint == None %}
                             <button type="submit" class="my-2 btn btn-success">Agregar al sprint</button>
                         {% else %}
@@ -140,7 +149,7 @@
                 <p><strong>Desarrollador asignado: </strong>
                     {% if object.encargado %}
                         {{object.encargado}} 
-                        {% if sprint_id %}<a href="{% url 'proyecto:user-story-reasignar' proyecto_id sprint_id object.pk %}?next={{request.path}}"><i class="fas fa-user-edit me-2"></i></a>{% endif %}</p>
+                        {% if sprint_id and object.sprint.estado_de_sprint != 'F' %}<a href="{% url 'proyecto:user-story-reasignar' proyecto_id sprint_id object.pk %}?next={{request.path}}"><i class="fas fa-user-edit me-2"></i></a>{% endif %}</p>
                     {% else %}
                         No asignado
                     {% endif %}
@@ -153,11 +162,10 @@
             </div>
         {% endif %}
         <div class="row class py-3">
-            {% if sprint_id and object.sprint %}
             <div class="col-6 class mx-3">
                 <div x-data="{ open: false }">
                     <button class="me-2 btn btn-outline-success" @click="open = !open">Dailys</button>
-                    {% if object.estado_user_story == 'DG'%}
+                    {% if object.estado_user_story == 'DG' and sprint_id and object.sprint and object.sprint.estado_de_sprint != 'F' %}
                         <a class="btn btn-primary" href="{% url 'proyecto:userstory-add-daily' proyecto_id sprint_id object.pk %}?next={{request.path}}"><i class="fas fa-stopwatch me-2"></i>Agregar Daily</a>
                     {% endif %}
                     <div x-show="open">
@@ -168,12 +176,14 @@
                                         <ul class="nav nav-pills card-header-pills">
                                             <li class="navbar-brand text-black">Daily</li>
                                             <li class="navbar-brand text-black">{{daily.fecha|default_if_none:""}}</li>
+                                            {% if object.estado_user_story == 'DG' and sprint_id and object.sprint %}
                                             <li class="nav-item">
                                                 <a href="{% url 'proyecto:editar-daily' proyecto_id sprint_id object.pk daily.pk %}?next={{request.path}}" class="nav-link"><i class="fas fa-pen me-2"></i>Modificar</a>
                                             </li>
                                             <li class="nav-item">
                                                 <a href="{% url 'proyecto:eliminar-daily' proyecto_id sprint_id object.pk daily.pk %}?next={{request.path}}" class="nav-link" style="color: red;"><i class="fas fa-trash me-2"></i>Eliminar</a>
                                             </li>
+                                            {% endif %}
                                         </ul>
                                     </div>
                                     <div class="card-body">
@@ -187,7 +197,6 @@
                     </div>
                 </div>
             </div>
-            {% endif %}
 
             <div class="col-5 class mx-3">
                 <div x-data="{ openH: false }">
@@ -210,7 +219,8 @@
                                 </div>
                                 <div class="card-body">
                                     <h5 class="card-title">Descripción:</h5>
-                                    {{historial.descripcion}}
+                                    {{historial.descripcion}} </br>
+                                    <p> Cambios: {{historial.log}}</p>
                                 </div>
                             </div>
                         {% endfor %}

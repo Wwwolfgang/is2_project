@@ -36,6 +36,7 @@
                 {% for field in form.visible_fields %}
                     {% if field.name == 'comentario'%}
                         Comentario (campo obligatorio):
+                        {{field.errors}}
                         {% render_field field class="form-control" %}
                         {% if field.help_text %}
                             <small class="form-text text-muted">{{ field.help_text }}</small>

@@ -1,5 +1,4 @@
 from django.contrib.auth.models import Permission
-from django.core.exceptions import PermissionDenied
 from django.db.models import Sum
 from django.views.generic.base import TemplateView
 from django.views.generic.detail import SingleObjectMixin
@@ -7,16 +6,11 @@ from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.shortcuts import get_object_or_404
 from guardian.shortcuts import assign_perm, remove_perm, get_user_perms
-from django.forms.models import model_to_dict
-#Mixin de django por defecto
-#from django.contrib.auth.mixins import PermissionRequiredMixin,LoginRequiredMixin
-#Usamos el mixin de Django Guardian
 from guardian.mixins import LoginRequiredMixin, PermissionRequiredMixin 
 from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView
 from django.urls import reverse
-import proyecto
 from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoEditForm,ProyectoCreateForm,AgregarParticipanteForm, DesarrolladorCreateForm,PermisoSolicitudForm,SprintCrearForm, AgregarUserStoryForm
 from proyecto.forms import EquipoFormset, UserStoryAssingForm, UserStoryDevForm, SprintModificarForm, SprintFinalizarForm, QaForm, UserstoryAprobarForm, ProyectoFinalizarForm, DailyForm, ReasignarForm,IntercambiarDevForm
 from proyecto.models import RolProyecto, Proyecto, ProyectUser, Sprint, UserStory, ProductBacklog, HistorialUS, Daily
@@ -25,15 +19,24 @@ from django.urls import reverse_lazy
 from guardian.decorators import permission_required_or_403,permission_required
 from guardian.shortcuts import assign_perm
 from sso.models import User
-from django.views.decorators.csrf import csrf_exempt
 import json
 from statistics import mean
 from django.core.mail import send_mail
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 from django.core.serializers import serialize
 from decimal import Decimal
 from django.contrib.auth.decorators import login_required
 from workalendar.america import Paraguay
+from django.conf import settings
+from django.db.models import Case, When, Value
+from io import BytesIO
+from django.http import HttpResponse
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import cm
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 
 
 class EliminarRolProyectoView(PermissionRequiredMixin,LoginRequiredMixin,DeleteView):
@@ -191,7 +194,8 @@ def editar_rol_proyecto_view(request, pk_proy, id_rol):
                 for participante in rol.participantes.all():
                     if str(past_part.pk) not in form.cleaned_data['permisos']:
                         if past_part.content_type.model == 'proyecto':
-                            remove_perm(past_part,participante,proyecto)
+                            if proyecto.owner != participante:
+                                remove_perm(past_part,participante,proyecto)
             messages.success(request, 'Rol de proyecto actualizado exitosamente')
             return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':pk_proy}))
         contexto['form'] = form
@@ -300,9 +304,8 @@ class AssignUserRolProyecto(PermissionRequiredMixin,UpdateView):
             for past_part in form.initial['participantes']:
                 if per.content_type.model == 'proyecto':
                     if past_part not in form.cleaned_data['participantes']:
-                        remove_perm(per,past_part,proyecto)
-
-
+                        if proyecto.owner != participante:
+                            remove_perm(per,past_part,proyecto)
         # else:   
         #     messages.error(self.request, 'Rol de proyecto no pudo ser assignado porque el proyecto no está activo')
 
@@ -438,11 +441,11 @@ class AgregarParticipanteProyecto(PermissionRequiredMixin, LoginRequiredMixin, U
             user = User.objects.get(pk=usuario)
             proyecto.equipo.add(user)
             perm = Permission.objects.get(codename='p_acceder_proyecto')
-            assign_perm(perm,self.user,self.proyecto)
+            assign_perm(perm,user,proyecto)
         return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':self.kwargs['pk_proy']}))
 
 @login_required
-@permission_required_or_403('proyecto.p_administrar_participantes',(Proyecto,'pk','pk'))
+@permission_required_or_403('proyecto.p_administrar_participantes',(Proyecto,'pk','pk_proy'))
 @permission_required_or_403('proyecto.p_acceder_proyecto',(Proyecto,'pk','pk_proy'))
 def eliminarParticipanteView(request, pk_proy, pk, template_name='proyecto/delete_confirm_participante.html'):
     """ View para eliminar participantes de equipo de un proyecto. Es una vista de confirmación
@@ -459,7 +462,9 @@ def eliminarParticipanteView(request, pk_proy, pk, template_name='proyecto/delet
 
         permisos = get_user_perms(user,proyecto)
         for per in permisos:
-            remove_perm(per,user,proyecto)
+            if proyecto.owner != user:
+                remove_perm(per,user,proyecto)
+            
         proyecto.equipo.remove(user)
         return HttpResponseRedirect(reverse('proyecto:roles',kwargs={'pk_proy':pk_proy}))
     return render(request, template_name, {'object':proyecto, 'usuario':user})
@@ -548,10 +553,6 @@ class AgregarSprintView(PermissionRequiredMixin, LoginRequiredMixin, CreateView)
     def get_permission_object(self):
         return get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
 
-    def get_object(self):
-        """Función que retorna el proyecto con el cual vamos a comprobar el permiso"""
-        self.obj = get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
-        return self.obj
 
     def dispatch(self, request, *args, **kwargs):
         """ Función que controla que controla que el proyecto esté activo y que no haya sprint en planificación. 
@@ -738,7 +739,9 @@ def agregar_user_story_view(request, pk_proy):
             u_story.product_backlog = backlog
             u_story.creador = request.user
             u_story.save()
-            HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=u_story.pk), version=1, nombre=u_story.nombre, descripcion=u_story.descripcion, prioridad = u_story.prioridad_user_story)
+            perm = Permission.objects.get(codename='us_manipular_userstory_dailys')
+            assign_perm(perm,proyecto.owner,u_story)
+            HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=u_story.pk), version=1, nombre=u_story.nombre, descripcion=u_story.descripcion, prioridad = u_story.prioridad_user_story, log="User Story Creado")
             #Redirigimos al product backlog
             return redirect('proyecto:product-backlog', pk_proy)  
         contexto['form'] = form
@@ -783,10 +786,33 @@ class UserStoryUdateView(PermissionRequiredMixin,LoginRequiredMixin,UpdateView):
 
     def form_valid(self, form):
         """ Función que guarda los nuevos casos y guarda una nueva versión en el historial. """
+        nombre = form.initial['nombre']
+        desc = form.initial['descripcion']
+        prio = form.initial['prioridad_user_story']
         us = form.save()
+        logger = ""
+        concat = False
+        if ( nombre != us.nombre ):
+            logger = logger + "Cambio de nombre"
+            concat = True
+
+        if ( desc != us.descripcion ):
+            if (concat):
+                logger = logger + ", "
+
+            logger = logger + "Cambio de descripcion"
+            concat = True
+
+        if(prio != us.prioridad_user_story):
+            if(concat):
+                logger = logger + ", "
+
+            logger = logger + "Cambio de prioridad"
+
+
         ver = HistorialUS.objects.filter(us_fk__id=us.pk).count()
         ver += 1
-        HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=us.pk), version=ver, nombre=us.nombre, descripcion=us.descripcion, prioridad = us.prioridad_user_story)
+        HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=us.pk), version=ver, nombre=us.nombre, descripcion=us.descripcion, prioridad = us.prioridad_user_story, log = logger)
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -807,6 +833,7 @@ class ProductBacklogView(PermissionRequiredMixin, ListView):
             'proyecto_id': self.kwargs['pk_proy'],
             'user_storys_nuevos': ProductBacklog.objects.get(proyecto__pk = self.kwargs['pk_proy']).userstory_set.filter(estado_aprobacion='T').exclude(estado_aprobacion='C'),
             'product_backlog': ProductBacklog.objects.get(proyecto__pk = self.kwargs['pk_proy']).userstory_set.filter(estado_aprobacion='A'),
+            'cancelados': ProductBacklog.objects.get(proyecto__pk = self.kwargs['pk_proy']).userstory_set.filter(estado_aprobacion='C')
         })
         return context
 
@@ -887,6 +914,11 @@ class SprintView(PermissionRequiredMixin,LoginRequiredMixin,TemplateView):
                 'ready_inicio': True
             })
 
+        if sprint.fechaFin != None and datetime.today().date() >= sprint.fechaFin - timedelta(5):
+            context.update({
+                'alerta_fin': True
+            })
+
         context.update({
             'proyecto_id': self.kwargs['pk_proy'],
             'sprint': sprint,
@@ -904,8 +936,6 @@ class UserStoryDetailView(LoginRequiredMixin,UpdateView):
     Dependiendo de la persona que abre el link, se muestran los campos del form.
     Si el user story no está asignado a un sprint, se le deja estimar al scrum master, asignar un desarrollador y hace su estimación de tiempo.
     Cuando el scrum master le asignó un dev, se le envia un correo al dev y el dev tiene que estimar el tiempo de duración del user story (planning poker).
-    TODO
-    falta ver que permisos se requieren en este view
     """
     model = UserStory
     template_name = 'proyecto/userstory_detail_update.html'
@@ -932,10 +962,13 @@ class UserStoryDetailView(LoginRequiredMixin,UpdateView):
         if sprint.estado_de_sprint == 'A':
             context.update({
                 'sprint_activo': True,
+                'daily_list': Daily.objects.filter(user_story__pk=self.kwargs['us_id']).filter(sprint__pk=self.kwargs['sprint_id']),
             })
         else:
             context.update({
                 'sprint_activo': False,
+                'daily_list': Daily.objects.filter(user_story__pk=self.kwargs['us_id']),
+                'horas_trabajadas' : Daily.objects.filter(user_story__pk=self.kwargs['us_id']).aggregate(Sum('duracion')).get('duracion__sum',0.00)
             })
 
         context.update({
@@ -943,7 +976,8 @@ class UserStoryDetailView(LoginRequiredMixin,UpdateView):
             'assignar': True,
             'scrum_master' : Proyecto.objects.get(pk=self.kwargs['pk_proy']).owner,
             'sprint_id': self.kwargs['sprint_id'],
-            'daily_list': Daily.objects.filter(user_story__pk=self.kwargs['us_id']).filter(sprint__pk=self.kwargs['sprint_id']),
+            'sprint': sprint,
+            'historial' : HistorialUS.objects.filter(us_fk__pk = self.kwargs['us_id']).exclude(version = HistorialUS.objects.filter(us_fk__id=(self.kwargs['us_id'])).count()).order_by('-version'),
         })
         return context
 
@@ -978,7 +1012,7 @@ class UserStoryDetailView(LoginRequiredMixin,UpdateView):
             us.sprint = sprint
             send_mail(
                 subject='Se le asignó un nuevo user story',
-                message='Se le acaba de asignar un nuevo user story, porfavor entre lo más posible en la plataforma para completar el tiempo estimado de terminación del user story.',
+                message='Se le acaba de asignar el user story '  + us.nombre + ' del proyecto ' + proyecto.nombreProyecto + ' del sprint ' + sprint.identificador + ', porfavor entre lo más posible en la plataforma para completar el tiempo estimado de terminación del user story.',
                 from_email=proyecto.owner.email,
                 recipient_list=[us.encargado.usuario.email],
             )
@@ -1031,6 +1065,7 @@ class InspectUserStoryView(PermissionRequiredMixin,LoginRequiredMixin,DetailView
         context.update({
             'proyecto_id': self.kwargs['pk_proy'],
             'historial' : HistorialUS.objects.filter(us_fk__pk = self.kwargs['us_id']).exclude(version = HistorialUS.objects.filter(us_fk__id=(self.kwargs['us_id'])).count()).order_by('-version'),
+            'daily_list': Daily.objects.filter(user_story__pk=self.kwargs['us_id'])
         })
         return context
 
@@ -1092,8 +1127,12 @@ def iniciar_sprint_view(request, pk_proy, sprint_id, template_name='proyecto/ini
             messages.warning(request, 'Hay un sprint corriendo, no se puede iniciar un nuevo sprint.')
         else:
             sprint.estado_de_sprint = 'A'
-            sprint.fechaInicio = datetime.now()
-            sprint.fechaFin = cal.add_working_days(datetime.now(), sprint.duracionSprint)
+            hoy = datetime.now()
+            if not cal.is_working_day(hoy):
+                hoy = cal.add_working_days(hoy, 1)
+                
+            sprint.fechaInicio = hoy
+            sprint.fechaFin = cal.add_working_days(hoy, sprint.duracionSprint-1)
             sprint.save()
         return HttpResponseRedirect(reverse('proyecto:sprint-detail',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id}))
     return render(request, template_name, {'proyecto_id':pk_proy, 'sprint_id':sprint_id})
@@ -1108,10 +1147,11 @@ class SprintKanbanView(PermissionRequiredMixin,LoginRequiredMixin,TemplateView):
     De ahí el usuario con los permisoss de hacer QA puede selecionarlo y hacer los procedimientos de QA. 
     Si el user story está aprobado en QA, quedará en la columna de Done pero se muestra que ya está listo para release.
     """
+    # 'proyecto.p_aprobar_us',
     model = Sprint
     template_name = 'proyecto/sprint_kanban.html'
     raise_exception = True
-    permission_required = ('proyecto.p_aprobar_us','proyecto.p_acceder_proyecto')
+    permission_required = ('proyecto.p_acceder_proyecto')
 
     def get_permission_object(self):
         return get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
@@ -1137,9 +1177,9 @@ class SprintKanbanView(PermissionRequiredMixin,LoginRequiredMixin,TemplateView):
         return context
 
 
+# @permission_required_or_403('proyecto.p_administrar_us',(Proyecto,'pk','pk_proy'))
 @login_required
 @permission_required_or_403('proyecto.p_acceder_proyecto',(Proyecto,'pk','pk_proy'))
-@permission_required_or_403('proyecto.p_administrar_us',(Proyecto,'pk','pk_proy'))
 @permission_required_or_403('proyecto.us_manipular_userstory_dailys',(UserStory,'pk','us_id'))
 def mark_us_doing(request, pk_proy, sprint_id,us_id):
     """ 
@@ -1147,15 +1187,31 @@ def mark_us_doing(request, pk_proy, sprint_id,us_id):
     Este view se usa para cambiar el estado de To-Do a Doing y solo puede ser hecho por el encargado del user story y
     por el scrum master.
     """
+    proyecto = get_object_or_404(Proyecto,pk=pk_proy)
+    sprint = get_object_or_404(Sprint,pk=sprint_id)
+
+    next = request.GET.get('next')
+    if proyecto.estado_de_proyecto != 'A':
+        messages.warning(request, 'El proyecto fue finalizado, no se puede hacer cambios')
+        return HttpResponseRedirect(next)
+
+    if sprint.estado_de_sprint != 'A':
+        messages.warning(request, 'El sprint no es activo, no se pueden agregar dailys en un sprint inactivo')
+        return HttpResponseRedirect(next)
+        
     us = get_object_or_404(UserStory, pk=us_id)
     us.estado_user_story = 'DG'
     us.save()
+    ver = HistorialUS.objects.filter(us_fk__id=us.pk).count()
+    ver += 1
+    HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=us.pk), version=ver, nombre=us.nombre,
+                               descripcion=us.descripcion, prioridad=us.prioridad_user_story, log="Paso a Doing")
     return HttpResponseRedirect(reverse('proyecto:sprint-kanban',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id}))
 
 
+# @permission_required_or_403('proyecto.p_administrar_us',(Proyecto,'pk','pk_proy'))
 @login_required
 @permission_required_or_403('proyecto.p_acceder_proyecto',(Proyecto,'pk','pk_proy'))
-@permission_required_or_403('proyecto.p_administrar_us',(Proyecto,'pk','pk_proy'))
 @permission_required_or_403('proyecto.us_manipular_userstory_dailys',(UserStory,'pk','us_id'))
 def mark_us_todo(request, pk_proy, sprint_id,us_id):
     """ 
@@ -1163,15 +1219,31 @@ def mark_us_todo(request, pk_proy, sprint_id,us_id):
     Este view se usa para cambiar el estado de Doing a To-Do y solo puede ser hecho por el encargado del user story y
     por el scrum master.
     """
+    proyecto = get_object_or_404(Proyecto,pk=pk_proy)
+    sprint = get_object_or_404(Sprint,pk=sprint_id)
+
+    next = request.GET.get('next')
+    if proyecto.estado_de_proyecto != 'A':
+        messages.warning(request, 'El proyecto fue finalizado, no se puede hacer cambios')
+        return HttpResponseRedirect(next)
+
+    if sprint.estado_de_sprint != 'A':
+        messages.warning(request, 'El sprint no es activo, no se pueden agregar dailys en un sprint inactivo')
+        return HttpResponseRedirect(next)
+        
     us = get_object_or_404(UserStory, pk=us_id)
     us.estado_user_story = 'TD'
     us.save()
+    ver = HistorialUS.objects.filter(us_fk__id=us.pk).count()
+    ver += 1
+    HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=us.pk), version=ver, nombre=us.nombre,
+                               descripcion=us.descripcion, prioridad=us.prioridad_user_story, log="Paso a To Do")
     return HttpResponseRedirect(reverse('proyecto:sprint-kanban',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id}))
 
 
+# @permission_required_or_403('proyecto.p_administrar_us',(Proyecto,'pk','pk_proy'))
 @login_required
 @permission_required_or_403('proyecto.p_acceder_proyecto',(Proyecto,'pk','pk_proy'))
-@permission_required_or_403('proyecto.p_administrar_us',(Proyecto,'pk','pk_proy'))
 @permission_required_or_403('proyecto.us_manipular_userstory_dailys',(UserStory,'pk','us_id'))
 def mark_us_done(request, pk_proy, sprint_id,us_id):
     """ 
@@ -1180,9 +1252,32 @@ def mark_us_done(request, pk_proy, sprint_id,us_id):
     por el scrum master. En la vista se marca al user story en estado de QA. Eso hace que en la columna de Done,
     se indica en el user story que falta hacer QA.
     """
+    proyecto = get_object_or_404(Proyecto,pk=pk_proy)
+    sprint = get_object_or_404(Sprint,pk=sprint_id)
+
+    next = request.GET.get('next')
+    if proyecto.estado_de_proyecto != 'A':
+        messages.warning(request, 'El proyecto fue finalizado, no se puede hacer cambios')
+        return HttpResponseRedirect(next)
+
+    if sprint.estado_de_sprint != 'A':
+        messages.warning(request, 'El sprint no es activo, no se pueden agregar dailys en un sprint inactivo')
+        return HttpResponseRedirect(next)
+
     us = get_object_or_404(UserStory, pk=us_id)
     us.estado_user_story = 'QA'
     us.save()
+    send_mail(
+        subject='El user story '  + us.nombre + ' del proyecto ' + proyecto.nombreProyecto + ' del sprint ' + sprint.identificador +  ' fue enviado a QA',
+        message='El user story '  + us.nombre + ' del proyecto ' + proyecto.nombreProyecto + ' del sprint ' + sprint.identificador + ' fue enviado a QA. Porfavor revísalo lo antes posible.',
+        from_email=settings.EMAIL_HOST_USER,
+        recipient_list=[proyecto.owner.email]
+    )
+    ver = HistorialUS.objects.filter(us_fk__id=us.pk).count()
+    ver += 1
+    HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=us.pk), version=ver, nombre=us.nombre,
+                               descripcion=us.descripcion, prioridad=us.prioridad_user_story, log="Paso a QA")
+
     return HttpResponseRedirect(reverse('proyecto:sprint-kanban',kwargs={'pk_proy':pk_proy,'sprint_id':sprint_id}))
 
 
@@ -1239,13 +1334,38 @@ class FinalizarSprintView(PermissionRequiredMixin,LoginRequiredMixin,UpdateView)
         """
         sprint = form.save()
         sprint.estado_de_sprint = 'F'
+        sprint.fechaFinalizacion = datetime.now()
         sprint.save()
 
         us = UserStory.objects.filter(sprint__pk=sprint.pk)
         for story in us:
             if story.estado_user_story != 'DN':
+                snapshot = UserStory.objects.get(pk=story.pk)
+                snapshot.pk = None
+                snapshot.id = None
+                snapshot.product_backlog = None
+                snapshot.save()
+                daily_list = Daily.objects.filter(user_story__pk=story.pk).filter(sprint__pk=sprint.pk)
+                historial = HistorialUS.objects.filter(us_fk__pk = story.pk).exclude(version = HistorialUS.objects.filter(us_fk__id=(story.pk)).count()).order_by('-version')
+                for daily in daily_list:
+                    new = Daily.objects.get(pk=daily.pk)
+                    new.pk = None
+                    new.user_story = snapshot
+                    new.save()
+                
+                for hist in historial:
+                    new = HistorialUS.objects.get(pk=hist.pk)
+                    new.pk = None
+                    new.us_fk = snapshot
+                    new.save()
+
                 story.estado_user_story = 'TD'
                 story.prioridad_user_story = 'E'
+                ver = HistorialUS.objects.filter(us_fk__pk=story.pk).count()
+                ver += 1
+                HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=story.pk), version=ver, nombre=story.nombre,
+                                           descripcion=story.descripcion, prioridad=story.prioridad_user_story,
+                                           log="Sprint finalizado. US sin finalizar")
                 story.tiempo_estimado_scrum_master = None
                 story.tiempo_estimado_dev = None
                 story.encargado = None
@@ -1312,21 +1432,32 @@ class QaView(PermissionRequiredMixin,LoginRequiredMixin,FormView):
         if 'aprove' in self.request.POST:
             proyecto = get_object_or_404(Proyecto,pk=self.kwargs['pk_proy'])
             us = get_object_or_404(UserStory, pk=self.kwargs['us_id'])
+            sprint = get_object_or_404(Sprint,pk=self.kwargs['sprint_id'])
             if self.request.POST['aprove'] == 'aproved':
                 us.estado_user_story = 'DN'
                 us.save()
+                ver = HistorialUS.objects.filter(us_fk__id=us.pk).count()
+                ver += 1
+                HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=us.pk), version=ver, nombre=us.nombre,
+                                           descripcion=us.descripcion, prioridad=us.prioridad_user_story,
+                                           log="User Story finalizado")
                 send_mail(
-                    subject='El user story ' + us.nombre + ' fue aprovado',
-                    message=form.cleaned_data['comentario'],
+                    subject='El user story ' + us.nombre + ' del proyecto ' + proyecto.nombreProyecto + ' del sprint ' + sprint.identificador + ' fue aprovado',
+                    message='Comentario: '+form.cleaned_data['comentario'],
                     from_email=proyecto.owner.email,
                     recipient_list=[us.encargado.usuario.email]
                 )
             elif self.request.POST['aprove'] == 'denied':
                 us.estado_user_story = 'DG'
                 us.save()
+                ver = HistorialUS.objects.filter(us_fk__id=us.pk).count()
+                ver += 1
+                HistorialUS.objects.create(us_fk=get_object_or_404(UserStory, pk=us.pk), version=ver, nombre=us.nombre,
+                                           descripcion=us.descripcion, prioridad=us.prioridad_user_story,
+                                           log="Paso a Doing")
                 send_mail(
-                    subject='El user story ' + us.nombre + ' no pasó el QA',
-                    message=form.cleaned_data['comentario'],
+                    subject='El user story ' + us.nombre + ' del proyecto ' + proyecto.nombreProyecto + ' del sprint ' + sprint.identificador + ' no pasó el QA',
+                    message='Comentario: '+form.cleaned_data['comentario'],
                     from_email=proyecto.owner.email,
                     recipient_list=[us.encargado.usuario.email]
                 )
@@ -1423,9 +1554,16 @@ class SprintBurndownchartView(PermissionRequiredMixin,LoginRequiredMixin,Templat
         hours = sprint.carga_horaria
         today = datetime.now()
         proceed = True
+        cal = Paraguay()
+        daily_count = Daily.objects.filter(sprint__pk=self.kwargs['sprint_id']).count()
+        var = 0
+        duracion_real = 0
 
         while proceed == True:
-            hours_worked = Daily.objects.filter(sprint__pk=self.kwargs['sprint_id']).filter(fecha=fecha).aggregate(Sum('duracion')).get('duracion__sum',0.00) 
+            query = Daily.objects.filter(sprint__pk=self.kwargs['sprint_id']).filter(fecha=fecha)
+            query_count = query.count()
+            var += query_count
+            hours_worked = query.aggregate(Sum('duracion')).get('duracion__sum',0.00) 
             if hours_worked == None:
                 hours_worked = 0
             hours -= hours_worked
@@ -1434,13 +1572,19 @@ class SprintBurndownchartView(PermissionRequiredMixin,LoginRequiredMixin,Templat
             else:
                 work_left.append(str(0))
 
-            # if fecha == datetime.today().date():
+            # if sprint.fechaFinalizacion != None and fecha < sprint.fechaFinalizacion:
+            #     proceed = True
+            # elif sprint.fechaFinalizacion == None and fecha < datetime.now().date() or fecha < sprint.fechaFin:
+            #     proceed = True
+            # else:
             #     proceed = False
-
-            if fecha == sprint.fechaFin:
+            # elif fecha == sprint.fechaFin:
+            #     proceed = False
+            if var == daily_count:
+                duracion_real = cal.get_working_days_delta(sprint.fechaInicio, fecha) +1
                 proceed = False
 
-            fecha += timedelta(days=1)
+            fecha = cal.add_working_days(fecha, 1)
             
 
         context.update({
@@ -1449,7 +1593,8 @@ class SprintBurndownchartView(PermissionRequiredMixin,LoginRequiredMixin,Templat
             'sprint_id': self.kwargs['sprint_id'],
             'sprint_json': json.dumps(work_left),
             'dias': json.dumps(sprint.duracionSprint),
-            'total_horas': json.dumps(str(sprint.carga_horaria))
+            'total_horas': json.dumps(str(sprint.carga_horaria)),
+            'duracion_real': json.dumps(str(duracion_real))
         })
         return context
 
@@ -1476,8 +1621,8 @@ def userstory_cancelar(request, pk_proy, us_id, template_name='proyecto/userstor
     return render(request, template_name, {'object': userstory, 'proyecto_id':pk_proy})
 
 
+# @permission_required_or_403('proyecto.p_administrar_us',(Proyecto,'pk','pk_proy'))
 @login_required
-@permission_required_or_403('proyecto.p_administrar_us',(Proyecto,'pk','pk_proy'))
 @permission_required_or_403('proyecto.p_acceder_proyecto',(Proyecto,'pk','pk_proy'))
 @permission_required_or_403('proyecto.us_manipular_userstory_dailys',(UserStory,'pk','us_id'))
 def agregar_daily_view(request, pk_proy, sprint_id, us_id):
@@ -1489,12 +1634,17 @@ def agregar_daily_view(request, pk_proy, sprint_id, us_id):
     día se resta los dailys del día del total de horas restantes.
     """
     proyecto = get_object_or_404(Proyecto,pk=pk_proy)
+    sprint = get_object_or_404(Sprint,pk=sprint_id)
+
     next = request.GET.get('next')
     if proyecto.estado_de_proyecto != 'A':
         messages.warning(request, 'El proyecto fue finalizado, no se puede hacer cambios')
         return HttpResponseRedirect(next)
 
-    sprint = get_object_or_404(Sprint,pk=sprint_id)
+    if sprint.estado_de_sprint != 'A':
+        messages.warning(request, 'El sprint no es activo, no se pueden agregar dailys en un sprint inactivo')
+        return HttpResponseRedirect(next)
+
     userstory = get_object_or_404(UserStory,pk=us_id)
     contexto = {}
     contexto.update({
@@ -1512,6 +1662,8 @@ def agregar_daily_view(request, pk_proy, sprint_id, us_id):
             daily = form.save()
             if not cal.is_working_day(fecha):
                 daily.fecha = cal.add_working_days(fecha, 1)
+            if daily.fecha < sprint.fechaInicio:
+                daily.fecha = sprint.fechaInicio
             daily.user_story = userstory
             daily.sprint = sprint
             daily.save()
@@ -1530,20 +1682,25 @@ class EditDailyView(PermissionRequiredMixin,LoginRequiredMixin,UpdateView):
     Vista para editar un Daily
     Sierve un template de formulario donde el usuario puede modificar los campos del daily.
     """
+    # 'proyecto.p_administrar_us',
     model = Daily
-    permission_required = ('proyecto.p_administrar_us','proyecto.p_acceder_proyecto','proyecto.us_manipular_userstory_dailys')
+    permission_required = ('proyecto.us_manipular_userstory_dailys')
     template_name = 'proyecto/daily_view_form.html'
     form_class= DailyForm
     raise_exception = True
 
     def dispatch(self, request, *args, **kwargs):
         """ 
-        
+        Función que verifica que el proyecto esté activo, si no vuelve a la ruta anterior y muestra una alerta.
         """
         proyecto = get_object_or_404(Proyecto,pk=self.kwargs['pk_proy'])
+        sprint = get_object_or_404(Sprint,pk=self.kwargs['sprint_id'])
         next = request.GET.get('next')
         if proyecto.estado_de_proyecto != 'A':
             messages.warning(request, 'El proyecto fue finalizado, no se puede hacer cambios')
+            return HttpResponseRedirect(next)
+        if sprint.estado_de_sprint != 'A':
+            messages.warning(request, 'No se puede editar un daily de un sprint inactivo')
             return HttpResponseRedirect(next)
         return super().dispatch(request, *args, **kwargs)
 
@@ -1593,12 +1750,16 @@ class EliminarDailyView(PermissionRequiredMixin,LoginRequiredMixin,DeleteView):
 
     def dispatch(self, request, *args, **kwargs):
         """ 
-        
+        Función que verifica que el proyecto y el sprint están activos. Si no muestra una advertencia y vuelve a la ruta anterior.
         """
         proyecto = get_object_or_404(Proyecto,pk=self.kwargs['pk_proy'])
+        sprint = get_object_or_404(Sprint,pk=self.kwargs['sprint_id'])
         next = request.GET.get('next')
         if proyecto.estado_de_proyecto != 'A':
             messages.warning(request, 'El proyecto fue finalizado, no se puede hacer cambios')
+            return HttpResponseRedirect(next)
+        if sprint.estado_de_sprint != 'A':
+            messages.warning(request, 'No se puede eliminar un daily de un sprint inactivo')
             return HttpResponseRedirect(next)
         return super().dispatch(request, *args, **kwargs)
 
@@ -1636,6 +1797,10 @@ class EliminarDailyView(PermissionRequiredMixin,LoginRequiredMixin,DeleteView):
 
 
 class ReasignarDesarrrolladorView(UpdateView):
+    """ 
+    En este view se maneja la reasignación de un user story a otro desarrollador del sprint. Este view solo es necesario si
+    el sprint ya está activo. El nuevo desarrollador será el nuevo encargado del user story.
+    """
     model = UserStory
     template_name = 'proyecto/userstory_reasign.html'
     form_class= ReasignarForm
@@ -1643,12 +1808,17 @@ class ReasignarDesarrrolladorView(UpdateView):
 
     def dispatch(self, request, *args, **kwargs):
         """ 
-        
+        Este función se ejecuta al inicio del request. Controla que el proyecto todavía no fue finalizado y que el sprint esté activo.
+        En caso de no cumplir una de esas condiciones se vuelve a la ruta anterior y se muestra un mensaje de advertencia.
         """
         proyecto = get_object_or_404(Proyecto,pk=self.kwargs['pk_proy'])
+        sprint = get_object_or_404(Sprint,pk=self.kwargs['sprint_id'])
         next = request.GET.get('next')
         if proyecto.estado_de_proyecto != 'A':
             messages.warning(request, 'El proyecto fue finalizado, no se puede hacer cambios')
+            return HttpResponseRedirect(next)
+        elif sprint.estado_de_sprint != 'A':
+            messages.warning(request, 'El sprint fue finalizado, no se puede hacer cambios')
             return HttpResponseRedirect(next)
         return super().dispatch(request, *args, **kwargs)
 
@@ -1662,7 +1832,7 @@ class ReasignarDesarrrolladorView(UpdateView):
         return self.model.objects.get(pk = us_id)
 
     def get_form_kwargs(self):
-        """ Función que inyecta el id del sprint que se usa en el Form. """
+        """ Función que inyecta el id del sprint y del proyecto que se usa en el Form. """
         kwargs = super(ReasignarDesarrrolladorView, self).get_form_kwargs()
         kwargs['sprint_id'] = self.kwargs['sprint_id']
         kwargs['pk_proy'] = self.kwargs['pk_proy']
@@ -1685,19 +1855,28 @@ class ReasignarDesarrrolladorView(UpdateView):
 
     def form_valid(self, form):
         """
-        En esta función se guarda los cambios hechos.
+        En esta función se guarda los cambios hechos. Además se quitan los permisos por el user story del desarrollador anterior
+        y se los asigna al nuevo desarrollador.
         """
         encargado_anterior = form.initial['encargado']
         us = form.save()
         perm = Permission.objects.get(codename='us_manipular_userstory_dailys')
         user = ProyectUser.objects.get(pk=encargado_anterior)
+        proyecto = Proyecto.objects.get(pk=self.kwargs['pk_proy'])
+
         assign_perm(perm,us.encargado.usuario,us)
-        remove_perm(perm,user.usuario,us)
+        if user.usuario != proyecto.owner:
+            remove_perm(perm,user.usuario,us)
 
         return HttpResponseRedirect(reverse('proyecto:user-story-detail',kwargs={'pk_proy':self.kwargs['pk_proy'],'sprint_id':self.kwargs['sprint_id'], 'us_id':self.kwargs['us_id']}))
 
 
 class IntercambiarDevView(UpdateView):
+    """ 
+    Vista para intercambiar un desarrollador asociado a un sprint con otro desarollador que participa en el proyecto. El nuevo 
+    desarrollador será en el encargado de todos los user storys que fueron asignados al usuario anterior. También se conservan las horas diarias que trabajaba
+    el desarrollador anterior para no romper la planificación del sprint. 
+    """
     model = ProyectUser
     template_name = 'proyecto/intercambiar_sprintdev.html'
     form_class= IntercambiarDevForm
@@ -1705,12 +1884,17 @@ class IntercambiarDevView(UpdateView):
 
     def dispatch(self, request, *args, **kwargs):
         """ 
-        
+        Función que se ejecuta al inicio del request, se verifica que el proyecto esté activo y que el sprint esté activo. Si una de esas condiciones no
+        se cumple, se muestra un mensaje y vuelve a la ruta anterior.
         """
         proyecto = get_object_or_404(Proyecto,pk=self.kwargs['pk_proy'])
+        sprint = get_object_or_404(Sprint,pk=self.kwargs['sprint_id'])
         next = request.GET.get('next')
         if proyecto.estado_de_proyecto != 'A':
             messages.warning(request, 'El proyecto fue finalizado, no se puede hacer cambios')
+            return HttpResponseRedirect(next)
+        elif sprint.estado_de_sprint != 'A':
+            messages.warning(request, 'El sprint fue finalizado, no se puede hacer cambios')
             return HttpResponseRedirect(next)
         return super().dispatch(request, *args, **kwargs)
 
@@ -1726,7 +1910,7 @@ class IntercambiarDevView(UpdateView):
 
 
     def get_form_kwargs(self):
-        """ Función que inyecta el id del sprint que se usa en el Form. """
+        """ Función que inyecta el id del proyecto que se usa en el Form. """
         kwargs = super(IntercambiarDevView, self).get_form_kwargs()
         kwargs['pk_proy'] = self.kwargs['pk_proy']
         return kwargs
@@ -1746,14 +1930,330 @@ class IntercambiarDevView(UpdateView):
 
     def form_valid(self, form):
         """
-        En esta función se guarda los cambios hechos.
+        En esta función se guarda los cambios hechos. Se le agregan los permisos para cada user story al nuevo desarrollador y se los 
+        quita del desarrollador anterior.
         """
         en = form.save()
         encargado_anterior = form.initial['usuario']
         perm = Permission.objects.get(codename='us_manipular_userstory_dailys')
         user_stories = UserStory.objects.filter(encargado__pk=en.pk)
         user = User.objects.get(pk=encargado_anterior)
+        proyecto = Proyecto.objects.get(pk=self.kwargs['pk_proy'])
         for us in user_stories:
             assign_perm(perm,en.usuario,us)
-            remove_perm(perm,user,us)
+            if user != proyecto.owner:
+                remove_perm(perm,user,us)
         return HttpResponseRedirect(reverse('proyecto:sprint-team-edit',kwargs={'pk_proy':self.kwargs['pk_proy'],'pk':self.kwargs['sprint_id']}))
+
+
+def generar_pdf_view(request, pk_proy,):
+    """ 
+    Vista para generar un reporte en PDF del product backlog. Se hace un listado de todos los user stories de un proyecto, 
+    mostrando la prioridad, el estado del user story, el creador del user story y la descripción del user story.
+    """
+    proyecto = get_object_or_404(Proyecto,pk=pk_proy)
+    product_backlog = ProductBacklog.objects.get(proyecto__pk = pk_proy).userstory_set.all()
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="Product Backlog.pdf"'
+
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(name='is-Heading0', parent=styles['Heading1'], alignment=TA_LEFT, fontSize=20))
+    styles.add(ParagraphStyle(name='is-Heading1', parent=styles['Heading1'], alignment=TA_CENTER, fontSize=20))
+    styles.add(ParagraphStyle(name='is-Heading2', parent=styles['Heading2'], alignment=TA_CENTER))
+    styles.add(ParagraphStyle(name='is-Heading4', parent=styles['Heading4'], alignment=TA_LEFT))
+    styles.add(ParagraphStyle(name='is-Heading5', parent=styles['Heading5'], alignment=TA_LEFT))
+
+
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, title='Product Backlog', pagesize=letter,
+                            rightMargin=25, leftMargin=25, topMargin=25, bottomMargin=25)
+    lista = []
+
+    lista.append(Paragraph('Product Backlog - '+proyecto.nombreProyecto, styles["is-Heading0"]))
+    col_widths = [None, 8*cm]
+    LIST_STYLE = TableStyle(
+        [
+        ('LINEABOVE', (0,1), (-1,-1), 0.25, colors.black),
+        ('BOX', (0,0), (-1,-1), 0.25, colors.black),
+        ('ALIGN', (1,1), (-1,-1), 'RIGHT')]
+    )
+    index = 0
+    for us in product_backlog:
+        index += 1
+        data = []
+        titulo = f'{str(index)}. {us.nombre}'
+        desc = us.descripcion
+        data.append((Paragraph(titulo, styles["is-Heading4"]), 'Prioridad: '+us.get_prioridad_user_story_display()))
+        data.append((Paragraph(desc,styles["Normal"]),""))
+        data.append(('Creador: '+us.creador.__str__(),'Estado: '+us.get_estado_user_story_display() + '     Estado aprob.: '+ us.get_estado_aprobacion_display()))
+        table = Table(data,colWidths=col_widths,rowHeights=[None,None,None])
+        table.setStyle(LIST_STYLE)
+        lista.append(table)
+        lista.append(Spacer(1, 12))
+
+    doc.build(lista)
+    pdf = buffer.getvalue()
+    buffer.close()
+    response.write(pdf)
+    return response
+
+
+def generar_sprint_backlog_pdf(request,pk_proy,sprint_id):
+    """ 
+    Vista para generar el reporte de un sprint backlog. Se separa el reporte en las
+    categorías TO-DO, DOING, QA y Release/DONE. Para cada categoría se muestran los 
+    respectivos user storys, y para cada user story se muestra el título, la prioridad,
+    la descripción, el encargado asociado, las horas planificadas y las horas trabajadas.
+    """
+    sprint = Sprint.objects.get(pk=sprint_id)
+    proyecto = Proyecto.objects.get(pk=pk_proy)
+    sprint_backlog = UserStory.objects.filter(sprint__pk = sprint_id)
+    us_todo = sprint_backlog.filter(estado_user_story='TD')
+    us_doing = sprint_backlog.filter(estado_user_story='DG')
+    us_done = sprint_backlog.filter(estado_user_story='DN')
+    us_qa = sprint_backlog.filter(estado_user_story='QA')
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="Sprint Backlog.pdf"'
+
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(name='is-Heading0', parent=styles['Heading1'], alignment=TA_LEFT, fontSize=20))
+    styles.add(ParagraphStyle(name='is-Heading1', parent=styles['Heading1'], alignment=TA_CENTER, fontSize=20))
+    styles.add(ParagraphStyle(name='is-Heading2', parent=styles['Heading2'], alignment=TA_CENTER))
+    styles.add(ParagraphStyle(name='is-Heading4', parent=styles['Heading4'], alignment=TA_LEFT))
+    styles.add(ParagraphStyle(name='is-Heading5', parent=styles['Heading5'], alignment=TA_LEFT))
+    styles.add(ParagraphStyle(name='is-Heading6', parent=styles['Heading4'], alignment=TA_CENTER))
+
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, title='Sprint Backlog', pagesize=letter,
+                            rightMargin=25, leftMargin=25, topMargin=25, bottomMargin=25)
+
+    lista = []
+
+    lista.append(Paragraph('Proyecto: '+proyecto.nombreProyecto, styles["is-Heading4"]))
+    lista.append(Paragraph(sprint.identificador + ' Backlog', styles["is-Heading1"]))
+    lista.append(Spacer(1, 12))
+
+    col_widths = [None, 8*cm]
+    LIST_STYLE = TableStyle(
+        [
+        ('LINEABOVE', (0,1), (-1,-1), 0.25, colors.black),
+        ('BOX', (0,0), (-1,-1), 0.25, colors.black),
+        ('ALIGN', (1,1), (-1,-1), 'RIGHT')]
+    )
+    index = 0
+    lista.append(Paragraph('User stories en TO-DO', styles["is-Heading2"]))
+    if us_todo.count() > 0:
+        for us in us_todo:
+            horas_trabajadas = Daily.objects.filter(sprint__pk=sprint_id).filter(user_story__pk=us.pk).aggregate(Sum('duracion')).get('duracion__sum',0.00) 
+            horas_calculadas = us.tiempo_promedio_calculado
+            if horas_trabajadas == None:
+                horas_trabajadas = Decimal(0)
+
+            if horas_calculadas == None:
+                horas_calculadas = Decimal(0)
+
+            horas_t = '{0:f}'.format(horas_trabajadas)
+            horas_p = '{0:f}'.format(horas_calculadas)
+
+            index += 1
+            data = []
+            titulo = f'{str(index)}. {us.nombre}'
+            desc = us.descripcion
+            data.append((Paragraph(titulo, styles["is-Heading4"]), 'Prioridad: '+us.get_prioridad_user_story_display()))
+            data.append((Paragraph(desc,styles["Normal"]),""))
+            data.append(('Encargado: '+us.encargado.usuario.__str__(),'Progreso: '+ horas_t+' de '+horas_p+' hrs.'))
+            
+            table = Table(data,colWidths=col_widths,rowHeights=[None,None,None])
+            table.setStyle(LIST_STYLE)
+            lista.append(table)
+            lista.append(Spacer(1, 12))
+    else:
+        lista.append(Paragraph('No hay user stories en está categoría', styles["is-Heading6"]))
+
+    lista.append(Spacer(1, 12))
+
+    index = 0
+    lista.append(Paragraph('User stories en DOING', styles["is-Heading2"]))
+    if us_doing.count() > 0:
+        for us in us_doing:
+            horas_trabajadas = Daily.objects.filter(sprint__pk=sprint_id).filter(user_story__pk=us.pk).aggregate(Sum('duracion')).get('duracion__sum',0.00) 
+            horas_calculadas = us.tiempo_promedio_calculado
+            if horas_trabajadas == None:
+                horas_trabajadas = Decimal(0)
+
+            if horas_calculadas == None:
+                horas_calculadas = Decimal(0)
+
+            horas_t = '{0:f}'.format(horas_trabajadas)
+            horas_p = '{0:f}'.format(horas_calculadas)
+
+            index += 1
+            data = []
+            titulo = f'{str(index)}. {us.nombre}'
+            desc = us.descripcion
+            data.append((Paragraph(titulo, styles["is-Heading4"]), 'Prioridad: '+us.get_prioridad_user_story_display()))
+            data.append((Paragraph(desc,styles["Normal"]),""))
+            data.append(('Encargado: '+us.encargado.usuario.__str__(),'Progreso: '+ horas_t +' de '+horas_p+' hrs.'))
+            
+            table = Table(data,colWidths=col_widths,rowHeights=[None,None,None])
+            table.setStyle(LIST_STYLE)
+            lista.append(table)
+            lista.append(Spacer(1, 12))
+    else:
+        lista.append(Paragraph('No hay user stories en está categoría', styles["is-Heading6"]))
+
+    lista.append(Spacer(1, 12))
+
+    index = 0
+    lista.append(Paragraph('User stories en QA', styles["is-Heading2"]))
+    if us_qa.count() > 0:
+        for us in us_qa:
+            horas_trabajadas = Daily.objects.filter(sprint__pk=sprint_id).filter(user_story__pk=us.pk).aggregate(Sum('duracion')).get('duracion__sum',0.00) 
+            horas_calculadas = us.tiempo_promedio_calculado
+            if horas_trabajadas == None:
+                horas_trabajadas = Decimal(0)
+
+            if horas_calculadas == None:
+                horas_calculadas = Decimal(0)
+
+            horas_t = '{0:f}'.format(horas_trabajadas)
+            horas_p = '{0:f}'.format(horas_calculadas)
+
+            index += 1
+            data = []
+            titulo = f'{str(index)}. {us.nombre}'
+            desc = us.descripcion
+            data.append((Paragraph(titulo, styles["is-Heading4"]), 'Prioridad: '+us.get_prioridad_user_story_display()))
+            data.append((Paragraph(desc,styles["Normal"]),""))
+            data.append(('Encargado: '+us.encargado.usuario.__str__(),'Progreso: '+ horas_t +' de '+horas_p+' hrs.'))
+            
+            table = Table(data,colWidths=col_widths,rowHeights=[None,None,None])
+            table.setStyle(LIST_STYLE)
+            lista.append(table)
+            lista.append(Spacer(1, 12))
+    else:
+        lista.append(Paragraph('No hay user stories en está categoría', styles["is-Heading6"]))
+
+    lista.append(Spacer(1, 12))
+
+    index = 0
+    lista.append(Paragraph('User stories en Release/DONE', styles["is-Heading2"]))
+    if us_done.count() > 0:
+        for us in us_done:
+            horas_trabajadas = Daily.objects.filter(sprint__pk=sprint_id).filter(user_story__pk=us.pk).aggregate(Sum('duracion')).get('duracion__sum',0.00) 
+            horas_calculadas = us.tiempo_promedio_calculado
+            if horas_trabajadas == None:
+                horas_trabajadas = Decimal(0)
+
+            if horas_calculadas == None:
+                horas_calculadas = Decimal(0)
+
+            horas_t = '{0:f}'.format(horas_trabajadas)
+            horas_p = '{0:f}'.format(horas_calculadas)
+            
+            index += 1
+            data = []
+            titulo = f'{str(index)}. {us.nombre}'
+            desc = us.descripcion
+            data.append((Paragraph(titulo, styles["is-Heading4"]), 'Prioridad: '+us.get_prioridad_user_story_display()))
+            data.append((Paragraph(desc,styles["Normal"]),""))
+            data.append(('Encargado: '+us.encargado.usuario.__str__(),'Progreso: '+ horas_t +' de '+horas_p+' hrs.'))
+            
+            table = Table(data,colWidths=col_widths,rowHeights=[None,None,None])
+            table.setStyle(LIST_STYLE)
+            lista.append(table)
+            lista.append(Spacer(1, 12))
+    else:
+        lista.append(Paragraph('No hay user stories en está categoría', styles["is-Heading6"]))
+
+    lista.append(Spacer(1, 12))
+
+    doc.build(lista)
+    pdf = buffer.getvalue()
+    buffer.close()
+    response.write(pdf)
+    return response
+
+
+def generar_reporte_prioridad_us_pdf(request,pk_proy,sprint_id):
+    """
+    View para la generación de un reporte, mostrando todos los user storys de un sprint, ordenados por su prioridad de mayor a menor.
+    Se muestra de cada user story el título, la prioridad, la descripción, el encargado, las horas trabajadas y las horas planificadas.
+    """
+    proyecto = get_object_or_404(Proyecto,pk=pk_proy)
+    sprint = get_object_or_404(Sprint,pk=sprint_id)
+    sprint_backlog = UserStory.objects.filter(sprint__pk = sprint_id).order_by( Case( 
+                       When ( prioridad_user_story="E", then=Value(0) ),
+                       When ( prioridad_user_story="A", then=Value(1) ),
+                       When ( prioridad_user_story="M", then=Value(2) ),
+                       default = Value(3)
+                          )
+                    )
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="US - Prioridad.pdf"'
+
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(name='is-Heading0', parent=styles['Heading1'], alignment=TA_LEFT, fontSize=20))
+    styles.add(ParagraphStyle(name='is-Heading1', parent=styles['Heading1'], alignment=TA_CENTER, fontSize=20))
+    styles.add(ParagraphStyle(name='is-Heading2', parent=styles['Heading2'], alignment=TA_CENTER))
+    styles.add(ParagraphStyle(name='is-Heading4', parent=styles['Heading4'], alignment=TA_LEFT))
+    styles.add(ParagraphStyle(name='is-Heading5', parent=styles['Heading5'], alignment=TA_LEFT))
+    styles.add(ParagraphStyle(name='is-Heading6', parent=styles['Heading4'], alignment=TA_CENTER))
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, title='US - Prioridad', pagesize=letter,
+                            rightMargin=25, leftMargin=25, topMargin=25, bottomMargin=25)
+    lista = []
+
+    lista.append(Paragraph('Proyecto: '+proyecto.nombreProyecto, styles["is-Heading4"]))
+    lista.append(Paragraph(sprint.identificador, styles["is-Heading1"]))
+    lista.append(Spacer(1, 12))
+
+    col_widths = [None, 8*cm]
+    LIST_STYLE = TableStyle(
+        [
+        ('LINEABOVE', (0,1), (-1,-1), 0.25, colors.black),
+        ('BOX', (0,0), (-1,-1), 0.25, colors.black),
+        ('ALIGN', (1,1), (-1,-1), 'RIGHT')]
+    )
+    index = 0
+    lista.append(Paragraph('User stories ordenados por prioridad', styles["is-Heading2"]))
+    if sprint_backlog.count() > 0:
+        for us in sprint_backlog:
+            horas_trabajadas = Daily.objects.filter(sprint__pk=sprint_id).filter(user_story__pk=us.pk).aggregate(Sum('duracion')).get('duracion__sum',0.00) 
+            horas_calculadas = us.tiempo_promedio_calculado
+            if horas_trabajadas == None:
+                horas_trabajadas = Decimal(0)
+
+            if horas_calculadas == None:
+                horas_calculadas = Decimal(0)
+
+            horas_t = '{0:f}'.format(horas_trabajadas)
+            horas_p = '{0:f}'.format(horas_calculadas)
+
+            index += 1
+            data = []
+            titulo = f'{str(index)}. {us.nombre}'
+            desc = us.descripcion
+            data.append((Paragraph(titulo, styles["is-Heading4"]), 'Prioridad: '+us.get_prioridad_user_story_display()))
+            data.append((Paragraph(desc,styles["Normal"]),""))
+            data.append(('Encargado: '+us.encargado.usuario.__str__(),'Progreso: '+ horas_t+' de '+horas_p+' hrs.'))
+            
+            table = Table(data,colWidths=col_widths,rowHeights=[None,None,None])
+            table.setStyle(LIST_STYLE)
+            lista.append(table)
+            lista.append(Spacer(1, 12))
+    else:
+        lista.append(Paragraph('No hay user stories agregados al sprint', styles["is-Heading6"]))
+
+    lista.append(Spacer(1, 12))
+
+    doc.build(lista)
+    pdf = buffer.getvalue()
+    buffer.close()
+    response.write(pdf)
+    return response
