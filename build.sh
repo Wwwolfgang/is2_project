@@ -45,7 +45,7 @@ mainmenu () {
         echo
          # prepare docker and database
         echo -e "${green}\n>>> Iniciando docker${reset}"
-        . docker-compose_up.sh
+        sudo docker-compose up -d
         sleep 2
         echo
         sudo docker cp db.dump pg_container:/
@@ -128,7 +128,7 @@ mainmenu () {
             exit
         fi
 
-        . docker-compose_up.sh
+        sudo docker-compose up -d
         sleep 2
         echo
 
