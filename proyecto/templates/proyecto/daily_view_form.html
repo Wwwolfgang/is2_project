@@ -11,6 +11,7 @@
 
             {% if field.name == 'fecha'%}
                 Fecha
+                {{field.errors}}
                 {% render_field field class="form-control" %}
                 {% if field.help_text %}
                 <small class="form-text text-muted">{{ field.help_text }}</small>
@@ -19,6 +20,7 @@
             
             {% if field.name == 'duracion'%}
                 Trabajo en horas
+                {{field.errors}}
                 {% render_field field class="form-control" %}
                 {% if field.help_text %}
                 <small class="form-text text-muted">{{ field.help_text }}</small>
@@ -26,6 +28,7 @@
             {% endif %}
             {% if field.name == 'impedimiento_comentario'%}
                 Impedimientos:
+                {{field.errors}}
                 {% render_field field class="form-control" %}
                 {% if field.help_text %}
                 <small class="form-text text-muted">{{ field.help_text }}</small>
@@ -34,6 +37,7 @@
 
             {% if field.name == 'progreso_comentario'%}
                 Progresos 
+                {{field.errors}}
                 {% render_field field class="form-control" %}
                 {% if field.help_text %}
                 <small class="form-text text-muted">{{ field.help_text }}</small>

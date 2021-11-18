@@ -1,5 +1,4 @@
 from django.contrib.auth.models import Permission
-from django.core.exceptions import PermissionDenied
 from django.db.models import Sum
 from django.views.generic.base import TemplateView
 from django.views.generic.detail import SingleObjectMixin
@@ -7,16 +6,11 @@ from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.shortcuts import get_object_or_404
 from guardian.shortcuts import assign_perm, remove_perm, get_user_perms
-from django.forms.models import model_to_dict
-#Mixin de django por defecto
-#from django.contrib.auth.mixins import PermissionRequiredMixin,LoginRequiredMixin
-#Usamos el mixin de Django Guardian
 from guardian.mixins import LoginRequiredMixin, PermissionRequiredMixin 
-from django.http import HttpResponseRedirect, HttpResponse, response
+from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView
 from django.urls import reverse
-import proyecto
 from proyecto.forms import AgregarRolProyectoForm, UserAssignRolForm, ImportarRolProyectoForm, ProyectoEditForm,ProyectoCreateForm,AgregarParticipanteForm, DesarrolladorCreateForm,PermisoSolicitudForm,SprintCrearForm, AgregarUserStoryForm
 from proyecto.forms import EquipoFormset, UserStoryAssingForm, UserStoryDevForm, SprintModificarForm, SprintFinalizarForm, QaForm, UserstoryAprobarForm, ProyectoFinalizarForm, DailyForm, ReasignarForm,IntercambiarDevForm
 from proyecto.models import RolProyecto, Proyecto, ProyectUser, Sprint, UserStory, ProductBacklog, HistorialUS, Daily
@@ -25,24 +19,19 @@ from django.urls import reverse_lazy
 from guardian.decorators import permission_required_or_403,permission_required
 from guardian.shortcuts import assign_perm
 from sso.models import User
-from django.views.decorators.csrf import csrf_exempt
 import json
 from statistics import mean
 from django.core.mail import send_mail
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 from django.core.serializers import serialize
 from decimal import Decimal
 from django.contrib.auth.decorators import login_required
 from workalendar.america import Paraguay
 from django.conf import settings
 from django.db.models import Case, When, Value
-
 from io import BytesIO
-from django.db.models import F
 from django.http import HttpResponse
-from django.http import JsonResponse
 from reportlab.lib import colors
-from reportlab.lib.colors import HexColor
 from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -564,10 +553,6 @@ class AgregarSprintView(PermissionRequiredMixin, LoginRequiredMixin, CreateView)
     def get_permission_object(self):
         return get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
 
-    def get_object(self):
-        """Función que retorna el proyecto con el cual vamos a comprobar el permiso"""
-        self.obj = get_object_or_404(Proyecto, pk = self.kwargs['pk_proy'])
-        return self.obj
 
     def dispatch(self, request, *args, **kwargs):
         """ Función que controla que controla que el proyecto esté activo y que no haya sprint en planificación. 
@@ -951,8 +936,6 @@ class UserStoryDetailView(LoginRequiredMixin,UpdateView):
     Dependiendo de la persona que abre el link, se muestran los campos del form.
     Si el user story no está asignado a un sprint, se le deja estimar al scrum master, asignar un desarrollador y hace su estimación de tiempo.
     Cuando el scrum master le asignó un dev, se le envia un correo al dev y el dev tiene que estimar el tiempo de duración del user story (planning poker).
-    TODO
-    falta ver que permisos se requieren en este view
     """
     model = UserStory
     template_name = 'proyecto/userstory_detail_update.html'
@@ -993,6 +976,7 @@ class UserStoryDetailView(LoginRequiredMixin,UpdateView):
             'assignar': True,
             'scrum_master' : Proyecto.objects.get(pk=self.kwargs['pk_proy']).owner,
             'sprint_id': self.kwargs['sprint_id'],
+            'sprint': sprint,
             'historial' : HistorialUS.objects.filter(us_fk__pk = self.kwargs['us_id']).exclude(version = HistorialUS.objects.filter(us_fk__id=(self.kwargs['us_id'])).count()).order_by('-version'),
         })
         return context
@@ -1028,7 +1012,7 @@ class UserStoryDetailView(LoginRequiredMixin,UpdateView):
             us.sprint = sprint
             send_mail(
                 subject='Se le asignó un nuevo user story',
-                message='Se le acaba de asignar un nuevo user story, porfavor entre lo más posible en la plataforma para completar el tiempo estimado de terminación del user story.',
+                message='Se le acaba de asignar el user story '  + us.nombre + ' del proyecto ' + proyecto.nombreProyecto + ' del sprint ' + sprint.identificador + ', porfavor entre lo más posible en la plataforma para completar el tiempo estimado de terminación del user story.',
                 from_email=proyecto.owner.email,
                 recipient_list=[us.encargado.usuario.email],
             )
@@ -1284,8 +1268,8 @@ def mark_us_done(request, pk_proy, sprint_id,us_id):
     us.estado_user_story = 'QA'
     us.save()
     send_mail(
-        subject='El user story ' + us.nombre + ' fue enviado a QA',
-        message='El user story' + us.nombre + 'fue enviado a QA. Porfavor revísalo lo antes posible.',
+        subject='El user story '  + us.nombre + ' del proyecto ' + proyecto.nombreProyecto + ' del sprint ' + sprint.identificador +  ' fue enviado a QA',
+        message='El user story '  + us.nombre + ' del proyecto ' + proyecto.nombreProyecto + ' del sprint ' + sprint.identificador + ' fue enviado a QA. Porfavor revísalo lo antes posible.',
         from_email=settings.EMAIL_HOST_USER,
         recipient_list=[proyecto.owner.email]
     )
@@ -1448,6 +1432,7 @@ class QaView(PermissionRequiredMixin,LoginRequiredMixin,FormView):
         if 'aprove' in self.request.POST:
             proyecto = get_object_or_404(Proyecto,pk=self.kwargs['pk_proy'])
             us = get_object_or_404(UserStory, pk=self.kwargs['us_id'])
+            sprint = get_object_or_404(Sprint,pk=self.kwargs['sprint_id'])
             if self.request.POST['aprove'] == 'aproved':
                 us.estado_user_story = 'DN'
                 us.save()
@@ -1457,8 +1442,8 @@ class QaView(PermissionRequiredMixin,LoginRequiredMixin,FormView):
                                            descripcion=us.descripcion, prioridad=us.prioridad_user_story,
                                            log="User Story finalizado")
                 send_mail(
-                    subject='El user story ' + us.nombre + ' fue aprovado',
-                    message=form.cleaned_data['comentario'],
+                    subject='El user story ' + us.nombre + ' del proyecto ' + proyecto.nombreProyecto + ' del sprint ' + sprint.identificador + ' fue aprovado',
+                    message='Comentario: '+form.cleaned_data['comentario'],
                     from_email=proyecto.owner.email,
                     recipient_list=[us.encargado.usuario.email]
                 )
@@ -1471,8 +1456,8 @@ class QaView(PermissionRequiredMixin,LoginRequiredMixin,FormView):
                                            descripcion=us.descripcion, prioridad=us.prioridad_user_story,
                                            log="Paso a Doing")
                 send_mail(
-                    subject='El user story ' + us.nombre + ' no pasó el QA',
-                    message=form.cleaned_data['comentario'],
+                    subject='El user story ' + us.nombre + ' del proyecto ' + proyecto.nombreProyecto + ' del sprint ' + sprint.identificador + ' no pasó el QA',
+                    message='Comentario: '+form.cleaned_data['comentario'],
                     from_email=proyecto.owner.email,
                     recipient_list=[us.encargado.usuario.email]
                 )

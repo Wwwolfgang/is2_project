@@ -16,6 +16,7 @@
       <div class="form-group class pb-2">
           {% if field.name == 'nombre'%}
               Titulo User story
+              {{field.errors}}
               {% render_field field class="form-control" %}
               {% if field.help_text %}
               <small class="form-text text-muted">{{ field.help_text }}</small>
@@ -24,6 +25,7 @@
 
           {% if field.name == 'descripcion'%}
               Descripción
+              {{field.errors}}
               {% render_field field class="form-control" %}
               {% if field.help_text %}
               <small class="form-text text-muted">{{ field.help_text }}</small>
@@ -32,7 +34,8 @@
 
           {% if field.name == 'prioridad_user_story' %}
             Prioridad
-              {{field}}
+            {{field.errors}}
+            {{field}}
           {% endif %}
       </div>
     {% endfor %}

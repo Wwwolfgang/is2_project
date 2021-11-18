@@ -50,12 +50,12 @@
             {% block sprint_body %}
                 <div class="card-body">
                     {% if sprint.carga_horaria != 0 and sprint.carga_horaria != None %}
-                        <h6 class="card-title"><strong>Carga horaria del sprint: </strong>{{sprint.carga_horaria}} hs</h6>
+                        <h6 class="card-title"><strong>Carga horaria del sprint: </strong>{{sprint.carga_horaria|default_if_none:"0"}} hs</h6>
                     {% endif %}
                     {% if sprint.horas_disponibles == 0 and user == owner %}
                         <h6 class="card-title"><strong>Parece que no configuró el equipo del sprint >> </strong><a href="{% url 'proyecto:sprint-team-edit' proyecto_id sprint.id%}" class=""><i class="fas fa-users me-2"></i>Team</a></h6>
                     {% elif sprint.horas_disponibles != 0 and user == owner and sprint.estado_de_sprint == 'I' %}
-                        <h6 class="card-title"><strong>Horas restantes: </strong>{{hours_remaining}} hs.</h6>
+                        <h6 class="card-title"><strong>Horas restantes: </strong>{{hours_remaining|default_if_none:"0"}} hs.</h6>
                     {% endif %}
                     {% if hours_remaining <= 0 and sprint.horas_disponibles != 0 and user == owner and sprint.estado_de_sprint == 'I'%}
                         <h6 class="card-title" style="color:red"><strong>¡Se está superando la capacidad horaria del sprint! La carga horaria es mayor que las horas disponibles.</strong></h6>
@@ -81,7 +81,7 @@
                                                     <span class="badge  bg-danger text-right">{{us.get_prioridad_user_story_display}}</span>
                                                 {% endif %}
                                             </div>
-                                            <div class="col d-flex justify-content-end align-content-center">
+                                            <div class="col-2 d-flex flex-column">
                                                 <a href="{% url 'proyecto:user-story-detail' proyecto_id sprint.id us.pk%}" class="btn btn-outline-primary btn-sm stretched-link">Abrir</a>
                                             </div>
                                         </div>
@@ -119,7 +119,7 @@
                                                     <span class="badge bg-danger text-right">{{us.get_prioridad_user_story_display}}</span>
                                                 {% endif %}
                                             </div>
-                                            <div class="col d-flex justify-content-end align-content-center">
+                                            <div class="col-3">
                                                 <a style="color: red;" href="{% url 'proyecto:user-story-quitar' proyecto_id sprint.id us.id%}" role="button"
                                                     ><i class="fas fa-times me-4 fa-lg"></i></a>
 
@@ -131,7 +131,7 @@
                                         <h5 class="card-title">{{us.nombre}}</h5>
                                         <p class="card-text">{{us.descripcion | truncatechars_html:80}}</p>
                                         <p class="card-text"><strong>Dev asignado: </strong>{{us.encargado}}</p>
-                                        <p class="card-text"><strong>Duración estimada: </strong>{{us.tiempo_promedio_calculado}} hs.</p>
+                                        <p class="card-text"><strong>Duración estimada: </strong>{{us.tiempo_promedio_calculado|default_if_none:"0"}} hs.</p>
                                     </div>
                                     <div class="card-footer text-muted">
                                         {% if us.creador %}
@@ -144,13 +144,13 @@
                     </div>
                     {% else %}
                     <h6 class="card-title"><strong>Fecha de finalización: </strong>{{sprint.fechaFin}}</h6>
-                    {% if alerta_fin %}
+                    {% if alerta_fin and sprint.estado_de_sprint != 'F' %}
                         <h6 class="card-title" style="color:red"><strong>¡El sprint está por terminarse dentro de pocos días!</strong></h6>
                     {% endif %}
-                    <div class="row class py-5">
-                            <div class="row py-2 class align-content-center">
-                                <div class="col-2"><h6>Sprint Backlog</h6> </div>
-                                <div class="col"><a href="{% url 'proyecto:generar-sprint-pb-pdf' proyecto_id sprint.id%}"  class="btn btn-outline-danger" type="button"><i class="fas fa-file-pdf me-2"></i>Generar Reporte Sprint Backlog</a></div>
+                    <div class="row class py-3">
+                            <div class="row py-2 mb-2">
+                                <div class="col-2 d-flex align-items-center"><h6 class="class mb-0">Sprint Backlog</h6> </div>
+                                <div class="col-4"><a href="{% url 'proyecto:generar-sprint-pb-pdf' proyecto_id sprint.id%}"  class="btn btn-outline-danger" type="button"><i class="fas fa-file-pdf me-2"></i>Generar Reporte Sprint Backlog</a></div>
                                 <div class="col"><a href="{% url 'proyecto:generar-us-prioridad-pdf' proyecto_id sprint.id%}"  class="btn btn-outline-danger" type="button"><i class="fas fa-file-pdf me-2"></i>Generar Reporte US - Prioridad</a></div>
                             </div>
                             
@@ -170,7 +170,7 @@
                                                     <span class="badge bg-danger text-right">{{us.get_prioridad_user_story_display}}</span>
                                                 {% endif %}
                                             </div>
-                                            <div class="col d-flex justify-content-end align-content-center">
+                                            <div class="col-12 d-flex flex-column class mt-1">
                                                 <a href="{% url 'proyecto:user-story-detail' proyecto_id sprint.id us.id%}" class="btn btn-outline-primary btn-sm stretched-link">Abrir</a>
                                             </div>
                                         </div>
@@ -179,7 +179,7 @@
                                         <h5 class="card-title">{{us.nombre}}</h5>
                                         <p class="card-text">{{us.descripcion | truncatechars_html:80}}</p>
                                         <p class="card-text"><strong>Dev asignado: </strong>{{us.encargado}}</p>
-                                        <p class="card-text"><strong>Duración estimada: </strong>{{us.tiempo_promedio_calculado}} hs.</p>
+                                        <p class="card-text"><strong>Duración estimada: </strong>{{us.tiempo_promedio_calculado|default_if_none:"0"}} hs.</p>
                                     </div>
                                     <div class="card-footer text-muted">
                                         {% if us.creador %}

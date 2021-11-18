@@ -15,6 +15,7 @@
                 <div class="form-group class pb-3">
                     {% if field.name == 'asunto'%}
                         Asunto:
+                        {{field.errors}}
                         {% render_field field class="form-control" %}
                         {% if field.help_text %}
                             <small class="form-text text-muted">{{ field.help_text }}</small>
@@ -22,6 +23,7 @@
                     {% endif %}
                     {% if field.name == 'body'%}
                         Solicitud:
+                        {{field.errors}}
                         {% render_field field class="form-control" %}
                         {% if field.help_text %}
                             <small class="form-text text-muted">{{ field.help_text }}</small>
