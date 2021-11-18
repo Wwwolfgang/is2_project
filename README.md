@@ -32,6 +32,9 @@ python manage.py collectstatic
 'USER': 'root',
 'PASSWORD': 'root',
 
+## Git
+```git remote set-url origin https://<USERNAME>:<PASSWORD>@bitbucket.org/path/to/repo.git ```
+
 ## Dentro del .env tambien encuentran el id y el secret para el sso 
 ## Guía para ver la configuración del sso https://www.section.io/engineering-education/django-google-oauth/
 ```sudo docker exec pg_container pg_dump -Fc -U root test_db > db.dump```

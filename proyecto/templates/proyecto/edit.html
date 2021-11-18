@@ -14,6 +14,7 @@
                 <div class="form-group">
                         {% if field.name == 'nombreProyecto'%}
                             Nombre del Proyecto
+                            {{field.errors}}
                             {% render_field field class="form-control" %}
                             {% if field.help_text %}
                             <small class="form-text text-muted">{{ field.help_text }}</small>
@@ -21,6 +22,7 @@
                         {% endif %}
                         {% if field.name == 'duracionSprint'%}
                             Duración de un Sprint
+                            {{field.errors}}
                             {% render_field field class="form-control" %}
                             {% if field.help_text %}
                             <small class="form-text text-muted">{{ field.help_text }}</small>
@@ -29,6 +31,7 @@
 
                         {% if field.name == 'fechaInicio'%}
                             Fecha de inicio
+                            {{field.errors}}
                             {% render_field field class="form-control" %}
                             {% if field.help_text %}
                             <small class="form-text text-muted">{{ field.help_text }}</small>
@@ -37,6 +40,7 @@
 
                         {% if field.name == 'fechaFin'%}
                             Fecha de finalización
+                            {{field.errors}}
                             {% render_field field class="form-control" %}
                             {% if field.help_text %}
                             <small class="form-text text-muted">{{ field.help_text }}</small>

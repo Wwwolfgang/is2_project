@@ -23,6 +23,7 @@
                         {% if field.name != 'equipo_desarrollador' %}
                             {% if field.name == 'duracionSprint'%}
                                 Duración
+                                {{field.errors}}
                                 {% render_field field class="form-control" %}
                                 {% if field.help_text %}
                                 <small class="form-text text-muted">{{ field.help_text }}</small>
@@ -31,6 +32,7 @@
 
                             {% if field.name == 'fechaFin'%}
                                 Fecha de finalización
+                                {{field.errors}}
                                 {% render_field field class="form-control" %}
                                 {% if field.help_text %}
                                 <small class="form-text text-muted">{{ field.help_text }}</small>

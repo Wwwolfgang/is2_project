@@ -12,6 +12,7 @@
         <div class="form-group class pt-3 pb-2">
             {% if field.name == 'usuario'%}
                 Seleccione el usuario a Intercambiar
+                {{field.errors}}
                 {% render_field field class="form-control" %}
                 {% if field.help_text %}
                 <small class="form-text text-muted">{{ field.help_text }}</small>

@@ -14,3 +14,4 @@ fontawesome-free==5.15
 django-crispy-forms
 django-widget-tweaks
 workalendar
+reportlab
