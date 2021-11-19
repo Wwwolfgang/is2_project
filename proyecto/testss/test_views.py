@@ -481,3 +481,41 @@ class SprintTest(TestCase):
         request.user = self.user
         response = views.IntercambiarDevView.as_view()(request,**kwargs)
         self.assertEqual(response.status_code, 200)
+
+    def test_generar_pdf_view(self):
+        """ Test para probar si el view generar_pdf_view es alcanzable con los correctos kwargs"""
+        kwargs = {'pk_proy': self.proyecto.pk}
+        url = reverse('proyecto:generar-pb-pdf', kwargs=kwargs)
+
+        # perm = Permission.objects.get(codename='us_manipular_userstory_dailys')
+        # assign_perm(perm,self.user,self.userstory)
+        request = self.factory.get(url)
+        request.user = self.user
+        response = views.generar_pdf_view(request,**kwargs)
+        self.assertEqual(response.status_code, 200)
+
+    def test_generar_pdf_view(self):
+        """ Test para probar si el view generar_sprint_backlog_pdf es alcanzable con los correctos kwargs"""
+        self.sprintCreate('A')
+        kwargs = {'pk_proy': self.proyecto.pk, 'sprint_id': self.sprint.pk}
+        url = reverse('proyecto:generar-sprint-pb-pdf', kwargs=kwargs)
+
+        # perm = Permission.objects.get(codename='us_manipular_userstory_dailys')
+        # assign_perm(perm,self.user,self.userstory)
+        request = self.factory.get(url)
+        request.user = self.user
+        response = views.generar_sprint_backlog_pdf(request,**kwargs)
+        self.assertEqual(response.status_code, 200)
+
+    def test_generar_pdf_view(self):
+        """ Test para probar si el view generar_reporte_prioridad_us_pdf es alcanzable con los correctos kwargs"""
+        self.sprintCreate('A')
+        kwargs = {'pk_proy': self.proyecto.pk, 'sprint_id': self.sprint.pk}
+        url = reverse('proyecto:generar-us-prioridad-pdf', kwargs=kwargs)
+
+        # perm = Permission.objects.get(codename='us_manipular_userstory_dailys')
+        # assign_perm(perm,self.user,self.userstory)
+        request = self.factory.get(url)
+        request.user = self.user
+        response = views.generar_reporte_prioridad_us_pdf(request,**kwargs)
+        self.assertEqual(response.status_code, 200)

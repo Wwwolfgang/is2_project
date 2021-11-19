@@ -16,6 +16,8 @@ mainmenu () {
     repo=is2_project
     echo -e "${red}<<< Bienvenidos al Projecto de IS2 del equipo 15 >>>${reset}"
 
+    rm -rf is2_project/
+
     git clone "https://${username}:${password}@github.com/Wwwolfgang/is2_project.git"
 
     cd "is2_project"
@@ -38,13 +40,14 @@ mainmenu () {
         echo "Presione 3 para TAG v.0.0.3"
         echo "Presione 4 para TAG v.0.0.4"
         echo "Presione 5 para TAG v.0.0.5"
+        echo "Presione 6 para TAG v.0.0.6"
         read -n 1 -p "Seleccione el Tag:" tag
 
         echo -e "${green}\n>>> Desarrollo TAG v.0.0.${tag}:${reset}"
         echo
          # prepare docker and database
         echo -e "${green}\n>>> Iniciando docker${reset}"
-        . docker-compose_up.sh
+        sudo docker-compose up -d
         sleep 2
         echo
         sudo docker cp db.dump pg_container:/
@@ -66,6 +69,8 @@ mainmenu () {
             git switch --detach v.0.0.4
         elif [ "$tag" = "5" ]; then
             git switch --detach v.0.0.5
+        elif [ "$tag" = "6" ]; then
+            git switch --detach v.0.0.6
         else 
             echo -e "${red}\n<<< Esa versión no existe >>>${reset}"
             sleep 2
@@ -98,6 +103,7 @@ mainmenu () {
         echo "Presione 3 para TAG v.0.0.3"
         echo "Presione 4 para TAG v.0.0.4"
         echo "Presione 5 para TAG v.0.0.5"
+        echo "Presione 6 para TAG v.0.0.6"
         read -n 1 -p "Seleccione el Tag:" tag
         echo -e "${green}\n>>> Producción TAG v.0.0.${tag}:${reset}"
         echo
@@ -119,13 +125,16 @@ mainmenu () {
         elif [ "$tag" = "5" ]; then
             git switch --detach vp.0.0.5
             git checkout production db.dump
+        elif [ "$tag" = "6" ]; then
+            git switch --detach vp.0.0.6
+            git checkout production db.dump
         else 
             echo -e "${red}\n<<< Esa versión no existe >>>${reset}"
             sleep 2
             exit
         fi
 
-        . docker-compose_up.sh
+        sudo docker-compose up -d
         sleep 2
         echo
 

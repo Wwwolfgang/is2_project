@@ -1,11 +1,8 @@
-from django.contrib.auth import models
-from django.forms import fields, widgets
 from django.contrib.auth.models import Permission
 from django import forms
 from .models import Proyecto, ProyectUser, RolProyecto, Sprint, UserStory, Daily
 from sso.models import User
 from django import forms
-from django.contrib.admin import widgets
 from django.forms.models import inlineformset_factory
 
 class AgregarRolProyectoForm(forms.ModelForm):

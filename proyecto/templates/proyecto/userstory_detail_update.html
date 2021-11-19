@@ -52,7 +52,11 @@
         {% endif %}
         
         <div class="card-header">
+            {% if sprint_id %}
+            <a href="{% url 'proyecto:sprint-detail' proyecto_id sprint_id %}"  class="btn btn-outline-success"><i class="fas fa-chevron-left me-2"></i>{{sprint.identificador}}</a>
+            {% elif not sprint_id or not object.sprint %}
             <a href="{% url 'proyecto:product-backlog' proyecto_id %}"  class="btn btn-outline-success"><i class="fas fa-chevron-left me-2"></i>Product Backlog</a>
+            {% endif %}
             <span class="navbar-brand class mx-2"> User story: {{object.nombre}}</span>
             {% if object.prioridad_user_story == 'A' %}
                 <span class="badge  bg-warning text-dark">{{object.get_prioridad_user_story_display}}</span>
@@ -84,6 +88,7 @@
                     {% if field.name == 'tiempo_estimado_scrum_master'%}
                         {% if user == scrum_master %}
                             Duración en horas
+                            {{field.errors}}
                             {% render_field field class="form-control" %}
                             {% if field.help_text %}
                             <small class="form-text text-muted">{{ field.help_text }}</small>
@@ -95,6 +100,7 @@
                     {% if field.name == 'encargado'%}
                         {% if user == scrum_master %}
                             Encargado
+                            {{field.errors}}
                             {% render_field field class="form-control" %}
                             {% if field.help_text %}
                             <small class="form-text text-muted">{{ field.help_text }}</small>
@@ -107,6 +113,7 @@
                     {% if is_assigned == True and user == object.encargado.usuario %}
                         {% if field.name == 'tiempo_estimado_dev'%}
                             Usted como Dev asignado, estime el tiempo en hs que toma para terminar el user story.
+                            {{field.errors}}
                             {% render_field field class="form-control" %}
                             {% if field.help_text %}
                             <small class="form-text text-muted">{{ field.help_text }}</small>
