@@ -162,7 +162,7 @@ class UserStory(models.Model):
     nombre = models.CharField(verbose_name='Nombre del user story', max_length=100, blank=False,null=False)
     descripcion = models.TextField(verbose_name='Descripción del user story',blank=True)
     tiempo_estimado_scrum_master = models.PositiveIntegerField(blank=True,null=True,help_text="Tiempo de duración estimado por el scrum master.",default=0,validators=[MinValueValidator(1)])
-    tiempo_estimado_dev = models.PositiveIntegerField(blank=True,null=True,help_text="Tiempo de duración estimado por el desarrollador asignado.",default=0,validators=[MinValueValidator(1)])
+    tiempo_estimado_dev = models.PositiveIntegerField(blank=True,null=True,help_text="Tiempo de duración estimado por el desarrollador asignado.",default=0)
     tiempo_promedio_calculado = models.DecimalField(blank=True,null=True,decimal_places=2,max_digits=4,help_text="Tiempo de duración promedio entre los dos tiempos estimados.")
     PRIORIDAD_DE_USER_STORY_CHOICES = [
         ('B', 'Baja'),
