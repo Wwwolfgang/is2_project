@@ -78,7 +78,7 @@ mainmenu () {
 
          # prepare env and install dependencies
         echo -e "${green}\n>>> Creando entorno virtual${reset}"
-        python3 -m venv env
+        python3.9 -m venv env
         echo "${green}>>> env fue creado${reset}"
         sleep 2
         echo "${green}>>> Activando el env${reset}"
