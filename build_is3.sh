@@ -8,7 +8,6 @@ mainmenu () {
     db_user=root
 
     username="Wwwolfgang"
-    password="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"
 
     red=`tput setaf 1`
     green=`tput setaf 2`
@@ -18,7 +17,7 @@ mainmenu () {
 
     rm -rf is2_project/
 
-    git clone "https://${username}:${password}@github.com/Wwwolfgang/is2_project.git"
+    git clone "https://github.com/Wwwolfgang/is2_project.git"
 
     cd "is2_project"
 
