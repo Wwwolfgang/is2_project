@@ -8,7 +8,7 @@ mainmenu () {
     db_user=root
 
     username="Wwwolfgang"
-    password="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"
+    password="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"
 
     red=`tput setaf 1`
     green=`tput setaf 2`
